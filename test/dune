@@ -1,0 +1,3 @@
+(test
+ (name test_opencommand)
+ (libraries alcotest mapping native_registry entry_tokenizer))

@@ -1,0 +1,9 @@
+(menhir
+ (modules parser))
+
+(ocamllex lexer)
+
+(library
+ (name entry_tokenizer)
+ (modules parser lexer json main)
+ (libraries core yojson core_unix))
