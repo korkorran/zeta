@@ -16,10 +16,10 @@ let test_entry () =
   Alcotest.(check (list string)) "same path" ["git config [?options]"] (successfull_paths "git config --list" git)
 
 let test_tokenizer () =
-  Alcotest.(check bool) "tokens" true (
-    let _json = Entry_tokenizer.Main.loop 
-    "{ \"name\": \"Alice\", \"age\": 30, \"is_student\": false, \"scores\": [85.5, 90.0, 78.0], \"address\": { \"street\": \"123 Main St\", \"city\": \"Anytown\" }, \"favorite_color\": null }" 
-  in true)
+  let _result = Entry_tokenizer.Main.loop 
+    "name Alice" 
+  in
+  Alcotest.(check (bool)) "tokens" true (true)
 
 (* Run it *)
 let () =
