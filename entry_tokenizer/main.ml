@@ -1,10 +1,9 @@
-open Core
 open Lexer
 open Lexing
 
 let print_position outx lexbuf =
   let pos = lexbuf.lex_curr_p in
-  fprintf outx "%s:%d:%d" pos.pos_fname
+  Printf.fprintf outx "%s:%d:%d" pos.pos_fname
     pos.pos_lnum (pos.pos_cnum - pos.pos_bol + 1)
 
 let parse_with_error lexbuf =
@@ -13,13 +12,13 @@ let parse_with_error lexbuf =
     Printf.fprintf Stdlib.stderr "%a: %s\n" print_position lexbuf msg;
     None
   | Parser.Error ->
-    fprintf Stdlib.stderr "%a: syntax error\n" print_position lexbuf;
+    Printf.fprintf Stdlib.stderr "%a: syntax error\n" print_position lexbuf;
     None
 
 let rec parse_and_print lexbuf =
   match parse_with_error lexbuf with
   | Some value ->
-    printf "%a\n" Entry.output_value value;
+    Printf.printf "%a\n" Entry.output_value value;
     parse_and_print lexbuf
   | None -> ()
 

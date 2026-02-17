@@ -15,11 +15,11 @@ let successfull_paths entry command =
 let test_entry () =
   Alcotest.(check (list string)) "same path" ["git config [?options]"] (successfull_paths "git config --list" git)
 
-let test_tokenizer () =
-  let _result = Entry_tokenizer.Main.loop 
-    "name Alice" 
+let test_tokenizer s tokens () =
+  let lexbuf = Lexing.from_string s in
+  let result = Entry_tokenizer.Main.parse_with_error lexbuf
   in
-  Alcotest.(check (bool)) "tokens" true (true)
+  Alcotest.(check (option (list string))) "tokens" tokens result
 
 (* Run it *)
 let () =
@@ -30,6 +30,10 @@ let () =
           test_case "entry evaluation" `Quick test_entry
         ];
       "tokenizer", [
-        test_case "tokenize json" `Quick test_tokenizer
+        test_case "tokenize 2 words" `Quick (test_tokenizer "name Alice" (Some ["name"; "Alice"]));
+        test_case "tokenize 3 words" `Quick (test_tokenizer "name Alice \"hello\"" (Some ["name"; "Alice"; "\"hello\""]));
+        test_case "tokenize 4 words" `Quick (test_tokenizer "git commit -m \"a commit message\"" 
+          (Some ["git"; "commit"; "-m"; "\"a commit message\""]));
+        test_case "tokenize fails" `Quick (test_tokenizer "name Alice \"hello" (None));
       ]
     ]
