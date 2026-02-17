@@ -2,4 +2,4 @@
  (name mapping)
  (modules command entry typeformat)
  (preprocess (pps ppx_deriving.show))
- (libraries tyre yojson))
+ (libraries tyre yojson entry_tokenizer))

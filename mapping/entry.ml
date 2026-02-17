@@ -163,10 +163,13 @@ let evalPath (entry:entry) (path:Command.EncodedPath.t) (head:Command.head) : re
 
 let evalConfiguration (rawEntry:string) (rawCommand:Command.rawCommand) : (string * result) list =
   (* let command = Command.parseEncodedCommand rawCommand in *)
-  let entry = tokenize rawEntry in
+  let tokens_opt = Entry_tokenizer.Main.parse_with_error (Lexing.from_string rawEntry) in
+  match tokens_opt with
+  | Some entry ->
   (* Placeholder implementation *)
   List.map (fun (path, head) ->
     let encodedPath = Command.EncodedPath.from_string path in
     let res = evalPath entry encodedPath head in
     (path, res)
   ) (Command.StringMap.bindings rawCommand)
+  | None -> []

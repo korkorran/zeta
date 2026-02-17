@@ -1,6 +1,6 @@
 (executable
  (name main)
- (libraries vdom)
+ (libraries vdom entry_tokenizer mapping native_registry)
  (modes js))
 
 
