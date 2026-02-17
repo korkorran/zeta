@@ -40,7 +40,15 @@ let git = emptyCommand
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
-        description = "List, create, or delete branches";
+        description = "List branches";
+      }
+  |> addPath "git branch <branch-name>" {
+        options = StringMap.empty;
+        optionsLocations = StringMap.empty;
+        args = (StringMap.empty
+          |> StringMap.add "branch-name" {encodings = SingleString; description = "Name of the branch to create"}
+        );
+        description = "Create a new branch";
       }
   |> addPath "git checkout" {
         options = StringMap.empty;

@@ -41,6 +41,11 @@ let displayConfiguration (config:Mapping.Entry.configuration) =
 let view { entry;checked;_ } =
   let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
   let results = Mapping.Entry.evalConfiguration entry (Native_registry.Git.git) in
+  let getPathDescription path =
+    match Mapping.Command.StringMap.find_opt path (Native_registry.Git.git) with
+    | Some head -> head.description
+    | None -> "Unknown path"
+  in
   let row (path, result) =
     let (desc, conf) = (match result with
       | Mapping.Entry.Success c -> ("Success", Some c)
@@ -49,7 +54,7 @@ let view { entry;checked;_ } =
       | Mapping.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) in
     div [
       div [text path; text " -> "; text desc];
-      div [(match conf with Some c -> displayConfiguration c | None -> div [])]
+      div (match conf with Some c -> [text (getPathDescription path);displayConfiguration c] | None -> [])
     ]
   in
   div (div [button "New counter" `New_counter] 
