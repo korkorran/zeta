@@ -6,8 +6,9 @@ type typeformat = TUnit
                 | TList of typeformat
                 | TOption of typeformat
                 | TTuple of typeformat list
-                | TRecord of (string * typeformat) list
-                | TVariant of (string * typeformat option) list
+                | TEnum of string list
+(*                 | TRecord of (string * typeformat) list
+                | TVariant of (string * typeformat option) list *)
 
 
 type value = VUnit
@@ -18,8 +19,10 @@ type value = VUnit
            | VList of value list
            | VOption of value option
            | VTuple of value list
-           | VRecord of (string * value) list
-           | VVariant of string * value option
+           | VEnum of string
+(*            | VRecord of (string * value) list
+           | VVariant of string * value option *)
+
 
     
 let rec validate typeformat value =
@@ -32,7 +35,8 @@ let rec validate typeformat value =
   | TList tf, VList vs -> List.for_all (validate tf) vs
   | TOption tf, VOption v -> (match v with Some v' -> validate tf v' | None -> true)
   | TTuple tfs, VTuple vs -> List.length tfs = List.length vs && List.for_all2 validate tfs vs
-  | TRecord fields, VRecord values ->
+  | TEnum options, VEnum v -> List.exists ((=) v) options
+(*   | TRecord fields, VRecord values ->
       let field_map = List.fold_left (fun acc (name, tf) -> (name, tf) :: acc) [] fields in
       List.for_all (fun (name, v) ->
         match List.assoc_opt name field_map with
@@ -45,5 +49,29 @@ let rec validate typeformat value =
             | Some tf, Some v -> validate tf v
             | None, None -> true
             | _, _ -> false)
-       | None -> false)
+       | None -> false) *)
   | _, _ -> false
+
+  let rec pp_value fmt = function
+    | VUnit -> Format.fprintf fmt "unit"
+    | VInt i -> Format.fprintf fmt "%d" i
+    | VFloat f -> Format.fprintf fmt "%f" f
+    | VBool b -> Format.fprintf fmt "%b" b
+    | VString s -> Format.fprintf fmt "\"%s\"" s
+    | VList vs ->
+        Format.fprintf fmt "[";
+        List.iteri (fun i v ->
+          if i > 0 then Format.fprintf fmt "; ";
+          pp_value fmt v) vs;
+        Format.fprintf fmt "]"
+    | VOption v_opt ->
+        (match v_opt with
+         | Some v -> pp_value fmt v
+         | None -> Format.fprintf fmt "None")
+    | VTuple vs ->
+        Format.fprintf fmt "(";
+        List.iteri (fun i v ->
+          if i > 0 then Format.fprintf fmt ", ";
+          pp_value fmt v) vs;
+        Format.fprintf fmt ")"
+    | VEnum s -> Format.fprintf fmt "%s" s

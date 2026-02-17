@@ -33,9 +33,9 @@ let displayConfiguration (config:Mapping.Entry.configuration) =
   let args = StringMap.bindings config.args in
   div [
     text "Options:";
-    div (List.map (fun (k, v) -> text (Printf.sprintf "%s: %s" k (Yojson.Basic.to_string v))) options);
+    div (List.map (fun (k, v) -> text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)) options);
     text "Arguments:";
-    div (List.map (fun (k, v) -> text (Printf.sprintf "%s: %s" k (Yojson.Basic.to_string v))) args);
+    div (List.map (fun (k, v) -> text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)) args);
   ]
 
 let view { entry;checked;_ } =

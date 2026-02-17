@@ -12,7 +12,7 @@ module StringMap = struct
 end
 
 type entry = string list
-type configuration = {options : Yojson.Basic.t StringMap.t; args : Yojson.Basic.t StringMap.t}
+type configuration = {options : (Typeformat.value) StringMap.t; args : Typeformat.value StringMap.t}
 [@@deriving show]
 
 let tokenize str =
@@ -44,7 +44,7 @@ let evalOption
   | [] -> None
   | he::te ->
       if List.exists (fun enc -> enc = he) option.Command.encodings then
-        let updatedOptions = StringMap.add id (`String "unit") currentConfig.options in
+        let updatedOptions = StringMap.add id (Typeformat.VUnit) currentConfig.options in
         Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
       else
         None
@@ -115,7 +115,7 @@ let evalTokens
         match l with
           _ ->
             let he = List.hd restEntry in
-            let newArgs = StringMap.add l (`String he) currentConfig.args in
+            let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
             let newConfig = {options=currentConfig.options; args=newArgs} in
             Ongoing (newConfig, {
               evaluatedEntry = evaluatedEntry @ [he];
