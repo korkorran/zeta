@@ -20,7 +20,7 @@ let update { counters;entry;checked } = function
   | `Text s -> { counters;entry = s;checked }
   | `Check b -> { counters;entry;checked = b }
 
-let init = { counters = IntMap.empty; entry = "git config --list";checked = true }
+let init = { counters = IntMap.empty; entry = "git merge --strategy resolve branch";checked = true }
 
 let button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
 

@@ -75,3 +75,15 @@ let rec validate typeformat value =
           pp_value fmt v) vs;
         Format.fprintf fmt ")"
     | VEnum s -> Format.fprintf fmt "%s" s
+
+
+let value_of_token typeformat token =
+  match typeformat, token with
+  | TUnit, "unit" -> Some VUnit
+  | TInt, s -> (try Some (VInt (int_of_string s)) with _ -> None)
+  | TFloat, s -> (try Some (VFloat (float_of_string s)) with _ -> None)
+  | TBool, "true" -> Some (VBool true)
+  | TBool, "false" -> Some (VBool false)
+  | TString, s -> Some (VString s)
+  | TEnum options, s when List.exists ((=) s) options -> Some (VEnum s)
+  | _, _ -> None

@@ -31,23 +31,38 @@ type ongoingResult =
   | Overflow of string 
   | Ongoing of configuration * evaluationState
 
-let getOptionsFromLocation (head:Command.head) (location:string) : (string * Command.commandOption) list =
+let getOptionsFromLocation (head:Command.head) (location:string) : (string * Command.CommandOption.t) list =
   StringMap.bindings head.options
-  |> List.filter (fun (_, opt) -> opt.Command.location = location)
+  |> List.filter (fun (_, opt) -> opt.Command.CommandOption.location = location)
 
 let evalOption 
-  (id, option: string* Command.commandOption) 
+  (id, option: string* Command.CommandOption.t) 
   (restEntry: string list) 
   (currentConfig: configuration) 
   : (configuration * string list * string list) option =
-  match restEntry with
-  | [] -> None
-  | he::te ->
-      if List.exists (fun enc -> enc = he) option.Command.encodings then
-        let updatedOptions = StringMap.add id (Typeformat.VUnit) currentConfig.options in
-        Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
+  match option.Command.CommandOption.encoding with
+  | Command.CommandOption.SingleString encodings -> (
+    match restEntry with
+    | [] -> None
+    | he::te ->
+        if List.exists (fun enc -> enc = he) encodings then
+          let updatedOptions = StringMap.add id (Typeformat.VUnit) currentConfig.options in
+          Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
+        else
+          None )
+  | Command.CommandOption.ValueSuffix (prefixes, typeformat) -> (
+    match restEntry with
+    | h1::h2::te -> 
+      if List.exists (fun prefix -> prefix = h1) prefixes then
+        let value_opt = Typeformat.value_of_token typeformat h2 in
+        match value_opt with
+        | None -> None
+        | Some value ->
+        let updatedOptions = StringMap.add id value currentConfig.options in
+        Some ({options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
       else
         None
+    | _ -> None)
 
 (*let evalArgument
   (id, option: string* Command.argument) 

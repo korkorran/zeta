@@ -73,21 +73,27 @@ end
 module EncodedPathMap = Map.Make(EncodedPath)
 module StringMap = Map.Make(String)
 
-type optionEncoding =
-  | RawString of string list
-  | ValueSuffix of string list
+module CommandOption = struct
 
-type commandOption = {
-  encodings: string list;
-  description: string;
-  location: string;
-}
+  type encoding =
+  | SingleString of string list
+  | ValueSuffix of string list * Typeformat.typeformat
 
-type argumentEncoding = SingleString | MultipleStrings of (int*int)  (* min, max *)
-type argument = {
-  encodings: argumentEncoding;
-  description: string;
-}
+  type t = {
+    encoding: encoding;
+    description: string;
+    location: string;
+  }
+end
+
+
+module Argument = struct
+  type encoding = SingleString | MultipleStrings of (int*int)  (* min, max *)
+  type t = {
+    encoding: encoding;
+    description: string;
+  }
+end
 
 type optionLocation = {
   from : int;
@@ -95,9 +101,9 @@ type optionLocation = {
 }
 
 type head = {
-  options: commandOption StringMap.t;
+  options: CommandOption.t StringMap.t;
   optionsLocations: optionLocation StringMap.t;
-  args: argument StringMap.t;
+  args: Argument.t StringMap.t;
   description: string;
 }
 
