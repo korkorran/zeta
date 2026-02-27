@@ -19,21 +19,39 @@ let update { counters;entry;checked } = function
   | `Update (pos, diff) -> { counters = IntMap.add pos (IntMap.find pos counters + diff) counters;entry;checked }
   | `Text s -> { counters;entry = s;checked }
   | `Check b -> { counters;entry;checked = b }
+  | `Unit -> { counters;entry;checked }
 
-let init = { counters = IntMap.empty; entry = "git merge --strategy resolve branch";checked = true }
+let init = { counters = IntMap.empty; entry = "git merge --strategy octopus branch";checked = true }
 
 let button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
 
-let select ?key ?a l = elt "select" ?key ?a l
-let option txt = elt "option" ~a:[value txt] [text txt]
+let select ?key  l = elt "select" ?key ~a:[onchange ~prevent_default:() ~stop_propagation:() (fun _ -> (`Unit)) ] l
+let option ?(selected=false) txt =
+  match selected with
+  | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
+  | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayConfiguration (config:Mapping.Entry.configuration) =
+let displayOption (k,optionValue : string * Mapping.Typeformat.value) (optionsTypeformat:Mapping.Typeformat.typeformat Mapping.Command.StringMap.t) =
+  let optionTypeformat = Mapping.Command.StringMap.find k optionsTypeformat in
+  match optionTypeformat with
+  | Mapping.Typeformat.TUnit -> text "UNIT"
+  | Mapping.Typeformat.TEnum enums ->
+    select (List.map (fun e -> 
+      if Mapping.Typeformat.VEnum e = optionValue 
+        then option ~selected:true e 
+        else option e) 
+      enums)
+  | _ -> text "OTHERS"
+
+
+let displayConfiguration path (config:Mapping.Entry.configuration) =
   let open Mapping.Entry in
   let options = StringMap.bindings config.options in
   let args = StringMap.bindings config.args in
-  div [
+  let optionsTypeformat = Mapping.Command.getOptionConfigurationTypeformat (Native_registry.Git.git) path in
+  div ~a:[style "border-style" "solid"; style "border-width" "1px"; style "width" "fit-content"; style "padding" "10px"] [
     text "Options:";
-    div (List.map (fun (k, v) -> text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)) options);
+    div (List.map (fun (k, v) -> displayOption (k,v) optionsTypeformat) options);
     text "Arguments:";
     div (List.map (fun (k, v) -> text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)) args);
   ]
@@ -54,11 +72,11 @@ let view { entry;checked;_ } =
       | Mapping.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) in
     div [
       div [text path; text " -> "; text desc];
-      div (match conf with Some c -> [text (getPathDescription path);displayConfiguration c] | None -> [])
+      div (match conf with Some c -> [text (getPathDescription path);displayConfiguration path c] | None -> [])
     ]
   in
   div (div [button "New counter" `New_counter] 
-    :: (input [] ~a:[oninput (fun s -> `Text s); value entry])
+    :: (input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100])
     :: (input [] ~a:[str_prop "type" "checkbox";
               bool_prop "checked" (checked);
               onclick (fun _ -> (`Check (not checked)));
