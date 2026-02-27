@@ -121,8 +121,10 @@ let emptyCommand : rawCommand = StringMap.empty
 let addPath path (head:head) cmd =
   StringMap.add path head cmd
 
-let getOptionConfigurationTypeformat (c:rawCommand) (path:string) : Typeformat.typeformat StringMap.t =
-  let head = StringMap.find path c in
-  StringMap.map (fun (opt) -> (match opt.CommandOption.encoding with
+let getOptionsTemplate (head: head) : Typeformat.typeformat StringMap.t =
+  head.options 
+  |> StringMap.map (fun (opt) -> (
+    match opt.CommandOption.encoding with
     | CommandOption.SingleString _ -> Typeformat.TUnit
-    | CommandOption.ValueSuffix (_, tf) -> tf)) head.options
+    | CommandOption.ValueSuffix (_, tf) -> tf
+    ))

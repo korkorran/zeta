@@ -7,9 +7,27 @@ let git = emptyCommand
         args = StringMap.empty;
         description = "Git version control system";
       }  
-  |> addPath "git commit" {
-        options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+  |> addPath "git commit [?options]" {
+        options = (let open CommandOption in StringMap.empty
+          |> StringMap.add "--message" {
+              encoding = ValueSuffix (["-m"; "--message"], TString);
+              description = "Use the given message as the commit message";
+              location = "options";
+            }
+          |> StringMap.add "--all" {
+              encoding = SingleString ["-a"; "--all"];
+              description = "Automatically stage files that have been modified and deleted, but new files you have not told Git about are not affected";
+              location = "options";
+            }
+          |> StringMap.add "--amend" {
+              encoding = SingleString ["--amend"];
+              description = "Replace the tip of the current branch by creating a new commit";
+              location = "options";
+            }
+        );
+        optionsLocations = (StringMap.empty
+          |> StringMap.add "options" {from=1; to_=100}
+        );
         args = StringMap.empty;
         description = "Record changes to the repository";
       }

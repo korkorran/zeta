@@ -21,7 +21,7 @@ let update { counters;entry;checked } = function
   | `Check b -> { counters;entry;checked = b }
   | `Unit -> { counters;entry;checked }
 
-let init = { counters = IntMap.empty; entry = "git merge --strategy octopus branch";checked = true }
+let init = { counters = IntMap.empty; entry = "git commit -m \"hello world\"";checked = true }
 
 let button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
 
@@ -31,28 +31,51 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOption (k,optionValue : string * Mapping.Typeformat.value) (optionsTypeformat:Mapping.Typeformat.typeformat Mapping.Command.StringMap.t) =
-  let optionTypeformat = Mapping.Command.StringMap.find k optionsTypeformat in
-  match optionTypeformat with
-  | Mapping.Typeformat.TUnit -> text "UNIT"
-  | Mapping.Typeformat.TEnum enums ->
-    select (List.map (fun e -> 
-      if Mapping.Typeformat.VEnum e = optionValue 
-        then option ~selected:true e 
-        else option e) 
-      enums)
-  | _ -> text "OTHERS"
+let displayOption (k:string) (optionValue :Mapping.Typeformat.value option) (optionTypeformat:Mapping.Typeformat.typeformat) (desc:string) =
+  let displayValue = 
+    match optionTypeformat with
+    | Mapping.Typeformat.TUnit -> text "()"
+    | Mapping.Typeformat.TEnum enums ->
+        select (List.map (fun e -> 
+          match optionValue with 
+          Some VEnum v -> if e = v
+            then option ~selected:true e 
+            else option e
+          | _ -> option e) 
+          enums)
+    | Mapping.Typeformat.TString -> (match optionValue with 
+      | Some VString s -> input [] ~a:[value s; oninput (fun _s -> `Unit)] 
+      | _ -> input [] ~a:[value ""; oninput (fun _s -> `Unit)])
+    | _ -> text "OTHERS" in
+  div [ 
+        div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
+          input [] ~a:[str_prop "type" "checkbox";
+              bool_prop "checked" (match optionValue with Some _ -> true | _ -> false);
+              onclick (fun _ -> (`Check (false)));
+              class_ "checkbox"
+             ]];
+        div ~a:[class_ "tooltip"] [text (k^": "); div ~a:[class_ "tooltiptext"] [text desc]];
+        displayValue
+  ]
+
 
 
 let displayConfiguration path (config:Mapping.Entry.configuration) =
   let open Mapping.Entry in
-  let options = StringMap.bindings config.options in
   let args = StringMap.bindings config.args in
-  let optionsTypeformat = Mapping.Command.getOptionConfigurationTypeformat (Native_registry.Git.git) path in
+  let head = StringMap.find path (Native_registry.Git.git) in
+  let optionsTemplate = Mapping.Command.getOptionsTemplate head in
+  let optionsBindings = StringMap.bindings optionsTemplate in
   div ~a:[style "border-style" "solid"; style "border-width" "1px"; style "width" "fit-content"; style "padding" "10px"] [
     text "Options:";
-    div (List.map (fun (k, v) -> displayOption (k,v) optionsTypeformat) options);
+    div (List.map (fun (k, optionTypeformat) -> 
+      let optionValue = StringMap.find_opt k config.options in
+      let optionDescription = (StringMap.find k head.options).Mapping.Command.CommandOption.description in
+      displayOption k optionValue optionTypeformat optionDescription
+    ) optionsBindings);
     text "Arguments:";
+    if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
+    else
     div (List.map (fun (k, v) -> text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)) args);
   ]
 
