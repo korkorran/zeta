@@ -1,9 +1,3 @@
-(* This file is part of the ocaml-vdom package, released under the terms of an MIT-like license.     *)
-(* See the attached LICENSE file.                                                                    *)
-(* Copyright (C) 2000-2024 LexiFi                                                                    *)
-
-(* Inspired from https://github.com/janestreet/incr_dom/blob/master/example/incr_decr/counters.ml *)
-
 open Vdom
 
 module IntMap = Map.Make(struct type t = int let compare : int -> int -> int = compare end)
@@ -12,18 +6,20 @@ type model = {
   counters : int IntMap.t;
   entry : string;
   checked : bool;
+  selectedCommandKey : string option;
 }
 
-let update { counters;entry;checked } = function
-  | `New_counter -> { counters = IntMap.add (IntMap.cardinal counters) 0 counters;entry;checked }
-  | `Update (pos, diff) -> { counters = IntMap.add pos (IntMap.find pos counters + diff) counters;entry;checked }
-  | `Text s -> { counters;entry = s;checked }
-  | `Check b -> { counters;entry;checked = b }
-  | `Unit -> { counters;entry;checked }
+let update { counters;entry;checked;selectedCommandKey } = function
+  | `New_counter -> { counters = IntMap.add (IntMap.cardinal counters) 0 counters;entry;checked;selectedCommandKey }
+  | `Update (pos, diff) -> { counters = IntMap.add pos (IntMap.find pos counters + diff) counters;entry;checked;selectedCommandKey }
+  | `Text s -> { counters;entry = s;checked ;selectedCommandKey}
+  | `Check b -> { counters;entry;checked = b;selectedCommandKey }
+  | `Unit -> { counters;entry;checked;selectedCommandKey }
+  | `SelectCommand cmd -> { counters;entry;checked;selectedCommandKey = Some cmd }
 
-let init = { counters = IntMap.empty; entry = "git commit -m \"hello world\"";checked = true }
+let init = { counters = IntMap.empty; entry = "git commit -m \"hello world\"";checked = true; selectedCommandKey = Some "mv" }
 
-let button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
+let _button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
 
 let select ?key  l = elt "select" ?key ~a:[onchange ~prevent_default:() ~stop_propagation:() (fun _ -> (`Unit)) ] l
 let option ?(selected=false) txt =
@@ -60,14 +56,16 @@ let displayOption (k:string) (optionValue :Mapping.Typeformat.value option) (opt
 
 
 
-let displayConfiguration path (config:Mapping.Entry.configuration) =
+let displayConfiguration path (config:Mapping.Entry.configuration) (selectedCommand:Mapping.Command.head Mapping.Command.StringMap.t) =
   let open Mapping.Entry in
   let args = StringMap.bindings config.args in
-  let head = StringMap.find path (Native_registry.Git.git) in
+  let head = StringMap.find path selectedCommand in
   let optionsTemplate = Mapping.Command.getOptionsTemplate head in
   let optionsBindings = StringMap.bindings optionsTemplate in
   div ~a:[style "border-style" "solid"; style "border-width" "1px"; style "width" "fit-content"; style "padding" "10px"] [
     text "Options:";
+    if optionsBindings = [] then div [text "No options"] ~a:[style "font-style" "italic"; style "color" "gray"]
+    else
     div (List.map (fun (k, optionTypeformat) -> 
       let optionValue = StringMap.find_opt k config.options in
       let optionDescription = (StringMap.find k head.options).Mapping.Command.CommandOption.description in
@@ -76,39 +74,61 @@ let displayConfiguration path (config:Mapping.Entry.configuration) =
     text "Arguments:";
     if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
-    div (List.map (fun (k, v) -> text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)) args);
+    div (List.map (fun (k, v) -> div [text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)]) args);
   ]
 
-let view { entry;checked;_ } =
-  let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
-  let results = Mapping.Entry.evalConfiguration entry (Native_registry.Git.git) in
-  let getPathDescription path =
-    match Mapping.Command.StringMap.find_opt path (Native_registry.Git.git) with
-    | Some head -> head.description
-    | None -> "Unknown path"
-  in
-  let row (path, result) =
+  let displayPathResult command (path, result) =
+    let getPathDescription path =
+      match Mapping.Command.StringMap.find_opt path command with
+      | Some head -> head.Mapping.Command.description
+      | None -> "Unknown path"
+    in
     let (desc, conf) = (match result with
       | Mapping.Entry.Success c -> ("Success", Some c)
       | Mapping.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Mapping.Command.Token.token_to_string t), None
       | Mapping.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Mapping.Command.Token.token_to_string t), None
-      | Mapping.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) in
+      | Mapping.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
+    in
     div [
       div [text path; text " -> "; text desc];
-      div (match conf with Some c -> [text (getPathDescription path);displayConfiguration path c] | None -> [])
+      div (match conf with Some c -> [text (getPathDescription path);displayConfiguration path c command] | None -> [])
     ]
+
+let displaySelectableCommands (_selectedCommand:string option) =
+  let commands = Native_registry.Registry.registry |> Mapping.Command.StringMap.bindings in
+  div ~a:[style "border-style" "solid"; style "border-width" "1px"; style "width" "fit-content"; style "padding" "10px"] [
+    text "Available commands:";
+    div (List.map (fun (k, _head) -> div [elt "a" ~a:[
+      onclick (fun _ -> `SelectCommand k);
+      style "cursor" "pointer";
+      style "text-decoration" (match _selectedCommand with Some sel when sel = k -> "underline" | _ -> "none")
+    ] [text k]]) commands)
+  ]
+
+let view { entry;selectedCommandKey;_ } =
+  let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
+  let selectedCommand = Mapping.Command.StringMap.find_opt 
+    (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
+    |> Option.value ~default:Native_registry.Git.git in
+  let results = Mapping.Entry.evalConfiguration entry (selectedCommand)
   in
-  div (div [button "New counter" `New_counter] 
-    :: (input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100])
-    :: (input [] ~a:[str_prop "type" "checkbox";
+  let firstCol = div [text "Enter a command:"; displaySelectableCommands selectedCommandKey] 
+  in
+  let secondCol = div ((input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100])
+    :: (div [text "Tokens: "; text (match tokens with Some ts -> String.concat ", " ts | None -> "None")])
+    :: (results |> List.map (displayPathResult selectedCommand))) 
+  in
+  div (elt "h1" [text "OpenCommand UI"] 
+    :: div [ firstCol; secondCol ] ~a:[style "display" "flex"; style "gap" "20px"]
+    :: [])
+      
+(*  :: (input [] ~a:[str_prop "type" "checkbox";
               bool_prop "checked" (checked);
               onclick (fun _ -> (`Check (not checked)));
              ];)
     :: (input [] ~a:[str_prop "type" "number"])
     :: (div [div [text "Checked!"]; text "Not checked"]) 
-    :: (select [option "foo"; option "bar"])
-    :: (div [text "Tokens: "; text (match tokens with Some ts -> String.concat ", " ts | None -> "None")])
-    :: (results |> List.map row))
+    :: (select [option "foo"; option "bar"]) *)      
 
 
 let app = simple_app ~init ~view ~update ()

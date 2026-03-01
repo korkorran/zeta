@@ -1,4 +1,4 @@
 (library
  (name native_registry)
- (modules git)
+ (modules git mv registry)
  (libraries mapping))
