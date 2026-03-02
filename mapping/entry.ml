@@ -92,7 +92,17 @@ let evalTokens
             restCommand = tc;
           })
     | _ -> Incomplete hc)
-  | (h::_, []) -> Overflow h
+  | (h::_, []) -> 
+    let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
+    let succeededOptions = List.filter_map (fun opt -> evalOption opt restEntry currentConfig) availableOptions in
+    (match succeededOptions with
+    | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
+        evaluatedEntry = evaluatedEntry @ evaluatedTokens;
+        restEntry = newRestEntry;
+        evaluatedCommand = evaluatedCommand;
+        restCommand = restCommand;
+      } |> fun state -> Ongoing (newConfig, state)
+    | [] -> Overflow h)
   | (_, _) -> 
     let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
     let succeededOptions = List.filter_map (fun opt -> evalOption opt restEntry currentConfig) availableOptions in
