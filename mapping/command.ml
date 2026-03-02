@@ -28,7 +28,7 @@ module Token = struct
               failwith ("Invalid token: " ^ s)
         | '<' ->
             if String.length s >= 3 && s.[String.length s - 1] = '>' then
-              ArgumentLocation (String.sub s 1 (String.length s - 2))
+              SingleArgumentLocation (String.sub s 1 (String.length s - 2))
             else
               failwith ("Invalid argument token: " ^ s)
         | _ -> Directive s

@@ -136,8 +136,8 @@ let evalTokens
             evaluatedCommand = evaluatedCommand @ [hc];
             restCommand = tc;
           })
-      | Command.Token.ArgumentLocation l | SingleArgumentLocation l ->
-        match l with
+      | SingleArgumentLocation l ->
+        (match l with
           _ ->
             let he = List.hd restEntry in
             let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
@@ -147,7 +147,49 @@ let evalTokens
               restEntry = List.tl restEntry;
               evaluatedCommand = evaluatedCommand @ [hc];
               restCommand = List.tl restCommand;
-            })
+            }))
+      | Command.Token.ArgumentLocation l ->
+        let encoding = (StringMap.find l head.args).encoding in
+        match encoding with
+        | Command.Argument.SingleString -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        | MultipleStrings (_min, max) ->
+          let currentArgumentLocationState = StringMap.find_opt l currentConfig.args in
+          (match currentArgumentLocationState with
+          | None -> 
+              let he = List.hd restEntry in
+              let newArgs = StringMap.add l (Typeformat.VList [Typeformat.VString he]) currentConfig.args in
+              let newConfig = {options=currentConfig.options; args=newArgs} in
+              Ongoing (newConfig, {
+                evaluatedEntry = evaluatedEntry @ [he];
+                restEntry = List.tl restEntry;
+                evaluatedCommand = evaluatedCommand;
+                restCommand = restCommand;
+              })
+          | Some (Typeformat.VList l_args) -> let n = List.length l_args in
+              if n >= max then
+                Overflow (Format.sprintf "Argument %s expects at most %d values, but got at least %d" l max (n+1))
+              else
+                let he = List.hd restEntry in
+                let newArgs = StringMap.add l (Typeformat.VList (l_args @ [Typeformat.VString he])) currentConfig.args in
+                let newConfig = {options=currentConfig.options; args=newArgs} in
+                let newEvaluatedCommand = if n + 1 >= max then evaluatedCommand @ [hc] else evaluatedCommand in
+                let newRestCommand = if n + 1 >= max then List.tl restCommand else restCommand in
+                Ongoing (newConfig, {
+                  evaluatedEntry = evaluatedEntry @ [he];
+                  restEntry = List.tl restEntry;
+                  evaluatedCommand = newEvaluatedCommand;
+                  restCommand = newRestCommand;
+                })
+          | Some _ -> failwith "This should not happen, argument location should always be associated with a list in the configuration")
+(*         let he = List.hd restEntry in
+        let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
+        let newConfig = {options=currentConfig.options; args=newArgs} in
+        Ongoing (newConfig, {
+          evaluatedEntry = evaluatedEntry @ [he];
+          restEntry = List.tl restEntry;
+          evaluatedCommand = evaluatedCommand @ [hc];
+          restCommand = List.tl restCommand;
+        }) *)
 
 
 type result = Success of configuration 
