@@ -24,12 +24,42 @@ type evaluationState = {
   evaluatedCommand: Command.Token.t list;
   restCommand: Command.Token.t list;
 }
-type ongoingResult = 
-    Success of configuration 
-  | Unmatched of Command.Token.t
-  | Incomplete of Command.Token.t 
-  | Overflow of string 
-  | Ongoing of configuration * evaluationState
+[@@deriving show]
+
+type ongoingCase = Ongoing
+  | Success 
+  | Unmatched of Command.Token.t 
+  | Incomplete of Command.Token.t
+  | Overflow of string
+[@@deriving show]
+
+type ongoingResult = {
+  configuration : configuration;
+  evaluationState : evaluationState;
+  case : ongoingCase;
+}
+[@@deriving show]
+
+let compare_ongoingResult r1 r2 =
+  let entry_cmp = compare (List.length r1.evaluationState.evaluatedEntry) (List.length r2.evaluationState.evaluatedEntry) in
+  if entry_cmp <> 0 then entry_cmp
+  else
+    match (r1.case, r2.case) with
+    | (Ongoing, Ongoing) -> 0
+    | (Ongoing, _) -> -1
+    | (_, Ongoing) -> 1
+    | (Success, Success) -> 0
+    | (Success, _) -> -1
+    | (_, Success) -> 1
+    | (Unmatched t1, Unmatched t2) -> Command.Token.compare t1 t2
+    | (Unmatched _, _) -> -1
+    | (_, Unmatched _) -> 1
+    | (Incomplete t1, Incomplete t2) -> Command.Token.compare t1 t2
+    | (Incomplete _, _) -> -1
+    | (_, Incomplete _) -> 1
+    | (Overflow s1, Overflow s2) -> compare s1 s2
+    
+  
 
 let getOptionsFromLocation (head:Command.head) (location:string) : (string * Command.CommandOption.t) list =
   StringMap.bindings head.options
@@ -75,79 +105,79 @@ let evalOption
 
 let evalTokens 
   (head :Command.head)
-  (evaluatedEntry, restEntry: string list * string list) 
-  (evaluatedCommand, restCommand: Command.Token.t list * Command.Token.t list) 
+  (ongoingResult : ongoingResult)
   (availableOptionsLocation: string list)
-  (currentConfig: configuration)
-  : ongoingResult =
-  match (restEntry, restCommand) with
-  | [] , [] -> Success currentConfig
+  : ongoingResult list =
+  let currentConfig = ongoingResult.configuration in
+  let currentState = ongoingResult.evaluationState in
+  match (currentState.restEntry, currentState.restCommand) with
+  | [] , [] -> [{ongoingResult with case = Success}]
   | ([], hc::_) -> (match hc with 
     Command.Token.OptionLocation _ | SingleOptionLocation _ -> 
-      let tc = List.tl restCommand in
-          Ongoing (currentConfig, {
-            evaluatedEntry = evaluatedEntry;
-            restEntry = restEntry;
-            evaluatedCommand = evaluatedCommand @ [hc];
+      let tc = List.tl currentState.restCommand in
+          [{ongoingResult with evaluationState = {
+            evaluatedEntry = currentState.evaluatedEntry;
+            restEntry = currentState.restEntry;
+            evaluatedCommand = currentState.evaluatedCommand @ [hc];
             restCommand = tc;
-          })
-    | _ -> Incomplete hc)
+          }}]
+    | _ -> [{ongoingResult with case = Incomplete hc}])
   | (h::_, []) -> 
     let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
-    let succeededOptions = List.filter_map (fun opt -> evalOption opt restEntry currentConfig) availableOptions in
+    let succeededOptions = List.filter_map (fun opt -> evalOption opt currentState.restEntry currentConfig) availableOptions in
     (match succeededOptions with
     | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
-        evaluatedEntry = evaluatedEntry @ evaluatedTokens;
+        evaluatedEntry = currentState.evaluatedEntry @ evaluatedTokens;
         restEntry = newRestEntry;
-        evaluatedCommand = evaluatedCommand;
-        restCommand = restCommand;
-      } |> fun state -> Ongoing (newConfig, state)
-    | [] -> Overflow h)
+        evaluatedCommand = currentState.evaluatedCommand;
+        restCommand = currentState.restCommand;
+      } |> fun state -> [{ongoingResult with configuration = newConfig; evaluationState = state}]
+    | [] -> [{ongoingResult with case = Overflow h}])
   | (_, _) -> 
     let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
-    let succeededOptions = List.filter_map (fun opt -> evalOption opt restEntry currentConfig) availableOptions in
+    let succeededOptions = List.filter_map (fun opt -> evalOption opt currentState.restEntry currentConfig) availableOptions in
     match succeededOptions with
     | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
-        evaluatedEntry = evaluatedEntry @ evaluatedTokens;
+        evaluatedEntry = currentState.evaluatedEntry @ evaluatedTokens;
         restEntry = newRestEntry;
-        evaluatedCommand = evaluatedCommand;
-        restCommand = restCommand;
-      } |> fun state -> Ongoing (newConfig, state)
+        evaluatedCommand = currentState.evaluatedCommand;
+        restCommand = currentState.restCommand;
+      } |> fun state -> [{ongoingResult with configuration = newConfig; evaluationState = state}]
     | [] ->
-      let hc = List.hd restCommand in
+      let hc = List.hd currentState.restCommand in
       match hc with
       | Command.Token.Directive d -> 
-          let he = List.hd restEntry in
+          let he = List.hd currentState.restEntry in
           if he = d then
-            Ongoing (currentConfig, {
-              evaluatedEntry = evaluatedEntry @ [he];
-              restEntry = List.tl restEntry;
-              evaluatedCommand = evaluatedCommand @ [hc];
-              restCommand = List.tl restCommand;
-            })
+            [{ongoingResult with evaluationState = {
+              evaluatedEntry = currentState.evaluatedEntry @ [he];
+              restEntry = List.tl currentState.restEntry;
+              evaluatedCommand = currentState.evaluatedCommand @ [hc];
+              restCommand = List.tl currentState.restCommand;
+            }}]
           else
-            Unmatched hc
+            [{ongoingResult with case = Unmatched hc}]
       | Command.Token.OptionLocation _ | SingleOptionLocation _  ->
-         let hc = List.hd restCommand in
-         let tc = List.tl restCommand in
-          Ongoing (currentConfig, {
-            evaluatedEntry = evaluatedEntry;
-            restEntry = restEntry;
-            evaluatedCommand = evaluatedCommand @ [hc];
+         let hc = List.hd currentState.restCommand in
+         let tc = List.tl currentState.restCommand in
+          [{ongoingResult with evaluationState = {
+            evaluatedEntry = currentState.evaluatedEntry;
+            restEntry = currentState.restEntry;
+            evaluatedCommand = currentState.evaluatedCommand @ [hc];
             restCommand = tc;
-          })
+          }}]
       | SingleArgumentLocation l ->
         (match l with
           _ ->
-            let he = List.hd restEntry in
+            let he = List.hd currentState.restEntry in
             let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
             let newConfig = {options=currentConfig.options; args=newArgs} in
-            Ongoing (newConfig, {
-              evaluatedEntry = evaluatedEntry @ [he];
-              restEntry = List.tl restEntry;
-              evaluatedCommand = evaluatedCommand @ [hc];
-              restCommand = List.tl restCommand;
-            }))
+            [{ongoingResult with configuration = newConfig; evaluationState = {
+              evaluatedEntry = currentState.evaluatedEntry @ [he];
+              restEntry = List.tl currentState.restEntry;
+              evaluatedCommand = currentState.evaluatedCommand @ [hc];
+              restCommand = List.tl currentState.restCommand;
+            }}])
       | Command.Token.ArgumentLocation l ->
         let encoding = (StringMap.find l head.args).encoding in
         match encoding with
@@ -156,30 +186,52 @@ let evalTokens
           let currentArgumentLocationState = StringMap.find_opt l currentConfig.args in
           (match currentArgumentLocationState with
           | None -> 
-              let he = List.hd restEntry in
+              let he = List.hd currentState.restEntry in
               let newArgs = StringMap.add l (Typeformat.VList [Typeformat.VString he]) currentConfig.args in
               let newConfig = {options=currentConfig.options; args=newArgs} in
-              Ongoing (newConfig, {
-                evaluatedEntry = evaluatedEntry @ [he];
-                restEntry = List.tl restEntry;
-                evaluatedCommand = evaluatedCommand;
-                restCommand = restCommand;
-              })
+              [{ongoingResult with configuration = newConfig; evaluationState = {
+                evaluatedEntry = currentState.evaluatedEntry @ [he];
+                restEntry = List.tl currentState.restEntry;
+                evaluatedCommand = currentState.evaluatedCommand;
+                restCommand = currentState.restCommand;
+              }};
+              {ongoingResult with configuration = newConfig; evaluationState = {
+                evaluatedEntry = currentState.evaluatedEntry @ [he];
+                restEntry = List.tl currentState.restEntry;
+                evaluatedCommand = currentState.evaluatedCommand @ [hc];
+                restCommand = List.tl currentState.restCommand;
+              }};
+              ]
           | Some (Typeformat.VList l_args) -> let n = List.length l_args in
               if n >= max then
-                Overflow (Format.sprintf "Argument %s expects at most %d values, but got at least %d" l max (n+1))
+                failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l max)
               else
-                let he = List.hd restEntry in
+                let he = List.hd currentState.restEntry in
                 let newArgs = StringMap.add l (Typeformat.VList (l_args @ [Typeformat.VString he])) currentConfig.args in
                 let newConfig = {options=currentConfig.options; args=newArgs} in
-                let newEvaluatedCommand = if n + 1 >= max then evaluatedCommand @ [hc] else evaluatedCommand in
-                let newRestCommand = if n + 1 >= max then List.tl restCommand else restCommand in
-                Ongoing (newConfig, {
-                  evaluatedEntry = evaluatedEntry @ [he];
-                  restEntry = List.tl restEntry;
-                  evaluatedCommand = newEvaluatedCommand;
-                  restCommand = newRestCommand;
-                })
+                let newEvaluatedCommand = currentState.evaluatedCommand @ [hc] in
+                let newRestCommand =  List.tl currentState.restCommand in
+                if n + 1 >= max then
+                  [{ongoingResult with configuration = newConfig; evaluationState = {
+                    evaluatedEntry = currentState.evaluatedEntry @ [he];
+                    restEntry = List.tl currentState.restEntry;
+                    evaluatedCommand = newEvaluatedCommand;
+                    restCommand = newRestCommand;
+                  }}]
+                else [
+                  {ongoingResult with configuration = newConfig; evaluationState = {
+                    evaluatedEntry = currentState.evaluatedEntry @ [he];
+                    restEntry = List.tl currentState.restEntry;
+                    evaluatedCommand = newEvaluatedCommand;
+                    restCommand = newRestCommand;
+                  }};
+                  {ongoingResult with configuration = newConfig; evaluationState = {
+                    evaluatedEntry = currentState.evaluatedEntry @ [he];
+                    restEntry = List.tl currentState.restEntry;
+                    evaluatedCommand = currentState.evaluatedCommand;
+                    restCommand = currentState.restCommand;
+                  }}
+                ]
           | Some _ -> failwith "This should not happen, argument location should always be associated with a list in the configuration")
 (*         let he = List.hd restEntry in
         let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
@@ -198,35 +250,48 @@ type result = Success of configuration
   | Overflow of string 
 [@@deriving show]
 
+
 let getAllOptionsLocations (head:Command.head) : string list =
   StringMap.bindings head.optionsLocations |> List.map (fun (id,_) -> id)
 let evalPath (entry:entry) (path:Command.EncodedPath.t) (head:Command.head) : result =
   let rec aux 
-    (currentResult: ongoingResult) 
-    : (ongoingResult) =
-    match currentResult with
-    | Ongoing (conf, state) ->
+    (currentResult_list: ongoingResult list) 
+    : (ongoingResult list) =
+    currentResult_list 
+    |> List.map (fun currentResult ->
+      (* Printf.printf "Current result: %s\n" (show_ongoingResult currentResult); *)
+    match currentResult.case with
+    | Ongoing ->
         let optionsLocations = getAllOptionsLocations head in
-        let nextResult = evalTokens head (state.evaluatedEntry, state.restEntry) (state.evaluatedCommand, state.restCommand) optionsLocations conf in
+        let nextResult = evalTokens head currentResult optionsLocations in
         aux nextResult
-    | _ -> (currentResult)
+    | _ -> [currentResult]) 
+    |> List.flatten
   in
-  let result = aux (
-    Ongoing 
-      ({options=StringMap.empty;args=StringMap.empty}, 
-      {
+  let initState = { case= Ongoing;
+       configuration = {options=StringMap.empty;args=StringMap.empty};
+       evaluationState ={
         evaluatedEntry = [];
         restEntry = entry;
         evaluatedCommand = [];
         restCommand = path;
-      })) 
+      }} in
+  let results = aux ([initState]) 
   in
-  match result with
-  | Success conf -> Success conf
+  (* List.iter (fun r -> Printf.printf "Final result: %s\n" (show_ongoingResult r)) results; *)
+  let getSuccessfullOrLongestElement (lst: ongoingResult list) =
+    let success = List.find_opt (fun (r:ongoingResult) -> match r.case with Success -> true | _ -> false) lst in
+    match success with
+    | Some s -> s
+    | None -> List.fold_left (fun acc (r) -> if compare_ongoingResult r acc > 0 then r else acc) initState lst
+  in
+  let finalResult = getSuccessfullOrLongestElement results in
+  match finalResult.case with
+  | Success -> Success finalResult.configuration
   | Unmatched x -> Unmatched x
   | Incomplete x -> Incomplete x
   | Overflow x -> Overflow x
-  | Ongoing _ -> failwith "This should not happen, Ongoing should be fully evaluated in aux"
+  | Ongoing -> Overflow "Evaluation did not finish, this should not happen"
 
 let evalConfiguration (rawEntry:string) (rawCommand:Command.rawCommand) : (string * result) list =
   (* let command = Command.parseEncodedCommand rawCommand in *)
