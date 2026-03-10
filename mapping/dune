@@ -1,5 +1,5 @@
 (library
  (name mapping)
- (modules command entry typeformat)
+ (modules command entry typeformat reverse)
  (preprocess (pps ppx_deriving.show))
  (libraries tyre yojson entry_tokenizer))

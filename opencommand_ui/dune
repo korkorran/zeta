@@ -8,4 +8,4 @@
 
 (alias
  (name all)
- (deps main.js index.html style.css checkbox.css))
+ (deps main.js index.html style.css layout.css))
