@@ -14,9 +14,7 @@ type model = {
 let getSelectedConfiguration results =
   List.find_opt (fun (_path, result) -> match result with Mapping.Entry.Success _ -> true | _ -> false) results
 
-let updateConfiguration model s selectedCommandKey =
-    ignore model.selectedPath;
-    ignore model.configuration;
+let updateConfiguration s selectedCommandKey =
     let entry = s in
     let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
     let selectedCommand = Mapping.Command.StringMap.find_opt 
@@ -47,10 +45,21 @@ let updateConfiguration model s selectedCommandKey =
         configurationTemplate = None;
       })
 
+let updateCommandPath model path =
+  let template = (
+      match model.selectedCommand with 
+      Some cmd -> Some (Mapping.Command.getConfigurationTemplate (Mapping.Command.StringMap.find path cmd)) 
+      | None -> None) in
+  { 
+    model with selectedPath = Some path; 
+    configurationTemplate = template;
+    configuration = (match template with Some t -> Some (Mapping.Reverse.getEmptyConfiguration t) | None -> None);
+  }
+
 let update model = function
-  | `Text s -> updateConfiguration model s model.selectedCommandKey
+  | `Text s -> updateConfiguration s model.selectedCommandKey
   | `Unit -> model
-  | `SelectCommand cmd -> updateConfiguration model model.entry (Some cmd)
+  | `SelectCommand cmd -> updateConfiguration model.entry (Some cmd)
   | `Click -> model
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
@@ -60,6 +69,7 @@ let update model = function
     in
     let entry = Mapping.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
     { model with configuration = newConfig; entry = entry }
+  | `SelectPath path -> updateCommandPath model path
 
 let init = { 
   entry = "git commit -m \"hello world\""; 
@@ -146,15 +156,18 @@ let displayConfiguration
       | Some head -> head.Mapping.Command.description
       | None -> "Unknown path"
     in
-    let (desc, conf) = (match result with
+    let (desc, _conf) = (match result with
       | Mapping.Entry.Success c -> ("Success", Some c)
       | Mapping.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Mapping.Command.Token.token_to_string t), None
       | Mapping.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Mapping.Command.Token.token_to_string t), None
       | Mapping.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
     in
-    div ~a:[class_ (if selectedPath = path then "path-result selected" else "path-result")] [
+    div ~a:[
+      class_ (if selectedPath = path then "path-result selected" else "path-result");
+      onclick (fun _ -> (print_endline "select path"; `SelectPath path));
+      ] [
       div [text path; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
-      div  ~a:[class_ "description"] (match conf with Some _c -> [text (getPathDescription path)] | None -> [])
+      div  ~a:[class_ "description"] (if selectedPath = path then [text (getPathDescription path)] else [])
     ]
 
 let displaySelectableCommands (selectedCommand:string option) =

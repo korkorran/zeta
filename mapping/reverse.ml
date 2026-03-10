@@ -1,3 +1,19 @@
+let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.configuration =
+  let options = Command.StringMap.empty in
+  let rec mapDefaultValue tf = match tf with 
+      Typeformat.TUnit -> Typeformat.VUnit 
+      | TString -> Typeformat.VString ""
+      | TInt -> Typeformat.VInt 0
+      | TFloat -> Typeformat.VFloat 0.0
+      | TEnum options -> Typeformat.VEnum (List.hd options)
+      | TOption _ -> Typeformat.VOption None
+      | TBool -> Typeformat.VBool false
+      | TTuple types -> Typeformat.VTuple (List.map mapDefaultValue types)
+      | TList _ -> Typeformat.VList []
+  in
+  let args = template.argsTemplate |> Command.StringMap.map mapDefaultValue in
+  { Entry.options; args }
+
 let computeEntry (command:Command.rawCommand) (path:string) (configuration:Entry.configuration) : string =
   ignore command;
   ignore path;
