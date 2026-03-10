@@ -1,4 +1,4 @@
-open Mapping.Command
+open Opencommand.Command
 
 let () = print_endline "Hello, World!"
 

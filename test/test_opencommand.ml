@@ -2,14 +2,14 @@
 let git = Native_registry.Git.git
 (* The tests *)
 let test_description () =
-  Alcotest.(check string) "same string" "Git version control system" (Mapping.Command.StringMap.find "git" git).description
+  Alcotest.(check string) "same string" "Git version control system" (Opencommand.Command.StringMap.find "git" git).description
 
 let successfull_paths entry command = 
-  let results = Mapping.Entry.evalConfiguration entry command in
-  List.filter_map (fun (path, result:string * Mapping.Entry.result) ->
-    Format.fprintf Format.std_formatter "Testing path: %s -> %a \n" path Mapping.Entry.pp_result result;
+  let results = Opencommand.Entry.evalConfiguration entry command in
+  List.filter_map (fun (path, result:string * Opencommand.Entry.result) ->
+    Format.fprintf Format.std_formatter "Testing path: %s -> %a \n" path Opencommand.Entry.pp_result result;
     match result with
-    | Mapping.Entry.Success _ -> Some path
+    | Opencommand.Entry.Success _ -> Some path
     | _ -> None
   ) results 
 let test_entry () =

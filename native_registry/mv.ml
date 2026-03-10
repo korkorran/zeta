@@ -1,4 +1,4 @@
-open Mapping.Command
+open Opencommand.Command
 
 let mv = emptyCommand
   |> addPath "mv [?options] [<source>] <destination>" {

@@ -4,26 +4,26 @@ type model = {
   entry : string;
   tokens : string list option;
   selectedCommandKey : string option;
-  selectedCommand : Mapping.Command.head Mapping.Command.StringMap.t option;
-  results : (string * Mapping.Entry.result) list option;
+  selectedCommand : Opencommand.Command.head Opencommand.Command.StringMap.t option;
+  results : (string * Opencommand.Entry.result) list option;
   selectedPath : string option;
-  configuration : Mapping.Entry.configuration option;
-  configurationTemplate : Mapping.Command.configurationTemplate option;
+  configuration : Opencommand.Entry.configuration option;
+  configurationTemplate : Opencommand.Command.configurationTemplate option;
 }
 
 let getSelectedConfiguration results =
-  List.find_opt (fun (_path, result) -> match result with Mapping.Entry.Success _ -> true | _ -> false) results
+  List.find_opt (fun (_path, result) -> match result with Opencommand.Entry.Success _ -> true | _ -> false) results
 
 let updateConfiguration s selectedCommandKey =
     let entry = s in
     let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
-    let selectedCommand = Mapping.Command.StringMap.find_opt 
+    let selectedCommand = Opencommand.Command.StringMap.find_opt 
     (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
     |> Option.value ~default:Native_registry.Git.git in
-    let results = Mapping.Entry.evalConfiguration entry (selectedCommand) in
+    let results = Opencommand.Entry.evalConfiguration entry (selectedCommand) in
     (match getSelectedConfiguration results with
-      | Some (selectedPath,Mapping.Entry.Success selectedConfiguration) -> 
-        let selectedConfigurationTemplate = Mapping.Command.getConfigurationTemplate (Mapping.Command.StringMap.find selectedPath selectedCommand) in
+      | Some (selectedPath,Opencommand.Entry.Success selectedConfiguration) -> 
+        let selectedConfigurationTemplate = Opencommand.Command.getConfigurationTemplate (Opencommand.Command.StringMap.find selectedPath selectedCommand) in
         { 
           entry; 
           tokens; 
@@ -48,12 +48,12 @@ let updateConfiguration s selectedCommandKey =
 let updateCommandPath model path =
   let template = (
       match model.selectedCommand with 
-      Some cmd -> Some (Mapping.Command.getConfigurationTemplate (Mapping.Command.StringMap.find path cmd)) 
+      Some cmd -> Some (Opencommand.Command.getConfigurationTemplate (Opencommand.Command.StringMap.find path cmd)) 
       | None -> None) in
   { 
     model with selectedPath = Some path; 
     configurationTemplate = template;
-    configuration = (match template with Some t -> Some (Mapping.Reverse.getEmptyConfiguration t) | None -> None);
+    configuration = (match template with Some t -> Some (Opencommand.Reverse.getEmptyConfiguration t) | None -> None);
   }
 
 let update model = function
@@ -63,11 +63,11 @@ let update model = function
   | `Click -> model
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
-        let newOptions = if on then Mapping.Command.StringMap.add k v config.Mapping.Entry.options else Mapping.Command.StringMap.remove k config.Mapping.Entry.options in
-        Some { config with Mapping.Entry.options = newOptions }
+        let newOptions = if on then Opencommand.Command.StringMap.add k v config.Opencommand.Entry.options else Opencommand.Command.StringMap.remove k config.Opencommand.Entry.options in
+        Some { config with Opencommand.Entry.options = newOptions }
     | None -> None
     in
-    let entry = Mapping.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
+    let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
     { model with configuration = newConfig; entry = entry }
   | `SelectPath path -> updateCommandPath model path
 
@@ -90,12 +90,12 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOption (k:string) (optionValue :Mapping.Typeformat.value option) (optionTypeformat:Mapping.Typeformat.typeformat) (desc:string) =
+let displayOption (k:string) (optionValue :Opencommand.Typeformat.value option) (optionTypeformat:Opencommand.Typeformat.typeformat) (desc:string) =
   let activated = match optionValue with Some _ -> true | None -> false in
   let displayValue = 
     match optionTypeformat with
-    | Mapping.Typeformat.TUnit -> text "()"
-    | Mapping.Typeformat.TEnum enums ->
+    | Opencommand.Typeformat.TUnit -> text "()"
+    | Opencommand.Typeformat.TEnum enums ->
         select (List.map (fun e -> 
           match optionValue with 
           Some VEnum v -> if e = v
@@ -103,7 +103,7 @@ let displayOption (k:string) (optionValue :Mapping.Typeformat.value option) (opt
             else option e
           | _ -> option e) 
           enums)
-    | Mapping.Typeformat.TString -> (match optionValue with 
+    | Opencommand.Typeformat.TString -> (match optionValue with 
       | Some VString s -> input [] ~a:[value s; oninput (fun _s -> `Unit)] 
       | _ -> input [] ~a:[value ""; oninput (fun _s -> `Unit)])
     | _ -> text "OTHERS" in
@@ -111,7 +111,7 @@ let displayOption (k:string) (optionValue :Mapping.Typeformat.value option) (opt
         div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
           input [] ~a:[str_prop "type" "checkbox";
               bool_prop "checked" activated;
-              onclick (fun _ -> (`Activate (not activated, k, match optionValue with Some v -> v | None -> Mapping.Typeformat.VUnit)));
+              onclick (fun _ -> (`Activate (not activated, k, match optionValue with Some v -> v | None -> Opencommand.Typeformat.VUnit)));
               class_ "checkbox"
              ]];
         div ~a:[class_ "tooltip"] [text (k^": "); div ~a:[class_ "tooltiptext"] [text desc]];
@@ -122,11 +122,11 @@ let displayOption (k:string) (optionValue :Mapping.Typeformat.value option) (opt
 
 let displayConfiguration 
   (path : string option) 
-  (config:Mapping.Entry.configuration option) 
-  (configurationTemplate:Mapping.Command.configurationTemplate option) 
-  (selectedCommand:Mapping.Command.head Mapping.Command.StringMap.t option) 
+  (config:Opencommand.Entry.configuration option) 
+  (configurationTemplate:Opencommand.Command.configurationTemplate option) 
+  (selectedCommand:Opencommand.Command.head Opencommand.Command.StringMap.t option) 
   =
-  let open Mapping.Entry in
+  let open Opencommand.Entry in
   match path, config, configurationTemplate, selectedCommand with
   | Some path, Some config, Some configurationTemplate, Some selectedCommand ->
   let args = StringMap.bindings config.args in
@@ -139,28 +139,28 @@ let displayConfiguration
     else
     div (List.map (fun (k, optionTypeformat) -> 
       let optionValue = StringMap.find_opt k config.options in
-      let optionDescription = (StringMap.find k head.options).Mapping.Command.CommandOption.description in
+      let optionDescription = (StringMap.find k head.options).Opencommand.Command.CommandOption.description in
       displayOption k optionValue optionTypeformat optionDescription
     ) optionsBindings);
     text "Arguments:";
     if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
-    div (List.map (fun (k, v) -> div [text (Format.asprintf "%s: %a" k Mapping.Typeformat.pp_value v)]) args);
+    div (List.map (fun (k, v) -> div [text (Format.asprintf "%s: %a" k Opencommand.Typeformat.pp_value v)]) args);
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]
 
   let displayPathResult command selectedPath (path, result) =
-    let isPathSuccessfull = match result with Mapping.Entry.Success _ -> true | _ -> false in
+    let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
     let getPathDescription path =
-      match Mapping.Command.StringMap.find_opt path command with
-      | Some head -> head.Mapping.Command.description
+      match Opencommand.Command.StringMap.find_opt path command with
+      | Some head -> head.Opencommand.Command.description
       | None -> "Unknown path"
     in
     let (desc, _conf) = (match result with
-      | Mapping.Entry.Success c -> ("Success", Some c)
-      | Mapping.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Mapping.Command.Token.token_to_string t), None
-      | Mapping.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Mapping.Command.Token.token_to_string t), None
-      | Mapping.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
+      | Opencommand.Entry.Success c -> ("Success", Some c)
+      | Opencommand.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Opencommand.Command.Token.token_to_string t), None
+      | Opencommand.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Opencommand.Command.Token.token_to_string t), None
+      | Opencommand.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
     in
     div ~a:[
       class_ (if selectedPath = path then "path-result selected" else "path-result");
@@ -171,7 +171,7 @@ let displayConfiguration
     ]
 
 let displaySelectableCommands (selectedCommand:string option) =
-  let commands = Native_registry.Registry.registry |> Mapping.Command.StringMap.bindings in
+  let commands = Native_registry.Registry.registry |> Opencommand.Command.StringMap.bindings in
   div [
     text "Available commands:";
     div (List.map (fun (k, _head) -> div [elt "a" ~a:[
@@ -255,4 +255,4 @@ let app = simple_app ~init ~view ~update ()
 open Js_browser
 
 let run () = Vdom_blit.run app |> Vdom_blit.dom |> Element.append_child (Document.body document)
-let () = print_endline "hello world"; Window.set_onload window run
+let () = print_endline ("hello world:"^(Location.pathname (Window.location window))); Window.set_onload window run

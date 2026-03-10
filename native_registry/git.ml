@@ -1,5 +1,5 @@
-open Mapping.Command
-open Mapping.Typeformat
+open Opencommand.Command
+open Opencommand.Typeformat
 let git = emptyCommand
   |> addPath "git" {
         options = StringMap.empty;
