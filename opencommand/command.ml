@@ -1,4 +1,3 @@
-open Utils
 
 module Token = struct 
   type t = Directive of string 
@@ -114,6 +113,7 @@ type head = {
 [@@deriving yojson]
 
 type commandPaths = head Utils.StringMap.t
+[@@deriving yojson]
 
 type info = {
   commandName: string;
@@ -127,6 +127,7 @@ type command = {
   info: info;
   paths: commandPaths;
 }
+[@@deriving yojson]
 (* type command = head EncodedPathMap.t
 
 let parseEncodedCommand (c:rawCommand) : command =
@@ -138,7 +139,7 @@ let parseEncodedCommand (c:rawCommand) : command =
 let emptyCommandPaths : commandPaths = Utils.StringMap.empty
 
 let addPath path (head:head) cmdPaths =
-  StringMap.add path head cmdPaths
+  Utils.StringMap.add path head cmdPaths
 
 type configurationTemplate = {
   optionsTemplate: Typeformat.typeformat Utils.StringMap.t;

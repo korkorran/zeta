@@ -2,11 +2,12 @@ open Opencommand.Command
 
 let () = print_endline "Hello, World!"
 
-let git = Native_registry.Git.git
+let mv = Native_registry.Mv.mv
 
-let () = print_endline (Printf.sprintf "Registered command: git - %s"
-                  (Opencommand.Utils.StringMap.find "git" git).description)
+let () = print_endline (Printf.sprintf "Registered command: mv - %s"
+                  (Opencommand.Utils.StringMap.find "mv [?options] [<source>] <destination>" mv).description)
 
-(* let c = parseEncodedCommand git
+let json = Yojson.Safe.to_string (Opencommand.Command.commandPaths_to_yojson mv)
 
-let () = ignore c *)
+let () = print_endline (Printf.sprintf "Serialized command: %s" json)
+
