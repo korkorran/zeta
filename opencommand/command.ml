@@ -1,3 +1,29 @@
+module StringMap = struct
+  include Map.Make(String);;
+  let pp pp_v fmt m =
+    let bindings = bindings m in
+    let pp_binding fmt (k, v) =
+      Format.fprintf fmt "%s: %a" k pp_v v
+    in
+    List.iter (fun b ->
+      pp_binding fmt b;
+      Format.fprintf fmt "\n"
+    ) bindings
+
+  let to_yojson to_yojson m =
+    let bindings = bindings m in
+    `Assoc (List.map (fun (k, v) -> (k, to_yojson v)) bindings)
+
+  let of_yojson of_yojson = function
+    | `Assoc bindings ->
+        Ok (List.fold_left (fun acc (k, v) ->
+          match of_yojson v with
+          | Ok v' -> add k v' acc
+          | Error _e -> acc  (* You might want to handle errors differently *)
+        ) empty bindings)
+    | _ -> Error "Invalid JSON format for StringMap"  (* You might want to handle this case differently *)
+end
+
 module Token = struct 
   type t = Directive of string 
     | SingleOptionLocation of string 
@@ -70,71 +96,88 @@ module EncodedPath = struct
     aux t1 t2
 end
 
-module EncodedPathMap = Map.Make(EncodedPath)
-module StringMap = Map.Make(String)
 
 module CommandOption = struct
 
   type encoding =
   | SingleString of string list
   | ValueSuffix of string list * Typeformat.typeformat
+  [@@deriving yojson]
 
   type t = {
     encoding: encoding;
     description: string;
     location: string;
   }
+  [@@deriving yojson]
 end
 
 
 module Argument = struct
   type encoding = SingleString | MultipleStrings of (int*int)  (* min, max *)
+  [@@deriving yojson]
   type t = {
     encoding: encoding;
     description: string;
   }
+  [@@deriving yojson]
 end
 
 type optionLocation = {
   from : int;
   to_ : int;
 }
+[@@deriving yojson]
 
 type head = {
-  options: CommandOption.t StringMap.t;
-  optionsLocations: optionLocation StringMap.t;
-  args: Argument.t StringMap.t;
+  options: CommandOption.t Utils.StringMap.t;
+  optionsLocations: optionLocation Utils.StringMap.t;
+  args: Argument.t Utils.StringMap.t;
   description: string;
 }
+[@@deriving yojson]
 
-type rawCommand = head StringMap.t
-type command = head EncodedPathMap.t
+type commandPaths = head Utils.StringMap.t
+
+type info = {
+  commandName: string;
+  version: string;
+  description: string;
+}
+[@@deriving yojson]
+
+type command = {
+  opencommand_version: string;
+  info: info;
+  paths: commandPaths;
+}
+(* type command = head EncodedPathMap.t
 
 let parseEncodedCommand (c:rawCommand) : command =
   StringMap.fold (fun path head acc ->
     let encodedPath = EncodedPath.from_string path in
     EncodedPathMap.add encodedPath head acc
-  ) c EncodedPathMap.empty
+  ) c EncodedPathMap.empty *)
 
-let emptyCommand : rawCommand = StringMap.empty
+let emptyCommandPaths : commandPaths = Utils.StringMap.empty
 
-let addPath path (head:head) cmd =
-  StringMap.add path head cmd
+let addPath path (head:head) cmdPaths =
+  StringMap.add path head cmdPaths
 
 type configurationTemplate = {
-  optionsTemplate: Typeformat.typeformat StringMap.t;
-  argsTemplate: Typeformat.typeformat StringMap.t;
+  optionsTemplate: Typeformat.typeformat Utils.StringMap.t;
+  argsTemplate: Typeformat.typeformat Utils.StringMap.t;
 }
 let getConfigurationTemplate (head: head) : configurationTemplate =
   let optionsTemplate = head.options 
-  |> StringMap.map (fun (opt) -> (
+  |> Utils.StringMap.map (fun (opt) -> (
     match opt.CommandOption.encoding with
     | CommandOption.SingleString _ -> Typeformat.TUnit
     | CommandOption.ValueSuffix (_, tf) -> tf
     )) 
   in
   let argsTemplate = head.args
-  |> StringMap.map (fun (arg) -> (
+  |> Utils.StringMap.map (fun (arg) -> (
     match arg.Argument.encoding with
     | Argument.SingleString -> Typeformat.TString
     | Argument.MultipleStrings _ -> Typeformat.TList Typeformat.TString

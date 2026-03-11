@@ -1,6 +1,6 @@
 open Opencommand.Command
 
-let mv = emptyCommand
+let mv = emptyCommandPaths
   |> addPath "mv [?options] [<source>] <destination>" {
     options = StringMap.empty
       |> StringMap.add "force" { CommandOption.encoding = CommandOption.SingleString ["-f"]; description = "Force move"; location = "options" }

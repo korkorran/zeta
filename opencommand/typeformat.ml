@@ -9,7 +9,7 @@ type typeformat = TUnit
                 | TEnum of string list
 (*                 | TRecord of (string * typeformat) list
                 | TVariant of (string * typeformat option) list *)
-
+[@@deriving yojson]
 
 type value = VUnit
            | VInt of int
@@ -22,7 +22,7 @@ type value = VUnit
            | VEnum of string
 (*            | VRecord of (string * value) list
            | VVariant of string * value option *)
-
+[@@deriving yojson]
 
     
 let rec validate typeformat value =

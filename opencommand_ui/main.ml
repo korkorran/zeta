@@ -129,17 +129,17 @@ let displayConfiguration
   let open Opencommand.Entry in
   match path, config, configurationTemplate, selectedCommand with
   | Some path, Some config, Some configurationTemplate, Some selectedCommand ->
-  let args = StringMap.bindings config.args in
-  let head = StringMap.find path selectedCommand in
+  let args = Opencommand.Utils.StringMap.bindings config.args in
+  let head = Opencommand.Utils.StringMap.find path selectedCommand in
   let optionsTemplate = configurationTemplate.optionsTemplate in
-  let optionsBindings = StringMap.bindings optionsTemplate in
+  let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
   div ~a:[class_ "configuration"] [
     text "Options:";
     if optionsBindings = [] then div [text "No options"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
     div (List.map (fun (k, optionTypeformat) -> 
-      let optionValue = StringMap.find_opt k config.options in
-      let optionDescription = (StringMap.find k head.options).Opencommand.Command.CommandOption.description in
+      let optionValue = Opencommand.Utils.StringMap.find_opt k config.options in
+      let optionDescription = (Opencommand.Utils.StringMap.find k head.options).Opencommand.Command.CommandOption.description in
       displayOption k optionValue optionTypeformat optionDescription
     ) optionsBindings);
     text "Arguments:";
@@ -149,10 +149,10 @@ let displayConfiguration
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]
 
-  let displayPathResult command selectedPath (path, result) =
+  let displayPathResult (command:Opencommand.Command.commandPaths) selectedPath (path, result) =
     let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
     let getPathDescription path =
-      match Opencommand.Command.StringMap.find_opt path command with
+      match Opencommand.Utils.StringMap.find_opt path command with
       | Some head -> head.Opencommand.Command.description
       | None -> "Unknown path"
     in

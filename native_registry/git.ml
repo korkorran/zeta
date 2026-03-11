@@ -1,6 +1,7 @@
 open Opencommand.Command
 open Opencommand.Typeformat
-let git = emptyCommand
+open Opencommand.Utils
+let git = emptyCommandPaths
   |> addPath "git" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;

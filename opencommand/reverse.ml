@@ -1,5 +1,5 @@
 let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.configuration =
-  let options = Command.StringMap.empty in
+  let options = Utils.StringMap.empty in
   let rec mapDefaultValue tf = match tf with 
       Typeformat.TUnit -> Typeformat.VUnit 
       | TString -> Typeformat.VString ""
@@ -11,14 +11,11 @@ let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.conf
       | TTuple types -> Typeformat.VTuple (List.map mapDefaultValue types)
       | TList _ -> Typeformat.VList []
   in
-  let args = template.argsTemplate |> Command.StringMap.map mapDefaultValue in
+  let args = template.argsTemplate |> Utils.StringMap.map mapDefaultValue in
   { Entry.options; args }
 
-let computeEntry (command:Command.rawCommand) (path:string) (configuration:Entry.configuration) : string =
-  ignore command;
-  ignore path;
-  ignore configuration;
-  let head = Command.StringMap.find path command in
+let computeEntry (command:Command.commandPaths) (path:string) (configuration:Entry.configuration) : string =
+  let head = Utils.StringMap.find path command in
 (*  let options = head.Command.options in
   let args = head.Command.args in *)
   let encodedPath = Command.EncodedPath.from_string path in
@@ -26,14 +23,14 @@ let computeEntry (command:Command.rawCommand) (path:string) (configuration:Entry
     fun token -> match token with
     | Command.Token.Directive s -> s
     | Command.Token.SingleArgumentLocation l | Command.Token.ArgumentLocation l -> 
-        let argValue = Command.StringMap.find_opt l configuration.Entry.args in
+        let argValue = Utils.StringMap.find_opt l configuration.Entry.args in
         (match argValue with
         | Some v -> Format.asprintf "{%a}" Typeformat.pp_value v
         | None -> Format.asprintf "{%s}" l)
     | Command.Token.OptionLocation l | Command.Token.SingleOptionLocation l ->
         let acceptableOptions = Entry.getOptionsFromLocation head l in
         let acceptedOptions = List.filter_map (fun (optName, opt) ->
-          let optValue = Command.StringMap.find_opt optName configuration.Entry.options in
+          let optValue = Utils.StringMap.find_opt optName configuration.Entry.options in
           match optValue with
           | Some v -> (
           match opt.Command.CommandOption.encoding with
