@@ -1,4 +1,5 @@
 open Opencommand.Command
+open Opencommand.Utils
 
 let mv = emptyCommandPaths
   |> addPath "mv [?options] [<source>] <destination>" {

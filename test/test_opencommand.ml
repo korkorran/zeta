@@ -2,7 +2,7 @@
 let git = Native_registry.Git.git
 (* The tests *)
 let test_description () =
-  Alcotest.(check string) "same string" "Git version control system" (Opencommand.Command.StringMap.find "git" git).description
+  Alcotest.(check string) "same string" "Git version control system" (Opencommand.Utils.StringMap.find "git" git).description
 
 let successfull_paths entry command = 
   let results = Opencommand.Entry.evalConfiguration entry command in

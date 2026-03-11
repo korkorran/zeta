@@ -4,7 +4,7 @@ type model = {
   entry : string;
   tokens : string list option;
   selectedCommandKey : string option;
-  selectedCommand : Opencommand.Command.head Opencommand.Command.StringMap.t option;
+  selectedCommand : Opencommand.Command.head Opencommand.Utils.StringMap.t option;
   results : (string * Opencommand.Entry.result) list option;
   selectedPath : string option;
   configuration : Opencommand.Entry.configuration option;
@@ -17,13 +17,13 @@ let getSelectedConfiguration results =
 let updateConfiguration s selectedCommandKey =
     let entry = s in
     let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
-    let selectedCommand = Opencommand.Command.StringMap.find_opt 
+    let selectedCommand = Opencommand.Utils.StringMap.find_opt 
     (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
     |> Option.value ~default:Native_registry.Git.git in
     let results = Opencommand.Entry.evalConfiguration entry (selectedCommand) in
     (match getSelectedConfiguration results with
       | Some (selectedPath,Opencommand.Entry.Success selectedConfiguration) -> 
-        let selectedConfigurationTemplate = Opencommand.Command.getConfigurationTemplate (Opencommand.Command.StringMap.find selectedPath selectedCommand) in
+        let selectedConfigurationTemplate = Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find selectedPath selectedCommand) in
         { 
           entry; 
           tokens; 
@@ -48,7 +48,7 @@ let updateConfiguration s selectedCommandKey =
 let updateCommandPath model path =
   let template = (
       match model.selectedCommand with 
-      Some cmd -> Some (Opencommand.Command.getConfigurationTemplate (Opencommand.Command.StringMap.find path cmd)) 
+      Some cmd -> Some (Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find path cmd)) 
       | None -> None) in
   { 
     model with selectedPath = Some path; 
@@ -63,7 +63,7 @@ let update model = function
   | `Click -> model
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
-        let newOptions = if on then Opencommand.Command.StringMap.add k v config.Opencommand.Entry.options else Opencommand.Command.StringMap.remove k config.Opencommand.Entry.options in
+        let newOptions = if on then Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options else Opencommand.Utils.StringMap.remove k config.Opencommand.Entry.options in
         Some { config with Opencommand.Entry.options = newOptions }
     | None -> None
     in
@@ -124,7 +124,7 @@ let displayConfiguration
   (path : string option) 
   (config:Opencommand.Entry.configuration option) 
   (configurationTemplate:Opencommand.Command.configurationTemplate option) 
-  (selectedCommand:Opencommand.Command.head Opencommand.Command.StringMap.t option) 
+  (selectedCommand:Opencommand.Command.head Opencommand.Utils.StringMap.t option) 
   =
   let open Opencommand.Entry in
   match path, config, configurationTemplate, selectedCommand with
@@ -171,7 +171,7 @@ let displayConfiguration
     ]
 
 let displaySelectableCommands (selectedCommand:string option) =
-  let commands = Native_registry.Registry.registry |> Opencommand.Command.StringMap.bindings in
+  let commands = Native_registry.Registry.registry |> Opencommand.Utils.StringMap.bindings in
   div [
     text "Available commands:";
     div (List.map (fun (k, _head) -> div [elt "a" ~a:[
