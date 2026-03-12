@@ -2,7 +2,7 @@
 open Opencommand.Typeformat
 open Opencommand.Utils
 open Opencommand.Command
-let git = emptyCommandPaths
+let gitPaths = emptyCommandPaths
   |> addPath "git" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
@@ -226,3 +226,14 @@ let git = emptyCommandPaths
         );
         description = "Join two or more development histories together";
       }
+
+
+let git : Opencommand.Command.command = {
+  opencommand_version = "0.0.1";
+  info = {
+    commandName = "git";
+    version = "2.40.0";
+    description = "Git version control system";
+  };
+  paths = gitPaths;
+}

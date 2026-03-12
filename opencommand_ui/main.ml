@@ -4,7 +4,7 @@ type model = {
   entry : string;
   tokens : string list option;
   selectedCommandKey : string option;
-  selectedCommand : Opencommand.Command.head Opencommand.Utils.StringMap.t option;
+  selectedCommand : Opencommand.Command.command option;
   results : (string * Opencommand.Entry.result) list option;
   selectedPath : string option;
   configuration : Opencommand.Entry.configuration option;
@@ -20,10 +20,10 @@ let updateConfiguration s selectedCommandKey =
     let selectedCommand = Opencommand.Utils.StringMap.find_opt 
     (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
     |> Option.value ~default:Native_registry.Git.git in
-    let results = Opencommand.Entry.evalConfiguration entry (selectedCommand) in
+    let results = Opencommand.Entry.evalConfiguration entry (selectedCommand.paths) in
     (match getSelectedConfiguration results with
       | Some (selectedPath,Opencommand.Entry.Success selectedConfiguration) -> 
-        let selectedConfigurationTemplate = Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find selectedPath selectedCommand) in
+        let selectedConfigurationTemplate = Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find selectedPath selectedCommand.paths) in
         { 
           entry; 
           tokens; 
@@ -48,7 +48,7 @@ let updateConfiguration s selectedCommandKey =
 let updateCommandPath model path =
   let template = (
       match model.selectedCommand with 
-      Some cmd -> Some (Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find path cmd)) 
+      Some cmd -> Some (Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find path cmd.paths)) 
       | None -> None) in
   { 
     model with selectedPath = Some path; 
@@ -124,13 +124,13 @@ let displayConfiguration
   (path : string option) 
   (config:Opencommand.Entry.configuration option) 
   (configurationTemplate:Opencommand.Command.configurationTemplate option) 
-  (selectedCommand:Opencommand.Command.head Opencommand.Utils.StringMap.t option) 
+  (selectedCommand:Opencommand.Command.command option) 
   =
   let open Opencommand.Entry in
   match path, config, configurationTemplate, selectedCommand with
   | Some path, Some config, Some configurationTemplate, Some selectedCommand ->
   let args = Opencommand.Utils.StringMap.bindings config.args in
-  let head = Opencommand.Utils.StringMap.find path selectedCommand in
+  let head = Opencommand.Utils.StringMap.find path selectedCommand.paths in
   let optionsTemplate = configurationTemplate.optionsTemplate in
   let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
   div ~a:[class_ "configuration"] [
@@ -149,10 +149,10 @@ let displayConfiguration
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]
 
-  let displayPathResult (command:Opencommand.Command.commandPaths) selectedPath (path, result) =
+  let displayPathResult (command:Opencommand.Command.command) selectedPath (path, result) =
     let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
     let getPathDescription path =
-      match Opencommand.Utils.StringMap.find_opt path command with
+      match Opencommand.Utils.StringMap.find_opt path command.paths with
       | Some head -> head.Opencommand.Command.description
       | None -> "Unknown path"
     in

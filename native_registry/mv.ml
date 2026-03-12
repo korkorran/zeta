@@ -1,7 +1,7 @@
 open Opencommand.Command
 open Opencommand.Utils
 
-let mv = emptyCommandPaths
+let mvPaths = emptyCommandPaths
   |> addPath "mv [?options] [<source>] <destination>" {
     options = StringMap.empty
       |> StringMap.add "force" { CommandOption.encoding = CommandOption.SingleString ["-f"]; description = "Force move"; location = "options" }
@@ -14,3 +14,13 @@ let mv = emptyCommandPaths
       |> StringMap.add "destination" { Argument.encoding = Argument.SingleString; description = "Destination file/directory" };
     description = "Move or rename a file, a directory, or a symlink"
   }
+
+let mv : Opencommand.Command.command = {
+  opencommand_version = "0.0.1";
+  info = {
+    commandName = "mv";
+    version = "8.32";
+    description = "Move or rename a file, a directory, or a symlink";
+  };
+  paths = mvPaths;
+}

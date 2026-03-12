@@ -14,8 +14,8 @@ let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.conf
   let args = template.argsTemplate |> Utils.StringMap.map mapDefaultValue in
   { Entry.options; args }
 
-let computeEntry (command:Command.commandPaths) (path:string) (configuration:Entry.configuration) : string =
-  let head = Utils.StringMap.find path command in
+let computeEntry (command:Command.command) (path:string) (configuration:Entry.configuration) : string =
+  let head = Utils.StringMap.find path command.paths in
 (*  let options = head.Command.options in
   let args = head.Command.args in *)
   let encodedPath = Command.EncodedPath.from_string path in
