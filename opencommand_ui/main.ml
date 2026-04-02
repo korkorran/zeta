@@ -11,6 +11,8 @@ type model = {
   configurationTemplate : Opencommand.Command.configurationTemplate option;
 }
 
+type optionOrArgument = Opt | Arg
+
 let getSelectedConfiguration results =
   List.find_opt (fun (_path, result) -> match result with Opencommand.Entry.Success _ -> true | _ -> false) results
 
@@ -78,8 +80,11 @@ let update model = function
     in
     let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
     { model with configuration = newConfig; entry = entry }
-  | `UpdateConfOption (k, v) -> let newConfig = match model.configuration with
-    | Some config -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options }
+  | `UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
+    | Some config -> (match opt_or_arg with
+      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options }
+      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.args } 
+    )
     | None -> None
     in
     let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
@@ -105,13 +110,13 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOption (k:string) (optionValue :Opencommand.Typeformat.value option) (optionTypeformat:Opencommand.Typeformat.typeformat) (desc:string) =
+let displayOptionOrArg (kind:optionOrArgument) (k:string) (optionValue :Opencommand.Typeformat.value option) (optionTypeformat:Opencommand.Typeformat.typeformat) (desc:string) =
   let activated = match optionValue with Some _ -> true | None -> false in
   let displayValue = 
     match optionTypeformat with
     | Opencommand.Typeformat.TUnit -> text "()"
     | Opencommand.Typeformat.TEnum enums ->
-        select ~a:[onchange ~prevent_default:() (fun x -> (`UpdateConfOption (k, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
+        select ~a:[onchange ~prevent_default:() (fun x -> (`UpdateConf (kind, k, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
           match optionValue with 
           Some VEnum v -> if e = v
             then option ~selected:true e 
@@ -119,19 +124,27 @@ let displayOption (k:string) (optionValue :Opencommand.Typeformat.value option) 
           | _ -> option e) 
           enums)
     | Opencommand.Typeformat.TString -> (match optionValue with 
-      | Some VString s -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConfOption (k, Opencommand.Typeformat.VString newValue))] 
-      | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConfOption (k, Opencommand.Typeformat.VString newValue))])
-    | _ -> text "OTHERS" in
-  div [ 
-        div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
+      | Some VString s -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConf (kind, k, Opencommand.Typeformat.VString newValue))] 
+      | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConf (kind, k, Opencommand.Typeformat.VString newValue))])
+    | _ -> text "OTHERS" 
+  in
+    let checkbox = div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
           input [] ~a:[str_prop "type" "checkbox";
               bool_prop "checked" activated;
               onclick (fun _ -> (`Activate (not activated, k, match optionValue with Some v -> v | None -> Opencommand.Typeformat.VUnit)));
               class_ "checkbox"
-             ]];
+             ]]
+    in
+    let display = [
         div ~a:[class_ "tooltip"] [text (k^": "); div ~a:[class_ "tooltiptext"] [text desc]];
         displayValue
-  ]
+    ]
+    in
+    let display = match kind with
+      | Opt -> checkbox :: display
+      | Arg -> display
+    in
+    div ~a:[class_ "option-or-arg"] display
 
 
 
@@ -155,12 +168,14 @@ let displayConfiguration
     div (List.map (fun (k, optionTypeformat) -> 
       let optionValue = Opencommand.Utils.StringMap.find_opt k config.options in
       let optionDescription = (Opencommand.Utils.StringMap.find k head.options).Opencommand.Command.CommandOption.description in
-      displayOption k optionValue optionTypeformat optionDescription
+      displayOptionOrArg Opt k optionValue optionTypeformat optionDescription
     ) optionsBindings);
     text "Arguments:";
     if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
-    div (List.map (fun (k, v) -> div [text (Format.asprintf "%s: %a" k Opencommand.Typeformat.pp_value v)]) args);
+    div (List.map 
+    (fun (k, v) -> displayOptionOrArg Arg k (Some v) (Opencommand.Utils.StringMap.find k configurationTemplate.argsTemplate) "")
+     args);
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]
 
