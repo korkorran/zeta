@@ -63,8 +63,23 @@ let update model = function
   | `Click -> model
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
+        let v = match model.configurationTemplate with
+          | None -> v
+          | Some template -> (match Opencommand.Utils.StringMap.find_opt k template.optionsTemplate with
+            | Some optionTypeformat -> (match optionTypeformat with
+              | Opencommand.Typeformat.TUnit -> Opencommand.Typeformat.VUnit
+              | Opencommand.Typeformat.TEnum l -> (match v with Opencommand.Typeformat.VEnum s -> Opencommand.Typeformat.VEnum s | _ -> Opencommand.Typeformat.VEnum (List.hd l))
+              | Opencommand.Typeformat.TString -> (match v with Opencommand.Typeformat.VString s -> Opencommand.Typeformat.VString s | _ -> v)
+              | _ -> v)
+            | None -> v) in
         let newOptions = if on then Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options else Opencommand.Utils.StringMap.remove k config.Opencommand.Entry.options in
         Some { config with Opencommand.Entry.options = newOptions }
+    | None -> None
+    in
+    let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
+    { model with configuration = newConfig; entry = entry }
+  | `UpdateConfOption (k, v) -> let newConfig = match model.configuration with
+    | Some config -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options }
     | None -> None
     in
     let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
@@ -72,7 +87,7 @@ let update model = function
   | `SelectPath path -> updateCommandPath model path
 
 let init = { 
-  entry = "git commit -m \"hello world\""; 
+  entry = "git merge branch"; 
   tokens = None;
   selectedCommandKey = None;
   selectedCommand = None;
@@ -84,7 +99,7 @@ let init = {
 
 let _button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
 
-let select ?key  l = elt "select" ?key ~a:[onchange ~prevent_default:() ~stop_propagation:() (fun _ -> (`Unit)) ] l
+let select ?key ~a l = elt "select" ?key ~a l
 let option ?(selected=false) txt =
   match selected with
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
@@ -96,7 +111,7 @@ let displayOption (k:string) (optionValue :Opencommand.Typeformat.value option) 
     match optionTypeformat with
     | Opencommand.Typeformat.TUnit -> text "()"
     | Opencommand.Typeformat.TEnum enums ->
-        select (List.map (fun e -> 
+        select ~a:[onchange ~prevent_default:() (fun x -> (`UpdateConfOption (k, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
           match optionValue with 
           Some VEnum v -> if e = v
             then option ~selected:true e 
@@ -104,8 +119,8 @@ let displayOption (k:string) (optionValue :Opencommand.Typeformat.value option) 
           | _ -> option e) 
           enums)
     | Opencommand.Typeformat.TString -> (match optionValue with 
-      | Some VString s -> input [] ~a:[value s; oninput (fun _s -> `Unit)] 
-      | _ -> input [] ~a:[value ""; oninput (fun _s -> `Unit)])
+      | Some VString s -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConfOption (k, Opencommand.Typeformat.VString newValue))] 
+      | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConfOption (k, Opencommand.Typeformat.VString newValue))])
     | _ -> text "OTHERS" in
   div [ 
         div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
@@ -236,7 +251,27 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
 </svg> *)
   let thirdCol = displayConfiguration selectedPath configuration configurationTemplate selectedCommand
   in
-  div ( (div ~a:[class_ "header"] [elt "h1" [text "Command 101"] ])
+  let icon = elt "img" ~a:[attr "src" "logo.svg"; style "width" "32px"; style "height" "32px"] []
+    
+    
+    (*  svg_elt "svg"
+        ~a:[
+          int_attr "width" (200);
+          int_attr "height" (200);
+          attr "viewBox" "0 0 16 16";
+          int_attr "stroke-width" (0);
+        ]
+        [
+          svg_elt "path" []
+            ~a:[
+              attr "d" "m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zM13 6v7h1V6zm2-1V4H1v1zm-.39 9H1.39l-.25 1h13.72z";
+              attr "fill" "none";
+              attr "stroke" "red";
+              int_attr "stroke-width" (5);
+            ] 
+        ] *)
+  in
+  div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"] ])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]
     :: [])
       

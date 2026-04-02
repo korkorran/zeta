@@ -25,8 +25,8 @@ let computeEntry (command:Command.command) (path:string) (configuration:Entry.co
     | Command.Token.SingleArgumentLocation l | Command.Token.ArgumentLocation l -> 
         let argValue = Utils.StringMap.find_opt l configuration.Entry.args in
         (match argValue with
-        | Some v -> Format.asprintf "{%a}" Typeformat.pp_value v
-        | None -> Format.asprintf "{%s}" l)
+        | Some v -> Format.asprintf "%a" Typeformat.pp_value v
+        | None -> Format.asprintf "%s" l)
     | Command.Token.OptionLocation l | Command.Token.SingleOptionLocation l ->
         let acceptableOptions = Entry.getOptionsFromLocation head l in
         let acceptedOptions = List.filter_map (fun (optName, opt) ->

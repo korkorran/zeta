@@ -57,7 +57,7 @@ let rec validate typeformat value =
     | VInt i -> Format.fprintf fmt "%d" i
     | VFloat f -> Format.fprintf fmt "%f" f
     | VBool b -> Format.fprintf fmt "%b" b
-    | VString s -> Format.fprintf fmt "\"%s\"" s
+    | VString s -> Format.fprintf fmt "%s" s
     | VList vs ->
         Format.fprintf fmt "[";
         List.iteri (fun i v ->
