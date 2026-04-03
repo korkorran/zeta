@@ -2,7 +2,9 @@ let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.conf
   let options = Utils.StringMap.empty in
   let rec mapDefaultValue tf = match tf with 
       Typeformat.TUnit -> Typeformat.VUnit 
-      | TString -> Typeformat.VString ""
+      | TString format_opt -> (match format_opt with
+          Some Typeformat.QuotedString -> Typeformat.VString ""
+          | None -> Typeformat.VString "")
       | TInt -> Typeformat.VInt 0
       | TFloat -> Typeformat.VFloat 0.0
       | TEnum options -> Typeformat.VEnum (List.hd options)
@@ -39,7 +41,7 @@ let computeEntry (command:Command.command) (path:string) (configuration:Entry.co
               Some (List.hd suffixes ^ (Format.asprintf " %a" Typeformat.pp_value v)))
           | None -> None
         ) acceptableOptions in
-        List.fold_left (fun acc opt -> acc ^ " " ^ opt) "" acceptedOptions
+        List.fold_left (fun acc opt -> if acc = "" then opt else acc ^ " " ^ opt) "" acceptedOptions
   ) encodedPath
   in
-  List.fold_left (fun acc opt -> acc ^ " " ^ opt) "" entryParts
+  List.fold_left (fun acc part -> if acc = "" then part else acc ^ " " ^ part) "" entryParts

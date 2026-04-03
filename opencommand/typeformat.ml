@@ -1,8 +1,11 @@
+type stringFormat = | QuotedString
+[@@deriving yojson]
+
 type typeformat = TUnit
                 | TInt
                 | TFloat
                 | TBool
-                | TString
+                | TString of stringFormat option
                 | TList of typeformat
                 | TOption of typeformat
                 | TTuple of typeformat list
@@ -31,7 +34,10 @@ let rec validate typeformat value =
   | TInt, VInt _ -> true
   | TFloat, VFloat _ -> true
   | TBool, VBool _ -> true
-  | TString, VString _ -> true
+  | TString format_opt, VString s -> (match format_opt with
+    | Some QuotedString -> let re = Tyre.seq (Tyre.char '"') (Tyre.seq (Tyre.rep (Tyre.charset (Tyre.Charset.not (Tyre.Charset.char '"')))) (Tyre.char '"')) in
+        Tyre.execp (Tyre.compile re) s
+    | None -> true)
   | TList tf, VList vs -> List.for_all (validate tf) vs
   | TOption tf, VOption v -> (match v with Some v' -> validate tf v' | None -> true)
   | TTuple tfs, VTuple vs -> List.length tfs = List.length vs && List.for_all2 validate tfs vs
@@ -84,6 +90,6 @@ let value_of_token typeformat token =
   | TFloat, s -> (try Some (VFloat (float_of_string s)) with _ -> None)
   | TBool, "true" -> Some (VBool true)
   | TBool, "false" -> Some (VBool false)
-  | TString, s -> Some (VString s)
+  | TString _, s -> Some (VString s)
   | TEnum options, s when List.exists ((=) s) options -> Some (VEnum s)
   | _, _ -> None

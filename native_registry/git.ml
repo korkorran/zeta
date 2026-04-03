@@ -12,7 +12,7 @@ let gitPaths = emptyCommandPaths
   |> addPath "git commit [?options]" {
         options = (let open CommandOption in StringMap.empty
           |> StringMap.add "--message" {
-              encoding = ValueSuffix (["-m"; "--message"], TString);
+              encoding = ValueSuffix (["-m"; "--message"], (TString (Some QuotedString)));
               description = "Use the given message as the commit message";
               location = "options";
             }

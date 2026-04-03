@@ -156,7 +156,7 @@ let getConfigurationTemplate (head: head) : configurationTemplate =
   let argsTemplate = head.args
   |> Utils.StringMap.map (fun (arg) -> (
     match arg.Argument.encoding with
-    | Argument.SingleString -> Typeformat.TString
-    | Argument.MultipleStrings _ -> Typeformat.TList Typeformat.TString
+    | Argument.SingleString -> Typeformat.TString None
+    | Argument.MultipleStrings _ -> Typeformat.TList (Typeformat.TString  None)
   )) in
   { optionsTemplate; argsTemplate }

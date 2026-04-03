@@ -9,12 +9,27 @@ type model = {
   selectedPath : string option;
   configuration : Opencommand.Entry.configuration option;
   configurationTemplate : Opencommand.Command.configurationTemplate option;
+  configurationValid : bool;
 }
 
 type optionOrArgument = Opt | Arg
 
 let getSelectedConfiguration results =
   List.find_opt (fun (_path, result) -> match result with Opencommand.Entry.Success _ -> true | _ -> false) results
+
+let validateConfiguration configuration configurationTemplate =
+  match configuration, configurationTemplate with
+  | Some config, Some template -> 
+    let optionsValid = Opencommand.Utils.StringMap.for_all (fun k v ->
+      match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.optionsTemplate with
+      | Some optionTypeformat -> Opencommand.Typeformat.validate optionTypeformat v
+      | None -> false) config.Opencommand.Entry.options in
+    let argsValid = Opencommand.Utils.StringMap.for_all (fun k v ->
+      match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.argsTemplate with
+      | Some argTypeformat -> Opencommand.Typeformat.validate argTypeformat v
+      | None -> false) config.Opencommand.Entry.args in
+    optionsValid && argsValid
+  | _ -> false
 
 let updateConfiguration s selectedCommandKey =
     let entry = s in
@@ -34,7 +49,8 @@ let updateConfiguration s selectedCommandKey =
           results = Some results;
           selectedPath = Some selectedPath; 
           configuration = Some selectedConfiguration; 
-          configurationTemplate = Some selectedConfigurationTemplate 
+          configurationTemplate = Some selectedConfigurationTemplate ;
+          configurationValid = true
         }
       | _ -> { 
          entry; 
@@ -45,6 +61,7 @@ let updateConfiguration s selectedCommandKey =
         selectedPath = None;
         configuration = None;
         configurationTemplate = None;
+        configurationValid = true
       })
 
 let updateCommandPath model path =
@@ -71,15 +88,18 @@ let update model = function
             | Some optionTypeformat -> (match optionTypeformat with
               | Opencommand.Typeformat.TUnit -> Opencommand.Typeformat.VUnit
               | Opencommand.Typeformat.TEnum l -> (match v with Opencommand.Typeformat.VEnum s -> Opencommand.Typeformat.VEnum s | _ -> Opencommand.Typeformat.VEnum (List.hd l))
-              | Opencommand.Typeformat.TString -> (match v with Opencommand.Typeformat.VString s -> Opencommand.Typeformat.VString s | _ -> v)
+              | Opencommand.Typeformat.TString _ -> (match v with Opencommand.Typeformat.VString s -> Opencommand.Typeformat.VString s | _ -> v)
               | _ -> v)
             | None -> v) in
         let newOptions = if on then Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options else Opencommand.Utils.StringMap.remove k config.Opencommand.Entry.options in
         Some { config with Opencommand.Entry.options = newOptions }
     | None -> None
     in
-    let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
-    { model with configuration = newConfig; entry = entry }
+    let configurationValid = validateConfiguration newConfig model.configurationTemplate in
+    let entry = if configurationValid then
+     Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) 
+    else model.entry in
+    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options }
@@ -87,8 +107,11 @@ let update model = function
     )
     | None -> None
     in
-    let entry = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) in
-    { model with configuration = newConfig; entry = entry }
+    let configurationValid = validateConfiguration newConfig model.configurationTemplate in
+    let entry = if configurationValid then
+      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    else model.entry in
+    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `SelectPath path -> updateCommandPath model path
 
 let init = { 
@@ -100,6 +123,7 @@ let init = {
   selectedPath = None;
   configuration = None;
   configurationTemplate = None;  
+  configurationValid = true;
 }
 
 let _button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
@@ -123,7 +147,7 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (optionValue :Opencomm
             else option e
           | _ -> option e) 
           enums)
-    | Opencommand.Typeformat.TString -> (match optionValue with 
+    | Opencommand.Typeformat.TString _ -> (match optionValue with 
       | Some VString s -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConf (kind, k, Opencommand.Typeformat.VString newValue))] 
       | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConf (kind, k, Opencommand.Typeformat.VString newValue))])
     | _ -> text "OTHERS" 
@@ -152,6 +176,7 @@ let displayConfiguration
   (path : string option) 
   (config:Opencommand.Entry.configuration option) 
   (configurationTemplate:Opencommand.Command.configurationTemplate option) 
+  (configurationValid:bool)
   (selectedCommand:Opencommand.Command.command option) 
   =
   let open Opencommand.Entry in
@@ -162,6 +187,8 @@ let displayConfiguration
   let optionsTemplate = configurationTemplate.optionsTemplate in
   let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
   div ~a:[class_ "configuration"] [
+    if not configurationValid then div [text "Invalid configuration"] ~a:[style "color" "red"; style "font-weight" "bold"]
+    else div [];
     text "Options:";
     if optionsBindings = [] then div [text "No options"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
@@ -211,7 +238,7 @@ let displaySelectableCommands (selectedCommand:string option) =
     ] [text k]]) commands)
   ]
 
-let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;configurationTemplate;configuration } =
+let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;configurationTemplate;configuration;configurationValid } =
   let firstCol = div [displaySelectableCommands selectedCommandKey] ~a:[class_ "commands"]
   in
   let secondCol = div ((input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100])
@@ -264,7 +291,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
     stroke-width="5"
   />
 </svg> *)
-  let thirdCol = displayConfiguration selectedPath configuration configurationTemplate selectedCommand
+  let thirdCol = displayConfiguration selectedPath configuration configurationTemplate configurationValid selectedCommand
   in
   let icon = elt "img" ~a:[attr "src" "logo.svg"; style "width" "32px"; style "height" "32px"] []
     
