@@ -30,19 +30,25 @@ type value = VUnit
     
 let rec validate typeformat value =
   match typeformat, value with
-  | TUnit, VUnit -> true
-  | TInt, VInt _ -> true
-  | TFloat, VFloat _ -> true
-  | TBool, VBool _ -> true
+  | TUnit, VUnit -> Result.Ok ()
+  | TInt, VInt _ -> Result.Ok ()
+  | TFloat, VFloat _ -> Result.Ok ()
+  | TBool, VBool _ -> Result.Ok ()
   | TString format_opt, VString s -> (match format_opt with
     | Some QuotedString -> let open Tyre in 
       let re = start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop in
-        execp (compile re) s
-    | None -> true)
-  | TList tf, VList vs -> List.for_all (validate tf) vs
-  | TOption tf, VOption v -> (match v with Some v' -> validate tf v' | None -> true)
-  | TTuple tfs, VTuple vs -> List.length tfs = List.length vs && List.for_all2 validate tfs vs
-  | TEnum options, VEnum v -> List.exists ((=) v) options
+        if execp (compile re) s then Result.Ok () else Result.Error "Value must be a quoted string"
+    | None -> Result.Ok ())
+  | TList tf, VList vs -> let error_message = ref "" in
+    if List.for_all (fun v -> match validate tf v with Result.Ok () -> true| Result.Error m -> error_message := m; false) vs
+      then Result.Ok () else Result.Error ("List element type mismatch: " ^ !error_message)
+  | TOption tf, VOption v -> (match v with Some v' -> validate tf v' | None -> Result.Ok ())
+  | TTuple tfs, VTuple vs -> if List.length tfs = List.length vs then
+    let error_message = ref "" in
+    let validate_pair tf v = match validate tf v with Result.Ok () -> true | Result.Error m -> error_message := m; false in
+    ( if List.for_all2 validate_pair tfs vs then Result.Ok () else Result.Error ("element type mismatch: " ^ !error_message ) )
+    else Result.Error "Tuple length mismatch"
+  | TEnum options, VEnum v -> if List.exists ((=) v) options then Result.Ok () else Result.Error ("Value must be one of: " ^ String.concat ", " options)
 (*   | TRecord fields, VRecord values ->
       let field_map = List.fold_left (fun acc (name, tf) -> (name, tf) :: acc) [] fields in
       List.for_all (fun (name, v) ->
@@ -57,7 +63,7 @@ let rec validate typeformat value =
             | None, None -> true
             | _, _ -> false)
        | None -> false) *)
-  | _, _ -> false
+  | _, _ -> Result.Error "Type mismatch"
 
   let rec pp_value fmt = function
     | VUnit -> Format.fprintf fmt "unit"

@@ -23,12 +23,12 @@ let validateConfiguration configuration configurationTemplate =
   | Some config, Some template -> 
     let optionsErrors = Opencommand.Utils.StringMap.fold (fun k v accErrors->
         match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.optionsTemplate with
-        | Some optionTypeformat -> if Opencommand.Typeformat.validate optionTypeformat v then accErrors else (Opt, k, "Invalid value for option")::accErrors
+        | Some optionTypeformat -> let r = (Opencommand.Typeformat.validate optionTypeformat v) in if Result.is_ok r then accErrors else (Opt, k, Result.get_error r)::accErrors
         | None -> (Opt, k, "Option not found in template")::accErrors)
       config.Opencommand.Entry.options [] in
     let argsErrors = Opencommand.Utils.StringMap.fold (fun k v accErrors->
       match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.argsTemplate with
-      | Some argTypeformat -> if Opencommand.Typeformat.validate argTypeformat v then accErrors else (Arg, k, "Invalid value for argument")::accErrors
+      | Some argTypeformat -> let r = (Opencommand.Typeformat.validate argTypeformat v) in if Result.is_ok r then accErrors else (Arg, k, Result.get_error r)::accErrors
       | None -> (Arg, k, "Argument not found in template")::accErrors) 
       config.Opencommand.Entry.args [] in
     if optionsErrors = [] && argsErrors = [] then Result.Ok () else Result.Error (optionsErrors @ argsErrors)
