@@ -35,8 +35,9 @@ let rec validate typeformat value =
   | TFloat, VFloat _ -> true
   | TBool, VBool _ -> true
   | TString format_opt, VString s -> (match format_opt with
-    | Some QuotedString -> let re = Tyre.seq (Tyre.char '"') (Tyre.seq (Tyre.rep (Tyre.charset (Tyre.Charset.not (Tyre.Charset.char '"')))) (Tyre.char '"')) in
-        Tyre.execp (Tyre.compile re) s
+    | Some QuotedString -> let open Tyre in 
+      let re = start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop in
+        execp (compile re) s
     | None -> true)
   | TList tf, VList vs -> List.for_all (validate tf) vs
   | TOption tf, VOption v -> (match v with Some v' -> validate tf v' | None -> true)

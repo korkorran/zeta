@@ -1,5 +1,8 @@
 open Vdom
 
+type optionOrArgument = Opt | Arg
+type confValidError = (optionOrArgument * string * string) (*kind, key, message*)
+
 type model = {
   entry : string;
   tokens : string list option;
@@ -9,10 +12,8 @@ type model = {
   selectedPath : string option;
   configuration : Opencommand.Entry.configuration option;
   configurationTemplate : Opencommand.Command.configurationTemplate option;
-  configurationValid : bool;
+  configurationValid : (unit, confValidError list) Result.t;
 }
-
-type optionOrArgument = Opt | Arg
 
 let getSelectedConfiguration results =
   List.find_opt (fun (_path, result) -> match result with Opencommand.Entry.Success _ -> true | _ -> false) results
@@ -20,16 +21,25 @@ let getSelectedConfiguration results =
 let validateConfiguration configuration configurationTemplate =
   match configuration, configurationTemplate with
   | Some config, Some template -> 
-    let optionsValid = Opencommand.Utils.StringMap.for_all (fun k v ->
-      match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.optionsTemplate with
-      | Some optionTypeformat -> Opencommand.Typeformat.validate optionTypeformat v
-      | None -> false) config.Opencommand.Entry.options in
-    let argsValid = Opencommand.Utils.StringMap.for_all (fun k v ->
+    let optionsErrors = Opencommand.Utils.StringMap.fold (fun k v accErrors->
+        match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.optionsTemplate with
+        | Some optionTypeformat -> if Opencommand.Typeformat.validate optionTypeformat v then accErrors else (Opt, k, "Invalid value for option")::accErrors
+        | None -> (Opt, k, "Option not found in template")::accErrors)
+      config.Opencommand.Entry.options [] in
+    let argsErrors = Opencommand.Utils.StringMap.fold (fun k v accErrors->
       match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.argsTemplate with
-      | Some argTypeformat -> Opencommand.Typeformat.validate argTypeformat v
-      | None -> false) config.Opencommand.Entry.args in
-    optionsValid && argsValid
-  | _ -> false
+      | Some argTypeformat -> if Opencommand.Typeformat.validate argTypeformat v then accErrors else (Arg, k, "Invalid value for argument")::accErrors
+      | None -> (Arg, k, "Argument not found in template")::accErrors) 
+      config.Opencommand.Entry.args [] in
+    if optionsErrors = [] && argsErrors = [] then Result.Ok () else Result.Error (optionsErrors @ argsErrors)
+  | _ -> Result.Ok () (* If we don't have enough information to validate, we consider it valid for now *)
+
+let optionOrArgumentValid configurationValid kind k =
+  match configurationValid with
+  | Result.Ok () -> Result.Ok ()
+  | Result.Error errors -> match (List.find_opt (fun (errKind, errKey, _) -> errKind = kind && errKey = k) errors) with
+    | Some (_, _, msg) -> Result.Error msg
+    | None -> Result.Ok ()
 
 let updateConfiguration s selectedCommandKey =
     let entry = s in
@@ -50,7 +60,7 @@ let updateConfiguration s selectedCommandKey =
           selectedPath = Some selectedPath; 
           configuration = Some selectedConfiguration; 
           configurationTemplate = Some selectedConfigurationTemplate ;
-          configurationValid = true
+          configurationValid = Ok ()
         }
       | _ -> { 
          entry; 
@@ -61,7 +71,7 @@ let updateConfiguration s selectedCommandKey =
         selectedPath = None;
         configuration = None;
         configurationTemplate = None;
-        configurationValid = true
+        configurationValid = Ok ();
       })
 
 let updateCommandPath model path =
@@ -96,7 +106,7 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let entry = if configurationValid then
+    let entry = if Result.is_ok configurationValid then
      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) 
     else model.entry in
     { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
@@ -108,7 +118,7 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let entry = if configurationValid then
+    let entry = if Result.is_ok configurationValid then
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
     { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
@@ -123,7 +133,7 @@ let init = {
   selectedPath = None;
   configuration = None;
   configurationTemplate = None;  
-  configurationValid = true;
+  configurationValid = Result.Ok ();
 }
 
 let _button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
@@ -134,7 +144,7 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOptionOrArg (kind:optionOrArgument) (k:string) (optionValue :Opencommand.Typeformat.value option) (optionTypeformat:Opencommand.Typeformat.typeformat) (desc:string) =
+let displayOptionOrArg (kind:optionOrArgument) (k:string) (optionValue :Opencommand.Typeformat.value option) (optionTypeformat:Opencommand.Typeformat.typeformat) (desc:string) (optionOrArgumentValid:(unit, string) Result.t) =
   let activated = match optionValue with Some _ -> true | None -> false in
   let displayValue = 
     match optionTypeformat with
@@ -168,6 +178,10 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (optionValue :Opencomm
       | Opt -> checkbox :: display
       | Arg -> display
     in
+    let display = match optionOrArgumentValid with
+      | Result.Ok () -> display
+      | Result.Error msg -> display @ [div ~a:[style "color" "red"; style "font-size" "0.8em"] [text msg]]
+    in
     div ~a:[class_ "option-or-arg"] display
 
 
@@ -176,7 +190,7 @@ let displayConfiguration
   (path : string option) 
   (config:Opencommand.Entry.configuration option) 
   (configurationTemplate:Opencommand.Command.configurationTemplate option) 
-  (configurationValid:bool)
+  (configurationValid:(unit, confValidError list) Result.t)
   (selectedCommand:Opencommand.Command.command option) 
   =
   let open Opencommand.Entry in
@@ -186,22 +200,20 @@ let displayConfiguration
   let head = Opencommand.Utils.StringMap.find path selectedCommand.paths in
   let optionsTemplate = configurationTemplate.optionsTemplate in
   let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
-  div ~a:[class_ "configuration"] [
-    if not configurationValid then div [text "Invalid configuration"] ~a:[style "color" "red"; style "font-weight" "bold"]
-    else div [];
+  div ~a:[class_ ("configuration" ^ (if Result.is_error configurationValid then " invalid" else ""))] [
     text "Options:";
     if optionsBindings = [] then div [text "No options"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
     div (List.map (fun (k, optionTypeformat) -> 
       let optionValue = Opencommand.Utils.StringMap.find_opt k config.options in
       let optionDescription = (Opencommand.Utils.StringMap.find k head.options).Opencommand.Command.CommandOption.description in
-      displayOptionOrArg Opt k optionValue optionTypeformat optionDescription
+      displayOptionOrArg Opt k optionValue optionTypeformat optionDescription (optionOrArgumentValid configurationValid Opt k)
     ) optionsBindings);
     text "Arguments:";
     if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
     div (List.map 
-    (fun (k, v) -> displayOptionOrArg Arg k (Some v) (Opencommand.Utils.StringMap.find k configurationTemplate.argsTemplate) "")
+    (fun (k, v) -> displayOptionOrArg Arg k (Some v) (Opencommand.Utils.StringMap.find k configurationTemplate.argsTemplate) "" (optionOrArgumentValid configurationValid Arg k))
      args);
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]

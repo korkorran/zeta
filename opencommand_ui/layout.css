@@ -21,6 +21,10 @@
     padding: 10px;
 }
 
+.invalid {
+    border-color: red;
+}
+
 .commands {
     border-style: solid;
     border-width: 1px;
