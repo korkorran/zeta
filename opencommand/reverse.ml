@@ -4,6 +4,7 @@ let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.conf
       Typeformat.TUnit -> Typeformat.VUnit 
       | TString format_opt -> (match format_opt with
           Some Typeformat.QuotedString -> Typeformat.VString ""
+          | Some Typeformat.SingleWord -> Typeformat.VString ""
           | None -> Typeformat.VString "")
       | TInt -> Typeformat.VInt 0
       | TFloat -> Typeformat.VFloat 0.0

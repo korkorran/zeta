@@ -67,7 +67,7 @@ let gitPaths = emptyCommandPaths
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = (let open Argument in StringMap.empty
-          |> StringMap.add "branch-name" {encoding = SingleString; description = "Name of the branch to create"}
+          |> StringMap.add "branch-name" {encoding = Single (TString (Some SingleWord)); description = "Name of the branch to create"}
         );
         description = "Create a new branch";
       }
@@ -110,8 +110,8 @@ let gitPaths = emptyCommandPaths
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = (let open Argument in StringMap.empty
-          |> StringMap.add "key" {encoding = SingleString; description = "Name of the config key"}
-          |> StringMap.add "value" {encoding = SingleString; description = "Value to set for the config key"}
+          |> StringMap.add "key" {encoding = Single (TString (Some SingleWord)); description = "Name of the config key"}
+          |> StringMap.add "value" {encoding = Single (TString (Some SingleWord)); description = "Value to set for the config key"}
         );
         description = "Set a config value";
       }
@@ -222,7 +222,7 @@ let gitPaths = emptyCommandPaths
           |> StringMap.add "options" {from=1; to_=100}
         );
         args = (StringMap.empty
-          |> StringMap.add "branch-name" (let open Argument in {encoding = SingleString; description = "Name of the branch to merge"})
+          |> StringMap.add "branch-name" (let open Argument in {encoding = Single (TString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
       }

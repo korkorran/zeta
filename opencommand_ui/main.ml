@@ -213,7 +213,9 @@ let displayConfiguration
     if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
     div (List.map 
-    (fun (k, v) -> displayOptionOrArg Arg k (Some v) (Opencommand.Utils.StringMap.find k configurationTemplate.argsTemplate) "" (optionOrArgumentValid configurationValid Arg k))
+    (fun (k, v) -> let argTypeformat = (Opencommand.Utils.StringMap.find k configurationTemplate.argsTemplate) in 
+      let description = (Opencommand.Utils.StringMap.find k head.args).Opencommand.Command.Argument.description in
+      displayOptionOrArg Arg k (Some v) argTypeformat description (optionOrArgumentValid configurationValid Arg k))
      args);
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]

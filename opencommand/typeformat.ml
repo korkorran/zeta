@@ -1,4 +1,4 @@
-type stringFormat = | QuotedString
+type stringFormat = | QuotedString | SingleWord
 [@@deriving yojson]
 
 type typeformat = TUnit
@@ -34,10 +34,12 @@ let rec validate typeformat value =
   | TInt, VInt _ -> Result.Ok ()
   | TFloat, VFloat _ -> Result.Ok ()
   | TBool, VBool _ -> Result.Ok ()
-  | TString format_opt, VString s -> (match format_opt with
-    | Some QuotedString -> let open Tyre in 
+  | TString format_opt, VString s -> let open Tyre in (match format_opt with
+    | Some QuotedString -> 
       let re = start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop in
         if execp (compile re) s then Result.Ok () else Result.Error "Value must be a quoted string"
+    | Some SingleWord -> let re = start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop in
+        if execp (compile re) s then Result.Ok () else Result.Error "Value must be a single word without spaces"
     | None -> Result.Ok ())
   | TList tf, VList vs -> let error_message = ref "" in
     if List.for_all (fun v -> match validate tf v with Result.Ok () -> true| Result.Error m -> error_message := m; false) vs
