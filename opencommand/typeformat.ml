@@ -74,11 +74,9 @@ let rec validate typeformat value =
     | VBool b -> Format.fprintf fmt "%b" b
     | VString s -> Format.fprintf fmt "%s" s
     | VList vs ->
-        Format.fprintf fmt "[";
         List.iteri (fun i v ->
-          if i > 0 then Format.fprintf fmt "; ";
-          pp_value fmt v) vs;
-        Format.fprintf fmt "]"
+          if i > 0 then Format.fprintf fmt " ";
+          pp_value fmt v) vs
     | VOption v_opt ->
         (match v_opt with
          | Some v -> pp_value fmt v

@@ -45,4 +45,4 @@ let computeEntry (command:Command.command) (path:string) (configuration:Entry.co
         List.fold_left (fun acc opt -> if acc = "" then opt else acc ^ " " ^ opt) "" acceptedOptions
   ) encodedPath
   in
-  List.fold_left (fun acc part -> if acc = "" then part else acc ^ " " ^ part) "" entryParts
+  List.fold_left (fun acc part -> if acc = "" then part else if part = "" then acc else acc ^ " " ^ part) "" entryParts

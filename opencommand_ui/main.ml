@@ -85,6 +85,8 @@ let updateCommandPath model path =
     configuration = (match template with Some t -> Some (Opencommand.Reverse.getEmptyConfiguration t) | None -> None);
   }
 
+type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
+
 let update model = function
   | `Text s -> updateConfiguration s model.selectedCommandKey
   | `Unit -> model
@@ -112,8 +114,22 @@ let update model = function
     { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
-      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options }
-      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.args } 
+      | Opt -> (match k with 
+        | Whole key -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add key v config.Opencommand.Entry.options }
+        | ListItem (key, index) -> let currentVal = Opencommand.Utils.StringMap.find_opt key config.Opencommand.Entry.options in
+          (match currentVal with
+          | Some (Opencommand.Typeformat.VList vs) -> 
+              let newList = if index < List.length vs then List.mapi (fun i item -> if i = index then v else item) vs else vs @ [v] in
+              Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add key (Opencommand.Typeformat.VList newList) config.Opencommand.Entry.options }
+          | _ -> None))
+      | Arg -> (match k with 
+        | Whole key -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.add key v config.Opencommand.Entry.args }
+        | ListItem (key, index) -> let currentVal = Opencommand.Utils.StringMap.find_opt key config.Opencommand.Entry.args in
+          (match currentVal with
+          | Some (Opencommand.Typeformat.VList vs) -> 
+              let newList = if index < List.length vs then List.mapi (fun i item -> if i = index then v else item) vs else vs @ [v] in
+              Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.add key (Opencommand.Typeformat.VList newList) config.Opencommand.Entry.args }
+          | _ -> None))
     )
     | None -> None
     in
@@ -125,7 +141,7 @@ let update model = function
   | `SelectPath path -> updateCommandPath model path
 
 let init = { 
-  entry = "git merge branch"; 
+  entry = "mv aze rty uiop"; 
   tokens = None;
   selectedCommandKey = None;
   selectedCommand = None;
@@ -144,34 +160,43 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOptionOrArg (kind:optionOrArgument) (k:string) (optionValue :Opencommand.Typeformat.value option) (optionTypeformat:Opencommand.Typeformat.typeformat) (desc:string) (optionOrArgumentValid:(unit, string) Result.t) =
-  let activated = match optionValue with Some _ -> true | None -> false in
-  let displayValue = 
-    match optionTypeformat with
+let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencommand.Typeformat.value option) (itemTypeformat:Opencommand.Typeformat.typeformat) (desc:string) (optionOrArgumentValid:(unit, string) Result.t) =
+  let activated = match itemValue with Some _ -> true | None -> false in
+  let rec displayValue typeformat itemVal updateKey= 
+    match typeformat with
     | Opencommand.Typeformat.TUnit -> text "()"
     | Opencommand.Typeformat.TEnum enums ->
-        select ~a:[onchange ~prevent_default:() (fun x -> (`UpdateConf (kind, k, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
-          match optionValue with 
-          Some VEnum v -> if e = v
+        select ~a:[onchange ~prevent_default:() (fun x -> (`UpdateConf (kind, updateKey, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
+          match itemVal with 
+          Some Opencommand.Typeformat.VEnum v -> if e = v
             then option ~selected:true e 
             else option e
           | _ -> option e) 
           enums)
-    | Opencommand.Typeformat.TString _ -> (match optionValue with 
-      | Some VString s -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConf (kind, k, Opencommand.Typeformat.VString newValue))] 
-      | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConf (kind, k, Opencommand.Typeformat.VString newValue))])
+    | Opencommand.Typeformat.TString _ -> (match itemVal with 
+      | Some (Opencommand.Typeformat.VString s) -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))] 
+      | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))])
+    | Opencommand.Typeformat.TList tf -> (
+       match itemVal with
+       | Some (Opencommand.Typeformat.VList vs) -> div (List.mapi (fun index v -> 
+          let nestedUpdateKey = match updateKey with 
+          | Whole key -> ListItem (key, index)
+          | ListItem (_, _) -> failwith "Cannot nest list items at depth 2"
+          in displayValue tf (Some v) nestedUpdateKey) vs)
+       | _ -> text "List is empty"
+    )
     | _ -> text "OTHERS" 
   in
     let checkbox = div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
           input [] ~a:[str_prop "type" "checkbox";
               bool_prop "checked" activated;
-              onclick (fun _ -> (`Activate (not activated, k, match optionValue with Some v -> v | None -> Opencommand.Typeformat.VUnit)));
+              onclick (fun _ -> (`Activate (not activated, k, match itemValue with Some v -> v | None -> Opencommand.Typeformat.VUnit)));
               class_ "checkbox"
              ]]
     in
     let display = [
         div ~a:[class_ "tooltip"] [text (k^": "); div ~a:[class_ "tooltiptext"] [text desc]];
-        displayValue
+        displayValue itemTypeformat itemValue (Whole k)
     ]
     in
     let display = match kind with
