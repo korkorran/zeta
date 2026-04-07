@@ -138,6 +138,38 @@ let update model = function
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
     { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
+  | `AddListItem (opt_or_arg, k) -> let newConfig = match model.configuration with
+    | Some config -> (match opt_or_arg with
+      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
+        | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (vs @ [Opencommand.Typeformat.VUnit]))
+        | _ -> Some (Opencommand.Typeformat.VList [Opencommand.Typeformat.VUnit])) config.Opencommand.Entry.options }
+      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.update k (function
+        | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (vs @ [Opencommand.Typeformat.VUnit]))
+        | _ -> Some (Opencommand.Typeformat.VList [Opencommand.Typeformat.VUnit])) config.Opencommand.Entry.args }
+    )
+    | None -> None
+    in
+    let configurationValid = validateConfiguration newConfig model.configurationTemplate in
+    let entry = if Result.is_ok configurationValid then
+      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    else model.entry in
+    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
+  | `DeleteListItem (opt_or_arg, k, index) -> let newConfig = match model.configuration with
+    | Some config -> (match opt_or_arg with
+      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
+        | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (List.filteri (fun i _ -> i <> index) vs))
+        | _ -> None) config.Opencommand.Entry.options }
+      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.update k (function
+        | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (List.filteri (fun i _ -> i <> index) vs))
+        | _ -> None) config.Opencommand.Entry.args }
+    )
+    | None -> None
+    in
+    let configurationValid = validateConfiguration newConfig model.configurationTemplate in
+    let entry = if Result.is_ok configurationValid then
+      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    else model.entry in
+    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `SelectPath path -> updateCommandPath model path
 
 let init = { 
@@ -152,7 +184,7 @@ let init = {
   configurationValid = Result.Ok ();
 }
 
-let _button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
+let button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
 
 let select ?key ~a l = elt "select" ?key ~a l
 let option ?(selected=false) txt =
@@ -178,11 +210,12 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencomman
       | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))])
     | Opencommand.Typeformat.TList tf -> (
        match itemVal with
-       | Some (Opencommand.Typeformat.VList vs) -> div (List.mapi (fun index v -> 
+       | Some (Opencommand.Typeformat.VList vs) -> div ((List.mapi (fun index v -> 
           let nestedUpdateKey = match updateKey with 
           | Whole key -> ListItem (key, index)
           | ListItem (_, _) -> failwith "Cannot nest list items at depth 2"
-          in displayValue tf (Some v) nestedUpdateKey) vs)
+          in div [displayValue tf (Some v) nestedUpdateKey; button "×" (`DeleteListItem (kind, k, index))]) vs)
+          @ [button "+" (`AddListItem (kind, k))])
        | _ -> text "List is empty"
     )
     | _ -> text "OTHERS" 
