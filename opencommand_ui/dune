@@ -1,11 +1,11 @@
 (executable
- (name main)
+ (name renderer)
  (libraries vdom entry_tokenizer opencommand native_registry)
  (modes js))
 
 
-(rule (copy main.bc.js main.js))
+(rule (copy renderer.bc.js renderer.js))
 
 (alias
  (name all)
- (deps main.js index.html style.css layout.css logo.svg))
+ (deps renderer.js index.html style.css layout.css logo.svg))

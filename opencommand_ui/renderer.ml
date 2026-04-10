@@ -365,7 +365,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
 </svg> *)
   let thirdCol = displayConfiguration selectedPath configuration configurationTemplate configurationValid selectedCommand
   in
-  let icon = elt "img" ~a:[attr "src" "logo.svg"; style "width" "32px"; style "height" "32px"] []
+  let icon = elt "img" ~a:[attr "src" "opencommand_ui/logo.svg"; style "width" "32px"; style "height" "32px"] []
     
     
     (*  svg_elt "svg"
