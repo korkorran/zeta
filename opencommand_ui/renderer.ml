@@ -1,5 +1,7 @@
 open Vdom
 
+let () = ignore Lib.unused
+
 type optionOrArgument = Opt | Arg
 type confValidError = (optionOrArgument * string * string) (*kind, key, message*)
 
@@ -385,7 +387,9 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
             ] 
         ] *)
   in
-  div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"] ])
+  let _ = Lib.ping () in 
+  div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
+  elt "p" [text (Lib.electron_version ^ " version - Pong says: ")]])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]
     :: [])
       

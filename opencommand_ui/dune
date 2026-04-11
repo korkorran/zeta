@@ -1,7 +1,9 @@
 (executable
  (name renderer)
- (libraries vdom entry_tokenizer opencommand native_registry)
- (modes js))
+ (libraries vdom entry_tokenizer opencommand native_registry js_of_ocaml)
+ (modes js)
+ (preprocess (pps js_of_ocaml-ppx))
+ (modules renderer lib))
 
 
 (rule (copy renderer.bc.js renderer.js))
