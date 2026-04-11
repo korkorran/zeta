@@ -1,4 +1,4 @@
-type stringFormat = | QuotedString | SingleWord
+type stringFormat = | QuotedString | SingleWord | FilePath
 [@@deriving yojson]
 
 type typeformat = TUnit
@@ -40,6 +40,8 @@ let rec validate typeformat value =
         if execp (compile re) s then Result.Ok () else Result.Error "Value must be a quoted string"
     | Some SingleWord -> let re = start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop in
         if execp (compile re) s then Result.Ok () else Result.Error "Value must be a single word without spaces"
+    | Some FilePath -> let re = start *> (rep1 (charset (Charset.union [(Charset.alnum); (Charset.punct)]))) <* stop in
+        if execp (compile re) s then Result.Ok () else Result.Error "Value must be a file path without spaces"
     | None -> Result.Ok ())
   | TList tf, VList vs -> let error_message = ref "" in
     if List.for_all (fun v -> match validate tf v with Result.Ok () -> true| Result.Error m -> error_message := m; false) vs

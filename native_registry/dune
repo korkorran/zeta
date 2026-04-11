@@ -1,4 +1,4 @@
 (library
  (name native_registry)
- (modules git mv registry)
+ (modules git mv registry cd pwd ls)
  (libraries opencommand))
