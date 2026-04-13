@@ -12,8 +12,8 @@ let successfull_paths entry (command:Opencommand.Command.command) =
     | Opencommand.Entry.Success _ -> Some path
     | _ -> None
   ) results 
-let test_entry () =
-  Alcotest.(check (list string)) "same path" ["git config [?options]"] (successfull_paths "git config --list" git)
+let test_entry path entry cmd () =
+  Alcotest.(check (list string)) "same path" [path] (successfull_paths entry cmd)
 
 let test_tokenizer s tokens () =
   let lexbuf = Lexing.from_string s in
@@ -27,7 +27,7 @@ let () =
   run "OpenCommand" [
       "git", [
           test_case "description match" `Quick test_description;
-          test_case "entry evaluation" `Quick test_entry
+          test_case "[git] entry evaluation" `Quick (test_entry "git config [?options]" "git config --list" git);
         ];
       "tokenizer", [
         test_case "tokenize 2 words" `Quick (test_tokenizer "name Alice" (Some ["name"; "Alice"]));
@@ -36,5 +36,8 @@ let () =
           (Some ["git"; "commit"; "-m"; "\"a commit message\""]));
         test_case "mv cmd" `Quick (test_tokenizer "mv file1.txt file2.txt" (Some ["mv"; "file1.txt"; "file2.txt"]));
         test_case "tokenize fails" `Quick (test_tokenizer "name Alice \"hello" (None));
-      ]
+      ];
+      "ls", [
+          test_case "[ls] entry evaluation" `Quick (test_entry "ls [?options] [<directories>]" "ls -a" Native_registry.Ls.ls);
+        ];
     ]

@@ -4,8 +4,6 @@ type entry = string list
 type configuration = {options : (Typeformat.value) Utils.StringMap.t; args : Typeformat.value Utils.StringMap.t}
 [@@deriving show]
 
-let tokenize str =
-    String.split_on_char ' ' str
 
 type evaluationState = {
   evaluatedEntry: string list;
@@ -15,7 +13,8 @@ type evaluationState = {
 }
 [@@deriving show]
 
-type ongoingCase = Ongoing
+type ongoingCase = 
+  | Ongoing
   | Success 
   | Unmatched of Command.Token.t 
   | Incomplete of Command.Token.t
@@ -34,12 +33,12 @@ let compare_ongoingResult r1 r2 =
   if entry_cmp <> 0 then entry_cmp
   else
     match (r1.case, r2.case) with
-    | (Ongoing, Ongoing) -> 0
-    | (Ongoing, _) -> -1
-    | (_, Ongoing) -> 1
     | (Success, Success) -> 0
     | (Success, _) -> -1
     | (_, Success) -> 1
+    | (Ongoing, Ongoing) -> 0
+    | (Ongoing, _) -> -1
+    | (_, Ongoing) -> 1
     | (Unmatched t1, Unmatched t2) -> Command.Token.compare t1 t2
     | (Unmatched _, _) -> -1
     | (_, Unmatched _) -> 1
@@ -110,6 +109,21 @@ let evalTokens
             evaluatedCommand = currentState.evaluatedCommand @ [hc];
             restCommand = tc;
           }}]
+      | Command.Token.ArgumentLocation l ->
+        (let encoding = (Utils.StringMap.find l head.args).encoding in
+        match encoding with
+        | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        | MultipleStrings (_tf, min, _max) ->
+          if min = 0 then 
+            let newConfig = {options=currentConfig.options; args=Utils.StringMap.add l (Typeformat.VList []) currentConfig.args} in
+            [{ongoingResult with configuration = newConfig; evaluationState = {
+              evaluatedEntry = currentState.evaluatedEntry;
+              restEntry = currentState.restEntry;
+              evaluatedCommand = currentState.evaluatedCommand @ [hc];
+              restCommand = List.tl currentState.restCommand;
+            }}]
+          else
+             [{ongoingResult with case = Incomplete hc}])
     | _ -> [{ongoingResult with case = Incomplete hc}])
   | (h::_, []) -> 
     let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
@@ -177,14 +191,14 @@ let evalTokens
         let encoding = (Utils.StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
-        | MultipleStrings (_tf, _min, max) ->
+        | MultipleStrings (_tf, min, max) ->
           let currentArgumentLocationState = Utils.StringMap.find_opt l currentConfig.args in
           (match currentArgumentLocationState with
           | None -> 
               let he = List.hd currentState.restEntry in
               let newArgs = Utils.StringMap.add l (Typeformat.VList [Typeformat.VString he]) currentConfig.args in
               let newConfig = {options=currentConfig.options; args=newArgs} in
-              [{ongoingResult with configuration = newConfig; evaluationState = {
+              let result = [{ongoingResult with configuration = newConfig; evaluationState = {
                 evaluatedEntry = currentState.evaluatedEntry @ [he];
                 restEntry = List.tl currentState.restEntry;
                 evaluatedCommand = currentState.evaluatedCommand;
@@ -196,7 +210,15 @@ let evalTokens
                 evaluatedCommand = currentState.evaluatedCommand @ [hc];
                 restCommand = List.tl currentState.restCommand;
               }};
-              ]
+              ] in 
+              if min = 0 then 
+                {ongoingResult with configuration = newConfig; evaluationState = {
+                evaluatedEntry = currentState.evaluatedEntry;
+                restEntry = currentState.restEntry;
+                evaluatedCommand = currentState.evaluatedCommand @ [hc];
+                restCommand = List.tl currentState.restCommand;
+              }}::result
+              else result
           | Some (Typeformat.VList l_args) -> let n = List.length l_args in
               if n >= max then
                 failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l max)
@@ -227,7 +249,7 @@ let evalTokens
                     restCommand = currentState.restCommand;
                   }}
                 ]
-          | Some _ -> failwith "This should not happen, argument location should always be associated with a list in the configuration")
+          | Some _ -> failwith "This should not happen, argument location (multiple strings) should always be associated with a list in the configuration")
 (*         let he = List.hd restEntry in
         let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
         let newConfig = {options=currentConfig.options; args=newArgs} in
