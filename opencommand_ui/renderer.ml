@@ -175,7 +175,7 @@ let update model = function
   | `SelectPath path -> updateCommandPath model path
 
 let init = { 
-  entry = "mv aze rty uiop"; 
+  entry = "ls -a"; 
   tokens = None;
   selectedCommandKey = None;
   selectedCommand = None;
@@ -389,7 +389,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
   in
   let _ = Lib.ping () in 
   div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
-  elt "p" [text (Lib.electron_version ^ " version - Pong says: ")]])
+  elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))]])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]
     :: [])
       
