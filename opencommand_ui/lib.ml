@@ -28,7 +28,7 @@ let () = Vdom_blit.(register (cmd {f = cmd_handler}))
 
 
 let ping () =
-  let expr = "window.versions.ping" in
+  let expr = "window.electronAPI.ping" in
   let success = (fun r -> print_endline (Ojs.string_of_js r)) in 
   let error = (fun e -> print_endline ("Error: " ^ (Ojs.string_of_js e))) in
   await expr ~success ~error
@@ -36,7 +36,7 @@ let ping () =
 let unused = Dom_html.document##.title := Js.string "New Title"
 
 let electron_version = try
-  Js.to_string (Js.Unsafe.js_expr "versions.electron()")
+  Js.to_string (Js.Unsafe.js_expr "window.electronAPI.electron_version()")
   with _ -> "Unknown"
 
 let is_desktop_mode = 

@@ -95,12 +95,12 @@ type updateKey = Whole of string | ListItem of string * int (*the list item and 
 let update model = function
   | `Text s -> return @@ updateConfiguration s model.selectedCommandKey model.responses
   | `Unit ->
-  let expr = "window.versions.ping" in
-  let on_success = (fun r -> `Click r) in 
-  let on_failure = (fun e -> `Click e) in
+  let expr = "window.electronAPI.ping" in
+  let on_success = (fun r -> `Click (model.entry, r)) in 
+  let on_failure = (fun e -> `Click (model.entry, e)) in
     return ~c:[Lib.Await {expr; on_success; on_failure}] model
+  | `Click (command, response) -> let responses = model.responses @ [(command, response)] in return @@ { model with responses }
   | `SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd) model.responses
-  | `Click s -> print_endline ("Click : " ^ s); let responses = model.responses @ [("ping", s)] in return @@ { model with responses }
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
         let v = match model.configurationTemplate with
@@ -323,14 +323,16 @@ let displaySelectableCommands (selectedCommand:string option) =
 let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;configurationTemplate;configuration;configurationValid; responses } =
   let firstCol = div [displaySelectableCommands selectedCommandKey] ~a:[class_ "commands"]
   in
-  let secondCol = div ((input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100])
+  let secondCol = div (
+    div ~a:[class_ "input-group"] [input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100] ; button "Run" (`Unit)]
     :: (div [text "Tokens: "; text (match tokens with Some ts -> String.concat ", " ts | None -> "None")])
-    :: (match selectedCommand, results with
-      | None, _-> [div [text "No command selected"] ~a:[style "font-style" "italic"; style "color" "gray"]]
-      | Some _, None-> [div [text "No results"] ~a:[style "font-style" "italic"; style "color" "gray"]]
+    :: [match selectedCommand, results with
+      | None, _-> div [text "No command selected"] ~a:[style "font-style" "italic"; style "color" "gray"]
+      | Some _, None-> div [text "No results"] ~a:[style "font-style" "italic"; style "color" "gray"]
       | Some selectedCommand, Some results -> 
         let sp = match selectedPath with Some sp -> sp | None -> "" in
-        (results |> List.map (displayPathResult selectedCommand sp))))
+        div (results |> List.map (displayPathResult selectedCommand sp)) ~a:[class_ "paths-results"]]
+    )
   in
 (*   let n = 3 in
   let _thirdCol = div
@@ -399,7 +401,6 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
   div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
   elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))]])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]
-    :: button "Ping" (`Unit)
     :: displayResponses
     :: [])
       
