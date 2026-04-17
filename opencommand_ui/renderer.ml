@@ -15,6 +15,7 @@ type model = {
   configuration : Opencommand.Entry.configuration option;
   configurationTemplate : Opencommand.Command.configurationTemplate option;
   configurationValid : (unit, confValidError list) Result.t;
+  responses : (string * string) list; (* For storing responses from commands, e.g. for the ping button *)
 }
 
 let getSelectedConfiguration results =
@@ -43,7 +44,7 @@ let optionOrArgumentValid configurationValid kind k =
     | Some (_, _, msg) -> Result.Error msg
     | None -> Result.Ok ()
 
-let updateConfiguration s selectedCommandKey =
+let updateConfiguration s selectedCommandKey responses =
     let entry = s in
     let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
     let selectedCommand = Opencommand.Utils.StringMap.find_opt 
@@ -62,7 +63,8 @@ let updateConfiguration s selectedCommandKey =
           selectedPath = Some selectedPath; 
           configuration = Some selectedConfiguration; 
           configurationTemplate = Some selectedConfigurationTemplate ;
-          configurationValid = Ok ()
+          configurationValid = Ok ();
+          responses = responses;
         }
       | _ -> { 
          entry; 
@@ -74,6 +76,7 @@ let updateConfiguration s selectedCommandKey =
         configuration = None;
         configurationTemplate = None;
         configurationValid = Ok ();
+        responses = responses;
       })
 
 let updateCommandPath model path =
@@ -90,10 +93,14 @@ let updateCommandPath model path =
 type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
 
 let update model = function
-  | `Text s -> updateConfiguration s model.selectedCommandKey
-  | `Unit -> model
-  | `SelectCommand cmd -> updateConfiguration model.entry (Some cmd)
-  | `Click -> model
+  | `Text s -> return @@ updateConfiguration s model.selectedCommandKey model.responses
+  | `Unit ->
+  let expr = "window.versions.ping" in
+  let on_success = (fun r -> `Click r) in 
+  let on_failure = (fun e -> `Click e) in
+    return ~c:[Lib.Await {expr; on_success; on_failure}] model
+  | `SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd) model.responses
+  | `Click s -> print_endline ("Click : " ^ s); let responses = model.responses @ [("ping", s)] in return @@ { model with responses }
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
         let v = match model.configurationTemplate with
@@ -113,7 +120,7 @@ let update model = function
     let entry = if Result.is_ok configurationValid then
      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) 
     else model.entry in
-    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
+    return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> (match k with 
@@ -139,7 +146,7 @@ let update model = function
     let entry = if Result.is_ok configurationValid then
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
-    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
+    return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `AddListItem (opt_or_arg, k) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
@@ -155,7 +162,7 @@ let update model = function
     let entry = if Result.is_ok configurationValid then
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
-    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
+    return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | `DeleteListItem (opt_or_arg, k, index) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
@@ -171,10 +178,10 @@ let update model = function
     let entry = if Result.is_ok configurationValid then
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
-    { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | `SelectPath path -> updateCommandPath model path
+    return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
+  | `SelectPath path -> return @@ updateCommandPath model path
 
-let init = { 
+let init = return { 
   entry = "ls -a"; 
   tokens = None;
   selectedCommandKey = None;
@@ -184,6 +191,7 @@ let init = {
   configuration = None;
   configurationTemplate = None;  
   configurationValid = Result.Ok ();
+  responses = [];
 }
 
 let button txt msg = input [] ~a:[onclick (fun _ -> msg); type_button; value txt]
@@ -312,7 +320,7 @@ let displaySelectableCommands (selectedCommand:string option) =
     ] [text k]]) commands)
   ]
 
-let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;configurationTemplate;configuration;configurationValid } =
+let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;configurationTemplate;configuration;configurationValid; responses } =
   let firstCol = div [displaySelectableCommands selectedCommandKey] ~a:[class_ "commands"]
   in
   let secondCol = div ((input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100])
@@ -387,10 +395,12 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
             ] 
         ] *)
   in
-  let _ = Lib.ping () in 
+  let displayResponses = div ~a:[class_ "responses"] (List.map (fun (k, v) -> div ~a:[class_ "response"] [text (k ^ ": " ^ v)]) responses) in
   div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
   elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))]])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]
+    :: button "Ping" (`Unit)
+    :: displayResponses
     :: [])
       
 (*  :: (input [] ~a:[str_prop "type" "checkbox";
@@ -402,10 +412,11 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
     :: (select [option "foo"; option "bar"]) *)      
 
 
-let app = simple_app ~init ~view ~update ()
+let app = app ~init ~view ~update ()
 
 
 open Js_browser
+
 
 let run () = Vdom_blit.run app |> Vdom_blit.dom |> Element.append_child (Document.body document)
 let () = print_endline ("hello world:"^(Location.pathname (Window.location window))); Window.set_onload window run
