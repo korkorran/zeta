@@ -15,7 +15,7 @@ type model = {
   configuration : Opencommand.Entry.configuration option;
   configurationTemplate : Opencommand.Command.configurationTemplate option;
   configurationValid : (unit, confValidError list) Result.t;
-  responses : (string * string) list; (* For storing responses from commands, e.g. for the ping button *)
+  responses : (string * string) list; (* For storing responses from commands *)
 }
 
 let getSelectedConfiguration results =
@@ -99,7 +99,13 @@ let update model = function
   let on_success = (fun r -> `Click (model.entry, r)) in 
   let on_failure = (fun e -> `Click (model.entry, e)) in
     return ~c:[Lib.Await {expr; on_success; on_failure}] model
-  | `Click (command, response) -> let responses = model.responses @ [(command, response)] in return @@ { model with responses }
+  | `Run -> 
+      let on_success = (fun r -> print_endline "result:"; print_endline r; `Click (model.entry, r)) in 
+      let on_failure = (fun e -> print_endline "error:"; print_endline e; `Click (model.entry, e)) in
+      return ~c:[Lib.RunCommand {cmd = model.entry; on_success; on_failure}] model
+  | `Click (command, response) -> 
+      (try let responses = model.responses @ [(command, response)] in return @@ { model with responses }
+      with e -> print_endline (Printexc.to_string e); return @@ model)
   | `SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd) model.responses
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
@@ -324,7 +330,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
   let firstCol = div [displaySelectableCommands selectedCommandKey] ~a:[class_ "commands"]
   in
   let secondCol = div (
-    div ~a:[class_ "input-group"] [input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100] ; button "Run" (`Unit)]
+    div ~a:[class_ "input-group"] [input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100] ; button "Run" (`Run)]
     :: (div [text "Tokens: "; text (match tokens with Some ts -> String.concat ", " ts | None -> "None")])
     :: [match selectedCommand, results with
       | None, _-> div [text "No command selected"] ~a:[style "font-style" "italic"; style "color" "gray"]
@@ -397,7 +403,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
             ] 
         ] *)
   in
-  let displayResponses = div ~a:[class_ "responses"] (List.map (fun (k, v) -> div ~a:[class_ "response"] [text (k ^ ": " ^ v)]) responses) in
+  let displayResponses = div ~a:[class_ "responses"] (List.map (fun (k, v) -> elt "pre" ~a:[class_ "response"] [text (k ^ ": " ^ v)]) responses) in
   div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
   elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))]])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]

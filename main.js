@@ -3,7 +3,7 @@ const path = require('node:path')
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1200,
+    width: 1500,
     height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
@@ -15,6 +15,16 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   ipcMain.handle('ping', () => 'pong');
+  ipcMain.handle('run-command', async (event, command) => {
+    let result = "";
+    try {
+      const { execSync } = require('child_process');
+      result = execSync(command, { encoding: 'utf-8' });
+    } catch (error) {
+      result = `Error: ${error.message}`;
+    }
+    return result;
+  });
   createWindow()
 
   app.on('activate', () => {
