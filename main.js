@@ -1,8 +1,14 @@
 const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('node:path')
+const pty = require('node-pty');
+const os = require('os');
+
+const shell = os.platform() === 'win32' ? 'powershell.exe' : '/bin/bash';
+
+let win;
 
 const createWindow = () => {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1500,
     height: 800,
     webPreferences: {
@@ -14,16 +20,28 @@ const createWindow = () => {
 }
 
 app.whenReady().then(() => {
+  const ptyProcess = pty.spawn(shell, [], {
+    name: 'xterm-color',
+    cols: 80,
+    rows: 30,
+    cwd: process.env.HOME,
+    env: process.env
+  });
+
+  ptyProcess.onData((data) => {
+    win.webContents.send('terminal-response', data);
+  });
+
   ipcMain.handle('ping', () => 'pong');
   ipcMain.handle('run-command', async (event, command) => {
-    let result = "";
     try {
-      const { execSync } = require('child_process');
-      result = execSync(command, { encoding: 'utf-8' });
-    } catch (error) {
-      result = `Error: ${error.message}`;
+      ptyProcess.write(command + '\r');
     }
-    return result;
+    catch (error) {
+      console.error('Error running command:', error);
+      throw error; // Rethrow the error to be caught in the renderer process
+    }
+    return true; // Return a value to indicate the command was received
   });
   createWindow()
 

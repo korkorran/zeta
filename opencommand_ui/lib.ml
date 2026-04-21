@@ -2,6 +2,11 @@
 open Js_of_ocaml
 open Js_browser
 
+let registerTerminalResponseHandler callback =
+  let jsfunc = Js.Unsafe.js_expr "window.electronAPI.onTerminalResponse" in
+  let callback = Js.wrap_callback (fun value -> callback (Js.to_string value)) in
+  ignore @@ Js.Unsafe.fun_call jsfunc [|Js.Unsafe.inject callback|]
+
 type 'msg Vdom.Cmd.t +=
   | Await of {expr: string; on_failure: (string -> 'msg); on_success: (string -> 'msg)}
   | RunCommand of {cmd: string; on_failure: (string -> 'msg); on_success: (string -> 'msg)}

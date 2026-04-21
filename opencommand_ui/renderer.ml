@@ -92,6 +92,12 @@ let updateCommandPath model path =
 
 type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
 
+let rec appendOutputToResponses output responses =
+  match responses with
+  | [] -> failwith "No entry registered for terminal output"
+  | [(k, v)] -> [(k, v ^ output)]
+  | other::rest -> other :: appendOutputToResponses output rest
+
 let update model = function
   | `Text s -> return @@ updateConfiguration s model.selectedCommandKey model.responses
   | `Unit ->
@@ -100,12 +106,13 @@ let update model = function
   let on_failure = (fun e -> `Click (model.entry, e)) in
     return ~c:[Lib.Await {expr; on_success; on_failure}] model
   | `Run -> 
-      let on_success = (fun r -> print_endline "result:"; print_endline r; `Click (model.entry, r)) in 
-      let on_failure = (fun e -> print_endline "error:"; print_endline e; `Click (model.entry, e)) in
+      let on_success = (fun r -> `Click (model.entry, r)) in 
+      let on_failure = (fun e -> `Click (model.entry, e)) in
       return ~c:[Lib.RunCommand {cmd = model.entry; on_success; on_failure}] model
-  | `Click (command, response) -> 
-      (try let responses = model.responses @ [(command, response)] in return @@ { model with responses }
+  | `Click (command, _response) -> 
+      (try let responses = model.responses @ [(command, "")] in return @@ { model with responses }
       with e -> print_endline (Printexc.to_string e); return @@ model)
+  | `TerminalOutput output -> let responses = appendOutputToResponses output model.responses in return @@ { model with responses }
   | `SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd) model.responses
   | `Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
@@ -403,7 +410,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
             ] 
         ] *)
   in
-  let displayResponses = div ~a:[class_ "responses"] (List.map (fun (k, v) -> elt "pre" ~a:[class_ "response"] [text (k ^ ": " ^ v)]) responses) in
+  let displayResponses = div ~a:[class_ "responses"] (List.map (fun (_k, v) -> elt "pre" ~a:[class_ "response"] [text ((* k ^ ": " ^ *) v)]) responses) in
   div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
   elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))]])
     :: div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]
@@ -425,5 +432,10 @@ let app = app ~init ~view ~update ()
 open Js_browser
 
 
-let run () = Vdom_blit.run app |> Vdom_blit.dom |> Element.append_child (Document.body document)
+let run () = 
+  let vdom_blit_app =Vdom_blit.run app in 
+  vdom_blit_app |> Vdom_blit.dom |> Element.append_child (Document.body document);
+  Lib.registerTerminalResponseHandler (
+    fun output -> Vdom_blit.process vdom_blit_app (`TerminalOutput output)
+  )
 let () = print_endline ("hello world:"^(Location.pathname (Window.location window))); Window.set_onload window run
