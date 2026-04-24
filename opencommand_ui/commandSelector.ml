@@ -5,6 +5,7 @@ open Vdom
 module type Injectable = sig
   type 'msg upper_msg
   val wrapMessage : 'msg -> 'msg upper_msg
+  val initCommandCallback : string -> 'msg upper_msg
 end
 
 module type S = sig
@@ -25,7 +26,6 @@ type updateKey = Whole of string | ListItem of string * int (*the list item and 
 type msg =
   | Text of string
   | Run
-  | Click of string * string (* command and response *)
   | SelectCommand of string
   | Activate of bool * string * Opencommand.Typeformat.value (* on/off, key, value *)
   | UpdateConf of optionOrArgument * updateKey * Opencommand.Typeformat.value (* kind, key or list item, new value *)
@@ -126,13 +126,9 @@ let update model = function
   let on_failure = (fun e -> Click (model.entry, e)) in
     return ~c:[Lib.Await {expr; on_success; on_failure}] model *)
   | Run -> 
-      let on_success = (fun r -> Injectable.wrapMessage @@ Click (model.entry, r)) in 
-      let on_failure = (fun e -> Injectable.wrapMessage @@ Click (model.entry, e)) in
+      let on_success = (fun _r -> Injectable.initCommandCallback (model.entry)) in 
+      let on_failure = (fun _e -> Injectable.initCommandCallback ("ERROR: " ^ model.entry)) in
       return ~c:[Lib.RunCommand {cmd = model.entry; on_success; on_failure}] model
-  | Click (_command, _response) -> 
-(*       (try let responses = model.responses @ [(command, "")] in return @@ { model with responses }
-      with e -> print_endline (Printexc.to_string e); *)
-       return @@ model
   | SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd)
   | Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 

@@ -5,12 +5,13 @@ let () = ignore Lib.unused
 type 'inner_msg msg =
   | CommandSelector of 'inner_msg
   | TerminalOutput of string
-(*   | InitCommand of string *)
+  | InitCommand of string
 
 module CommandSelectorApp = CommandSelector.Make(
   struct 
     type 'msg upper_msg = 'msg msg 
     let wrapMessage x = CommandSelector x 
+    let initCommandCallback cmd = InitCommand cmd
   end
 )
 
@@ -26,10 +27,10 @@ let rec appendOutputToResponses output responses =
   | other::rest -> other :: appendOutputToResponses output rest
 
 let update model = function
-(*   | InitCommand command ->  (
+  | InitCommand command ->  (
       try let responses = model.responses @ [(command, "")] in return @@ { model with responses }
       with e -> print_endline (Printexc.to_string e); 
-       return @@ model) *)
+       return @@ model)
   | TerminalOutput output -> let responses = appendOutputToResponses output model.responses in return @@ { model with responses }
   | CommandSelector msg -> 
     let (updatedCommandSelector, cmds) = CommandSelectorApp.update model.commandSelector msg in 
