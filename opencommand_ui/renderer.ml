@@ -4,6 +4,19 @@ let () = ignore Lib.unused
 
 type optionOrArgument = Opt | Arg
 type confValidError = (optionOrArgument * string * string) (*kind, key, message*)
+type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
+
+type msg =
+  | Text of string
+  | Run
+  | Click of string * string (* command and response *)
+  | TerminalOutput of string
+  | SelectCommand of string
+  | Activate of bool * string * Opencommand.Typeformat.value (* on/off, key, value *)
+  | UpdateConf of optionOrArgument * updateKey * Opencommand.Typeformat.value (* kind, key or list item, new value *)
+  | AddListItem of optionOrArgument * string (* kind, key *)
+  | DeleteListItem of optionOrArgument * string * int (* kind, key, index *)
+  | SelectPath of string
 
 type model = {
   entry : string;
@@ -90,8 +103,6 @@ let updateCommandPath model path =
     configuration = (match template with Some t -> Some (Opencommand.Reverse.getEmptyConfiguration t) | None -> None);
   }
 
-type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
-
 let rec appendOutputToResponses output responses =
   match responses with
   | [] -> failwith "No entry registered for terminal output"
@@ -99,22 +110,22 @@ let rec appendOutputToResponses output responses =
   | other::rest -> other :: appendOutputToResponses output rest
 
 let update model = function
-  | `Text s -> return @@ updateConfiguration s model.selectedCommandKey model.responses
-  | `Unit ->
+  | Text s -> return @@ updateConfiguration s model.selectedCommandKey model.responses
+  (* | Unit ->
   let expr = "window.electronAPI.ping" in
-  let on_success = (fun r -> `Click (model.entry, r)) in 
-  let on_failure = (fun e -> `Click (model.entry, e)) in
-    return ~c:[Lib.Await {expr; on_success; on_failure}] model
-  | `Run -> 
-      let on_success = (fun r -> `Click (model.entry, r)) in 
-      let on_failure = (fun e -> `Click (model.entry, e)) in
+  let on_success = (fun r -> Click (model.entry, r)) in 
+  let on_failure = (fun e -> Click (model.entry, e)) in
+    return ~c:[Lib.Await {expr; on_success; on_failure}] model *)
+  | Run -> 
+      let on_success = (fun r -> Click (model.entry, r)) in 
+      let on_failure = (fun e -> Click (model.entry, e)) in
       return ~c:[Lib.RunCommand {cmd = model.entry; on_success; on_failure}] model
-  | `Click (command, _response) -> 
+  | Click (command, _response) -> 
       (try let responses = model.responses @ [(command, "")] in return @@ { model with responses }
       with e -> print_endline (Printexc.to_string e); return @@ model)
-  | `TerminalOutput output -> let responses = appendOutputToResponses output model.responses in return @@ { model with responses }
-  | `SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd) model.responses
-  | `Activate (on, k, v) -> let newConfig = match model.configuration with
+  | TerminalOutput output -> let responses = appendOutputToResponses output model.responses in return @@ { model with responses }
+  | SelectCommand cmd -> return @@ updateConfiguration model.entry (Some cmd) model.responses
+  | Activate (on, k, v) -> let newConfig = match model.configuration with
     | Some config -> 
         let v = match model.configurationTemplate with
           | None -> v
@@ -134,7 +145,7 @@ let update model = function
      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) 
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | `UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
+  | UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> (match k with 
         | Whole key -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add key v config.Opencommand.Entry.options }
@@ -160,7 +171,7 @@ let update model = function
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | `AddListItem (opt_or_arg, k) -> let newConfig = match model.configuration with
+  | AddListItem (opt_or_arg, k) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
         | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (vs @ [Opencommand.Typeformat.VUnit]))
@@ -176,7 +187,7 @@ let update model = function
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | `DeleteListItem (opt_or_arg, k, index) -> let newConfig = match model.configuration with
+  | DeleteListItem (opt_or_arg, k, index) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
         | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (List.filteri (fun i _ -> i <> index) vs))
@@ -192,7 +203,7 @@ let update model = function
       Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | `SelectPath path -> return @@ updateCommandPath model path
+  | SelectPath path -> return @@ updateCommandPath model path
 
 let init = return { 
   entry = "ls -a"; 
@@ -221,7 +232,7 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencomman
     match typeformat with
     | Opencommand.Typeformat.TUnit -> text "()"
     | Opencommand.Typeformat.TEnum enums ->
-        select ~a:[onchange ~prevent_default:() (fun x -> (`UpdateConf (kind, updateKey, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
+        select ~a:[onchange ~prevent_default:() (fun x -> (UpdateConf (kind, updateKey, Opencommand.Typeformat.VEnum x))) ] (List.map (fun e -> 
           match itemVal with 
           Some Opencommand.Typeformat.VEnum v -> if e = v
             then option ~selected:true e 
@@ -229,16 +240,16 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencomman
           | _ -> option e) 
           enums)
     | Opencommand.Typeformat.TString _ -> (match itemVal with 
-      | Some (Opencommand.Typeformat.VString s) -> input [] ~a:[value s; oninput (fun newValue -> `UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))] 
-      | _ -> input [] ~a:[value ""; oninput (fun newValue -> `UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))])
+      | Some (Opencommand.Typeformat.VString s) -> input [] ~a:[value s; oninput (fun newValue -> UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))] 
+      | _ -> input [] ~a:[value ""; oninput (fun newValue -> UpdateConf (kind, updateKey, Opencommand.Typeformat.VString newValue))])
     | Opencommand.Typeformat.TList tf -> (
        match itemVal with
        | Some (Opencommand.Typeformat.VList vs) -> div ((List.mapi (fun index v -> 
           let nestedUpdateKey = match updateKey with 
           | Whole key -> ListItem (key, index)
           | ListItem (_, _) -> failwith "Cannot nest list items at depth 2"
-          in div [displayValue tf (Some v) nestedUpdateKey; button "×" (`DeleteListItem (kind, k, index))]) vs)
-          @ [button "+" (`AddListItem (kind, k))])
+          in div [displayValue tf (Some v) nestedUpdateKey; button "×" (DeleteListItem (kind, k, index))]) vs)
+          @ [button "+" (AddListItem (kind, k))])
        | _ -> text "List is empty"
     )
     | _ -> text "OTHERS" 
@@ -246,7 +257,7 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencomman
     let checkbox = div ~a:[class_ "checkbox-wrapper"; style "display" "inline-flex"; style "position" "relative"] [
           input [] ~a:[str_prop "type" "checkbox";
               bool_prop "checked" activated;
-              onclick (fun _ -> (`Activate (not activated, k, match itemValue with Some v -> v | None -> Opencommand.Typeformat.VUnit)));
+              onclick (fun _ -> (Activate (not activated, k, match itemValue with Some v -> v | None -> Opencommand.Typeformat.VUnit)));
               class_ "checkbox"
              ]]
     in
@@ -316,7 +327,7 @@ let displayConfiguration
     in
     div ~a:[
       class_ (if selectedPath = path then "path-result selected" else "path-result");
-      onclick (fun _ -> (print_endline "select path"; `SelectPath path));
+      onclick (fun _ -> (print_endline "select path"; SelectPath path));
       ] [
       div [text path; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
       div  ~a:[class_ "description"] (if selectedPath = path then [text (getPathDescription path)] else [])
@@ -327,7 +338,7 @@ let displaySelectableCommands (selectedCommand:string option) =
   div [
     text "Available commands:";
     div (List.map (fun (k, _head) -> div [elt "a" ~a:[
-      onclick (fun _ -> `SelectCommand k);
+      onclick (fun _ -> SelectCommand k);
       style "cursor" "pointer";
       style "text-decoration" (match selectedCommand with Some sel when sel = k -> "underline" | _ -> "none")
     ] [text k]]) commands)
@@ -337,7 +348,7 @@ let view { entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;
   let firstCol = div [displaySelectableCommands selectedCommandKey] ~a:[class_ "commands"]
   in
   let secondCol = div (
-    div ~a:[class_ "input-group"] [input [] ~a:[oninput (fun s -> `Text s); value entry; int_prop "size" 100] ; button "Run" (`Run)]
+    div ~a:[class_ "input-group"] [input [] ~a:[oninput (fun s -> Text s); value entry; int_prop "size" 100] ; button "Run" (Run)]
     :: (div [text "Tokens: "; text (match tokens with Some ts -> String.concat ", " ts | None -> "None")])
     :: [match selectedCommand, results with
       | None, _-> div [text "No command selected"] ~a:[style "font-style" "italic"; style "color" "gray"]
@@ -436,6 +447,6 @@ let run () =
   let vdom_blit_app =Vdom_blit.run app in 
   vdom_blit_app |> Vdom_blit.dom |> Element.append_child (Document.body document);
   Lib.registerTerminalResponseHandler (
-    fun output -> Vdom_blit.process vdom_blit_app (`TerminalOutput output)
+    fun output -> Vdom_blit.process vdom_blit_app (TerminalOutput output)
   )
 let () = print_endline ("hello world:"^(Location.pathname (Window.location window))); Window.set_onload window run
