@@ -1,20 +1,44 @@
-open Opencommand.Command
 
-let () = print_endline "Hello, World!"
+type commit_options = {
+  message : string Lib.commandOption
+}
+type commit_arguments = unit
 
-let mv = Native_registry.Mv.mv
+type create_branch_options = unit
+type create_branch_arguments = {
+  branch_name : string Lib.commandArg
+}
 
-let () = print_endline (Printf.sprintf "Registered command: mv - %s"
-                  (Opencommand.Utils.StringMap.find "mv [?options] [<source>] <destination>" mv.paths).description)
+type git_mapping = {
+  commit : (commit_options, commit_arguments) Lib.feature;
+  create_branch : (create_branch_options, create_branch_arguments) Lib.feature;
+}
 
-let json = Yojson.Safe.to_string (Opencommand.Command.commandPaths_to_yojson mv.paths)
+let git_mapping : git_mapping = {
+  commit = {
+    path = "git commit [?options]";
+    options = {
+      message = {
+        encoding = ValueSuffix (["-m"; "--message"], Lib.SimpleString);
+        description = "Use the given message as the commit message";
+        location = "options";
+      }
+    };
+    args = ();
+    description = "Record changes to the repository";
+  };
+  create_branch = {
+    path = "git branch <branch_name>";
+    options = ();
+    args = {
+      branch_name = {
+        encoding = Single (Lib.SimpleString);
+        description = "Name of the branch to create";
+      }
+    };
+    description = "Create a new branch";
+  };
+}
 
-let () = print_endline (Printf.sprintf "Serialized command: %s" json)
-
-let string = {|{"mv [?options] [<source>] <destination>":{"options":{"force":{"encoding":["SingleString",["-f"]],"description":"Force move","location":"options"},"interactive":{"encoding":["SingleString",["-i"]],"description":"Prompt before move","location":"options"},"verbose":{"encoding":["SingleString",["-v"]],"description":"Verbose output","location":"options"}},"optionsLocations":{"options":{"from":1,"to_":10}},"args":{"destination":{"encoding":["SingleString"],"description":"Destination file/directory"},"source":{"encoding":["MultipleStrings",[1,3]],"description":"Source file/directory"}},"description":"Move or rename a file, a directory, or a symlink"}}|}
-
-let mv_parsed = Opencommand.Command.commandPaths_of_yojson (Yojson.Safe.from_string string)
-
-let () = match mv_parsed with
-  | Ok mv_parsed -> print_endline (Printf.sprintf "Parsed command: %s" (Opencommand.Utils.StringMap.find "mv [?options] [<source>] <destination>" mv_parsed).description)
-  | Error e -> print_endline (Printf.sprintf "Error parsing command: %s" e)
+let () = ignore git_mapping; ignore git_mapping.commit; ignore git_mapping.commit.options; ignore git_mapping.commit.options.message; ignore git_mapping.commit.options.message.encoding; ignore git_mapping.commit.options.message.description; ignore git_mapping.commit.options.message.location; ignore git_mapping.commit.path; ignore git_mapping.commit.description; ignore git_mapping.commit.args
+let () = ignore git_mapping.create_branch; ignore git_mapping.create_branch.options; ignore git_mapping.create_branch.args; ignore git_mapping.create_branch.args.branch_name; ignore git_mapping.create_branch.args.branch_name.encoding; ignore git_mapping.create_branch.args.branch_name.description; ignore git_mapping.create_branch.path; ignore git_mapping.create_branch.description

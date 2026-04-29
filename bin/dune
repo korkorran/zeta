@@ -1,4 +1,5 @@
 (executable
  (public_name mapping-cli)
  (name main)
+ (modules main lib)
  (libraries opencommand native_registry))
