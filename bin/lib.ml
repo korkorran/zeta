@@ -10,7 +10,6 @@ let encodeToken : type a. a tokenEncoding -> a -> string = function
 type 't optionEncoding =
   | SingleString : string list -> unit optionEncoding
   | ValueSuffix : string list * ('t tokenEncoding) -> 't optionEncoding
-  [@@deriving yojson]
 
 type 'a commandOption = {
     encoding: 'a optionEncoding;
@@ -21,7 +20,6 @@ type 'a commandOption = {
 type 't argumentEncoding =
   | Single : ('t tokenEncoding) -> 't argumentEncoding
   | StringList : (('t tokenEncoding) * int * int) -> 't list argumentEncoding
-  [@@deriving yojson]
 
 type 'a commandArg = {
     encoding: 'a argumentEncoding;
