@@ -89,7 +89,9 @@ end
 
 
 module Argument = struct
-  type encoding = Single of Typeformat.typeformat | MultipleStrings of (Typeformat.typeformat*int*int)  (* min, max *)
+  type encoding = 
+    | Single of Typeformat.typeformat
+    | ArgList of (Typeformat.typeformat*int*int)  (* min, max *)
   [@@deriving yojson]
   type t = {
     encoding: encoding;
@@ -157,6 +159,6 @@ let getConfigurationTemplate (head: head) : configurationTemplate =
   |> Utils.StringMap.map (fun (arg) -> (
     match arg.Argument.encoding with
     | Argument.Single tf -> tf
-    | Argument.MultipleStrings (tf, _, _) -> Typeformat.TList tf
+    | Argument.ArgList (tf, _, _) -> Typeformat.TList tf
   )) in
   { optionsTemplate; argsTemplate }

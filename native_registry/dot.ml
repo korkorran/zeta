@@ -8,7 +8,7 @@ let dotPaths = emptyCommandPaths
     optionsLocations = StringMap.empty
       |> StringMap.add "options" { from = 1; to_ = 10 };
     args = StringMap.empty
-      |> StringMap.add "input" { Argument.encoding = Argument.MultipleStrings ((TString (Some FilePath)),0,1); description = "Input file/directory" };
+      |> StringMap.add "input" { Argument.encoding = Argument.ArgList ((TString (Some FilePath)),0,1); description = "Input file/directory" };
     description = "Compute graphviz visualization"
   }
 

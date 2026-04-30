@@ -113,7 +113,7 @@ let evalTokens
         (let encoding = (Utils.StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
-        | MultipleStrings (_tf, min, _max) ->
+        | ArgList (_tf, min, _max) ->
           if min = 0 then 
             let newConfig = {options=currentConfig.options; args=Utils.StringMap.add l (Typeformat.VList []) currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
@@ -172,7 +172,7 @@ let evalTokens
       | SingleArgumentLocation l ->
         (let encoding = (Utils.StringMap.find l head.args).encoding in
         match encoding with
-        | Command.Argument.MultipleStrings _ -> failwith "argument encoding should not be MultipleStrings (reserved to ArgumentLocation), this should have been caught in parsing"
+        | Command.Argument.ArgList _ -> failwith "argument encoding should not be ArgList (reserved to ArgumentLocation), this should have been caught in parsing"
         | Command.Argument.Single tf ->
             let he = List.hd currentState.restEntry in
             let value_opt = Typeformat.value_of_token tf he in
@@ -191,7 +191,7 @@ let evalTokens
         let encoding = (Utils.StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
-        | MultipleStrings (_tf, min, max) ->
+        | ArgList (_tf, min, max) ->
           let currentArgumentLocationState = Utils.StringMap.find_opt l currentConfig.args in
           (match currentArgumentLocationState with
           | None -> 

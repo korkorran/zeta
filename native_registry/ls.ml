@@ -10,7 +10,7 @@ let lsPaths = emptyCommandPaths
     optionsLocations = StringMap.empty
       |> StringMap.add "options" { from = 1; to_ = 10 };
     args = StringMap.empty
-      |> StringMap.add "directories" { Argument.encoding = Argument.MultipleStrings ((TString (Some FilePath)),0,10); description = "Directories to list" };
+      |> StringMap.add "directories" { Argument.encoding = Argument.ArgList ((TString (Some FilePath)),0,10); description = "Directories to list" };
     description = "List directory contents"
   }
 
