@@ -9,7 +9,8 @@ let pwdPaths = emptyCommandPaths
     optionsLocations = StringMap.empty
     |> StringMap.add "options" { from = 1; to_ = 10 };
     args = StringMap.empty;
-    description = "Print the name of the current directory"
+    description = "Print the name of the current directory";
+    feature = "print_working_directory";
   }
 
 let pwd : Opencommand.Command.command = {

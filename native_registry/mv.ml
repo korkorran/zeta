@@ -12,7 +12,8 @@ let mvPaths = emptyCommandPaths
     args = StringMap.empty
       |> StringMap.add "source" { Argument.encoding = Argument.ArgList ((TString (Some SingleWord)),1,3); description = "Source file/directory" }
       |> StringMap.add "destination" { Argument.encoding = Argument.Single (TString (Some SingleWord)); description = "Destination file/directory" };
-    description = "Move or rename a file, a directory, or a symlink"
+    description = "Move or rename a file, a directory, or a symlink";
+    feature = "move_or_rename";
   }
 
 let mv : Opencommand.Command.command = {

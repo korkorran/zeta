@@ -11,7 +11,8 @@ let lsPaths = emptyCommandPaths
       |> StringMap.add "options" { from = 1; to_ = 10 };
     args = StringMap.empty
       |> StringMap.add "directories" { Argument.encoding = Argument.ArgList ((TString (Some FilePath)),0,10); description = "Directories to list" };
-    description = "List directory contents"
+    description = "List directory contents";
+    feature = "list_directory_contents";
   }
 
 let ls : Opencommand.Command.command = {

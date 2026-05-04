@@ -8,6 +8,7 @@ let gitPaths = emptyCommandPaths
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Git version control system";
+        feature = "git_usage";
       }  
   |> addPath "git commit [?options]" {
         options = (let open CommandOption in StringMap.empty
@@ -32,36 +33,42 @@ let gitPaths = emptyCommandPaths
         );
         args = StringMap.empty;
         description = "Record changes to the repository";
+        feature = "commit";
       }
   |> addPath "git push" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Update remote refs along with associated objects";
+        feature = "push";
       }
   |> addPath "git pull" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Fetch from and integrate with another repository or a local branch";
+        feature = "pull";
       }
   |> addPath "git status" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Show the working tree status";
+        feature = "status";
       }
   |> addPath "git clone" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Clone a repository into a new directory";
+        feature = "clone";
       }
   |> addPath "git branch" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "List branches";
+        feature = "list_branch";
       }
   |> addPath "git branch <branch-name>" {
         options = StringMap.empty;
@@ -70,12 +77,14 @@ let gitPaths = emptyCommandPaths
           |> StringMap.add "branch-name" {encoding = Single (TString (Some SingleWord)); description = "Name of the branch to create"}
         );
         description = "Create a new branch";
+        feature = "create_branch";
       }
   |> addPath "git checkout" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Switch branches or restore working tree files";
+        feature = "checkout";
       }
   |> addPath "git config [?options]" {
         options = (let open CommandOption in StringMap.empty
@@ -104,7 +113,8 @@ let gitPaths = emptyCommandPaths
           |> StringMap.add "options" {from=1; to_=100}
         );
         args = StringMap.empty;
-        description = "Get and set repository or global options";
+        description = "Get repository or global options";
+        feature = "get_config";
       }
   |> addPath "git config <key> <value>" {
         options = StringMap.empty;
@@ -114,6 +124,7 @@ let gitPaths = emptyCommandPaths
           |> StringMap.add "value" {encoding = Single (TString (Some SingleWord)); description = "Value to set for the config key"}
         );
         description = "Set a config value";
+        feature = "set_config";
       }
   |> addPath "git merge [?options] <branch-name>" {
         options = (let open CommandOption in StringMap.empty 
@@ -225,6 +236,7 @@ let gitPaths = emptyCommandPaths
           |> StringMap.add "branch-name" (let open Argument in {encoding = Single (TString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
+        feature = "merge";
       }
 
 

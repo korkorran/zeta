@@ -111,6 +111,7 @@ type head = {
   optionsLocations: optionLocation Utils.StringMap.t;
   args: Argument.t Utils.StringMap.t;
   description: string;
+  feature: string;
 }
 [@@deriving yojson]
 

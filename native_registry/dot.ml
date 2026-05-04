@@ -9,7 +9,8 @@ let dotPaths = emptyCommandPaths
       |> StringMap.add "options" { from = 1; to_ = 10 };
     args = StringMap.empty
       |> StringMap.add "input" { Argument.encoding = Argument.ArgList ((TString (Some FilePath)),0,1); description = "Input file/directory" };
-    description = "Compute graphviz visualization"
+    description = "Compute graphviz visualization";
+    feature = "generate_visualization";
   }
 
 let dot : Opencommand.Command.command = {

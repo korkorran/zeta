@@ -7,7 +7,8 @@ let cdPaths = emptyCommandPaths
     optionsLocations = StringMap.empty;
     args = StringMap.empty
       |> StringMap.add "directory" { Argument.encoding = Argument.Single (TString (Some FilePath)); description = "Directory to change to" };
-    description = "Change the current directory"
+    description = "Change the current directory";
+    feature = "change_directory";
   }
 
 let cd : Opencommand.Command.command = {
