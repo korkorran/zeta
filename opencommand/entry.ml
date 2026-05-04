@@ -68,11 +68,11 @@ let evalOption
           Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
         else
           None )
-  | Command.CommandOption.ValueSuffix (prefixes, typeformat) -> (
+  | Command.CommandOption.ValueSuffix (prefixes, encoding) -> (
     match restEntry with
     | h1::h2::te -> 
       if List.exists (fun prefix -> prefix = h1) prefixes then
-        let value_opt = Typeformat.value_of_token typeformat h2 in
+        let value_opt = Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) h2 in
         match value_opt with
         | None -> None
         | Some value ->
@@ -173,9 +173,9 @@ let evalTokens
         (let encoding = (Utils.StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.ArgList _ -> failwith "argument encoding should not be ArgList (reserved to ArgumentLocation), this should have been caught in parsing"
-        | Command.Argument.Single tf ->
+        | Command.Argument.Single encoding ->
             let he = List.hd currentState.restEntry in
-            let value_opt = Typeformat.value_of_token tf he in
+            let value_opt = Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he in
             match value_opt with
               | None -> [{ongoingResult with case = Unmatched hc}]
               | Some value ->

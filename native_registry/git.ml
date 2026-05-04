@@ -13,7 +13,7 @@ let gitPaths = emptyCommandPaths
   |> addPath "git commit [?options]" {
         options = (let open CommandOption in StringMap.empty
           |> StringMap.add "--message" {
-              encoding = ValueSuffix (["-m"; "--message"], (TString (Some QuotedString)));
+              encoding = ValueSuffix (["-m"; "--message"], (SimpleString (Some QuotedString)));
               description = "Use the given message as the commit message";
               location = "options";
             }
@@ -74,7 +74,7 @@ let gitPaths = emptyCommandPaths
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = (let open Argument in StringMap.empty
-          |> StringMap.add "branch-name" {encoding = Single (TString (Some SingleWord)); description = "Name of the branch to create"}
+          |> StringMap.add "branch-name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
         );
         description = "Create a new branch";
         feature = "create_branch";
@@ -120,8 +120,8 @@ let gitPaths = emptyCommandPaths
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = (let open Argument in StringMap.empty
-          |> StringMap.add "key" {encoding = Single (TString (Some SingleWord)); description = "Name of the config key"}
-          |> StringMap.add "value" {encoding = Single (TString (Some SingleWord)); description = "Value to set for the config key"}
+          |> StringMap.add "key" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the config key"}
+          |> StringMap.add "value" {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"}
         );
         description = "Set a config value";
         feature = "set_config";
@@ -224,7 +224,7 @@ let gitPaths = emptyCommandPaths
               location = "options";
             }
           |> StringMap.add "--strategy" {
-              encoding = ValueSuffix (["--strategy"], TEnum ["resolve"; "recursive"; "octopus"; "ours"; "subtree"]);
+              encoding = ValueSuffix (["--strategy"], Enum ["resolve"; "recursive"; "octopus"; "ours"; "subtree"]);
               description = "Use the given merge strategy";
               location = "options";
             }
@@ -233,7 +233,7 @@ let gitPaths = emptyCommandPaths
           |> StringMap.add "options" {from=1; to_=100}
         );
         args = (StringMap.empty
-          |> StringMap.add "branch-name" (let open Argument in {encoding = Single (TString (Some SingleWord)); description = "Name of the branch to merge"})
+          |> StringMap.add "branch-name" (let open Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
         feature = "merge";

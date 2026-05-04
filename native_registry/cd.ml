@@ -6,7 +6,7 @@ let cdPaths = emptyCommandPaths
     options = StringMap.empty;
     optionsLocations = StringMap.empty;
     args = StringMap.empty
-      |> StringMap.add "directory" { Argument.encoding = Argument.Single (TString (Some FilePath)); description = "Directory to change to" };
+      |> StringMap.add "directory" { Argument.encoding = Argument.Single (SimpleString (Some FilePath)); description = "Directory to change to" };
     description = "Change the current directory";
     feature = "change_directory";
   }

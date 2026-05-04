@@ -75,36 +75,32 @@ end
 module CommandOption = struct
 
   type encoding =
-  | SingleString of string list
-  | ValueSuffix of string list * Typeformat.typeformat
-  [@@deriving yojson]
+  | SingleString : string list -> encoding
+  | ValueSuffix : string list * ('a TokenEncoding.tokenEncoding) -> encoding
 
   type t = {
     encoding: encoding;
     description: string;
     location: string;
   }
-  [@@deriving yojson]
 end
 
 
 module Argument = struct
   type encoding = 
-    | Single of Typeformat.typeformat
-    | ArgList of (Typeformat.typeformat*int*int)  (* min, max *)
-  [@@deriving yojson]
+    | Single : 'a TokenEncoding.tokenEncoding -> encoding
+    | ArgList : ('a TokenEncoding.tokenEncoding*int*int) -> encoding  (* min, max *)
+
   type t = {
     encoding: encoding;
     description: string;
   }
-  [@@deriving yojson]
 end
 
 type optionLocation = {
   from : int;
   to_ : int;
 }
-[@@deriving yojson]
 
 type head = {
   options: CommandOption.t Utils.StringMap.t;
@@ -113,24 +109,20 @@ type head = {
   description: string;
   feature: string;
 }
-[@@deriving yojson]
 
 type commandPaths = head Utils.StringMap.t
-[@@deriving yojson]
 
 type info = {
   commandName: string;
   version: string;
   description: string;
 }
-[@@deriving yojson]
 
 type command = {
   opencommand_version: string;
   info: info;
   paths: commandPaths;
 }
-[@@deriving yojson]
 (* type command = head EncodedPathMap.t
 
 let parseEncodedCommand (c:rawCommand) : command =
@@ -153,13 +145,13 @@ let getConfigurationTemplate (head: head) : configurationTemplate =
   |> Utils.StringMap.map (fun (opt) -> (
     match opt.CommandOption.encoding with
     | CommandOption.SingleString _ -> Typeformat.TUnit
-    | CommandOption.ValueSuffix (_, tf) -> tf
+    | CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
     )) 
   in
   let argsTemplate = head.args
   |> Utils.StringMap.map (fun (arg) -> (
     match arg.Argument.encoding with
-    | Argument.Single tf -> tf
-    | Argument.ArgList (tf, _, _) -> Typeformat.TList tf
+    | Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
+    | Argument.ArgList (enc, _, _) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
   )) in
   { optionsTemplate; argsTemplate }

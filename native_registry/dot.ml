@@ -4,11 +4,11 @@ open Opencommand.Utils
 let dotPaths = emptyCommandPaths
   |> addPath "dot [?options] [<input>]" {
     options = StringMap.empty
-      |> StringMap.add "output" { CommandOption.encoding = CommandOption.ValueSuffix (["-o"], TString (Some FilePath)); description = "write output in file"; location = "options" };
+      |> StringMap.add "output" { CommandOption.encoding = CommandOption.ValueSuffix (["-o"], SimpleString (Some FilePath)); description = "write output in file"; location = "options" };
     optionsLocations = StringMap.empty
       |> StringMap.add "options" { from = 1; to_ = 10 };
     args = StringMap.empty
-      |> StringMap.add "input" { Argument.encoding = Argument.ArgList ((TString (Some FilePath)),0,1); description = "Input file/directory" };
+      |> StringMap.add "input" { Argument.encoding = Argument.ArgList ((SimpleString (Some FilePath)),0,1); description = "Input file/directory" };
     description = "Compute graphviz visualization";
     feature = "generate_visualization";
   }
