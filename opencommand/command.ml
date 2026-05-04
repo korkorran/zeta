@@ -135,23 +135,3 @@ let emptyCommandPaths : commandPaths = Utils.StringMap.empty
 
 let addPath path (head:head) cmdPaths =
   Utils.StringMap.add path head cmdPaths
-
-type configurationTemplate = {
-  optionsTemplate: Typeformat.typeformat Utils.StringMap.t;
-  argsTemplate: Typeformat.typeformat Utils.StringMap.t;
-}
-let getConfigurationTemplate (head: head) : configurationTemplate =
-  let optionsTemplate = head.options 
-  |> Utils.StringMap.map (fun (opt) -> (
-    match opt.CommandOption.encoding with
-    | CommandOption.SingleString _ -> Typeformat.TUnit
-    | CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
-    )) 
-  in
-  let argsTemplate = head.args
-  |> Utils.StringMap.map (fun (arg) -> (
-    match arg.Argument.encoding with
-    | Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
-    | Argument.ArgList (enc, _, _) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
-  )) in
-  { optionsTemplate; argsTemplate }

@@ -7,4 +7,5 @@ let test_description () =
 let git_test = [
   test_case "description match" `Quick test_description;
   test_case "[git] entry evaluation" `Quick (Utils.test_evaluated_feature_id "get_config" "git config --list" git);
+  test_case "[git] generated entry" `Quick (Utils.test_generated_entry "git config" git "get_config" { Opencommand.Entry.options = Opencommand.Utils.StringMap.empty; args = Opencommand.Utils.StringMap.empty });
 ]

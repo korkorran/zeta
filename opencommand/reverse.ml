@@ -1,31 +1,15 @@
-let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.configuration =
-  let options = Utils.StringMap.empty in
-  let rec mapDefaultValue tf = match tf with 
-      Typeformat.TUnit -> Typeformat.VUnit 
-      | TString format_opt -> (match format_opt with
-          Some Typeformat.QuotedString -> Typeformat.VString ""
-          | Some Typeformat.SingleWord -> Typeformat.VString ""
-          | Some Typeformat.FilePath -> Typeformat.VString ""
-          | None -> Typeformat.VString "")
-      | TInt -> Typeformat.VInt 0
-      | TFloat -> Typeformat.VFloat 0.0
-      | TEnum options -> Typeformat.VEnum (List.hd options)
-      | TOption _ -> Typeformat.VOption None
-      | TBool -> Typeformat.VBool false
-      | TTuple types -> Typeformat.VTuple (List.map mapDefaultValue types)
-      | TList _ -> Typeformat.VList []
-  in
-  let args = template.argsTemplate |> Utils.StringMap.map mapDefaultValue in
-  { Entry.options; args }
 
-let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, string) Result.t =
+type error = FeatureNotFound of string | ValidationError of (Configuration.optionOrArgument * string * string) list
+[@@deriving show]
+
+let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
   let commandPaths = Utils.StringMap.bindings command.paths in
   let result = List.find_opt (fun (_, h) -> h.Command.feature = feature) commandPaths in
   match result with
-  | None -> Result.Error "Feature not found in command paths"
+  | None -> Result.Error (FeatureNotFound feature)
   | Some (path, head) ->
-(*  let options = head.Command.options in
-  let args = head.Command.args in *)
+  let validationResult = Configuration.validateConfiguration configuration (Configuration.getConfigurationTemplate head) in
+  if Result.is_error validationResult then Result.Error (ValidationError (Result.get_error validationResult)) else
   let encodedPath = Command.EncodedPath.from_string path in
   let entryParts = List.map (
     fun token -> match token with

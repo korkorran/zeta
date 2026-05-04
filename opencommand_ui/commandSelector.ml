@@ -19,8 +19,8 @@ end
 
 module Make(Injectable: Injectable) : S with type 'msg upper_msg := 'msg Injectable.upper_msg = struct
 
-type optionOrArgument = Opt | Arg
-type confValidError = (optionOrArgument * string * string) (*kind, key, message*)
+
+type confValidError = (Opencommand.Configuration.optionOrArgument * string * string) (*kind, key, message*)
 type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
 
 type msg =
@@ -28,9 +28,9 @@ type msg =
   | Run
   | SelectCommand of string
   | Activate of bool * string * Opencommand.Typeformat.value (* on/off, key, value *)
-  | UpdateConf of optionOrArgument * updateKey * Opencommand.Typeformat.value (* kind, key or list item, new value *)
-  | AddListItem of optionOrArgument * string (* kind, key *)
-  | DeleteListItem of optionOrArgument * string * int (* kind, key, index *)
+  | UpdateConf of Opencommand.Configuration.optionOrArgument * updateKey * Opencommand.Typeformat.value (* kind, key or list item, new value *)
+  | AddListItem of Opencommand.Configuration.optionOrArgument * string (* kind, key *)
+  | DeleteListItem of Opencommand.Configuration.optionOrArgument * string * int (* kind, key, index *)
   | SelectPath of string
 
 type model = {
@@ -41,7 +41,7 @@ type model = {
   results : (string * Opencommand.Entry.result) list option;
   selectedPath : string option;
   configuration : Opencommand.Entry.configuration option;
-  configurationTemplate : Opencommand.Command.configurationTemplate option;
+  configurationTemplate : Opencommand.Configuration.configurationTemplate option;
   configurationValid : (unit, confValidError list) Result.t;
 }
 
@@ -52,17 +52,7 @@ let getSelectedConfiguration results =
 let validateConfiguration configuration configurationTemplate =
   match configuration, configurationTemplate with
   | Some config, Some template -> 
-    let optionsErrors = Opencommand.Utils.StringMap.fold (fun k v accErrors->
-        match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.optionsTemplate with
-        | Some optionTypeformat -> let r = (Opencommand.Typeformat.validate optionTypeformat v) in if Result.is_ok r then accErrors else (Opt, k, Result.get_error r)::accErrors
-        | None -> (Opt, k, "Option not found in template")::accErrors)
-      config.Opencommand.Entry.options [] in
-    let argsErrors = Opencommand.Utils.StringMap.fold (fun k v accErrors->
-      match Opencommand.Utils.StringMap.find_opt k template.Opencommand.Command.argsTemplate with
-      | Some argTypeformat -> let r = (Opencommand.Typeformat.validate argTypeformat v) in if Result.is_ok r then accErrors else (Arg, k, Result.get_error r)::accErrors
-      | None -> (Arg, k, "Argument not found in template")::accErrors) 
-      config.Opencommand.Entry.args [] in
-    if optionsErrors = [] && argsErrors = [] then Result.Ok () else Result.Error (optionsErrors @ argsErrors)
+    Opencommand.Configuration.validateConfiguration config template
   | _ -> Result.Ok () (* If we don't have enough information to validate, we consider it valid for now *)
 
 let optionOrArgumentValid configurationValid kind k =
@@ -81,7 +71,7 @@ let updateConfiguration s selectedCommandKey =
     let results = Opencommand.Entry.evalConfiguration entry (selectedCommand.paths) in
     (match getSelectedConfiguration results with
       | Some (selectedPath,Opencommand.Entry.Success selectedConfiguration) -> 
-        let selectedConfigurationTemplate = Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find selectedPath selectedCommand.paths) in
+        let selectedConfigurationTemplate = Opencommand.Configuration.getConfigurationTemplate (Opencommand.Utils.StringMap.find selectedPath selectedCommand.paths) in
         { 
           entry; 
           tokens; 
@@ -108,12 +98,12 @@ let updateConfiguration s selectedCommandKey =
 let updateCommandPath model path =
   let template = (
       match model.selectedCommand with 
-      Some cmd -> Some (Opencommand.Command.getConfigurationTemplate (Opencommand.Utils.StringMap.find path cmd.paths)) 
+      Some cmd -> Some (Opencommand.Configuration.getConfigurationTemplate (Opencommand.Utils.StringMap.find path cmd.paths)) 
       | None -> None) in
   { 
     model with selectedPath = Some path; 
     configurationTemplate = template;
-    configuration = (match template with Some t -> Some (Opencommand.Reverse.getEmptyConfiguration t) | None -> None);
+    configuration = (match template with Some t -> Some (Opencommand.Configuration.getEmptyConfiguration t) | None -> None);
   }
 
 let return ?(c=[]) x = (x, c)
@@ -241,7 +231,7 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencommand.Typeformat.value option) (itemTypeformat:Opencommand.Typeformat.typeformat) (desc:string) (optionOrArgumentValid:(unit, string) Result.t) =
+let displayOptionOrArg (kind:Opencommand.Configuration.optionOrArgument) (k:string) (itemValue :Opencommand.Typeformat.value option) (itemTypeformat:Opencommand.Typeformat.typeformat) (desc:string) (optionOrArgumentValid:(unit, string) Result.t) =
   let activated = match itemValue with Some _ -> true | None -> false in
   let rec displayValue typeformat itemVal updateKey= 
     match typeformat with
@@ -296,7 +286,7 @@ let displayOptionOrArg (kind:optionOrArgument) (k:string) (itemValue :Opencomman
 let displayConfiguration 
   (path : string option) 
   (config:Opencommand.Entry.configuration option) 
-  (configurationTemplate:Opencommand.Command.configurationTemplate option) 
+  (configurationTemplate:Opencommand.Configuration.configurationTemplate option) 
   (configurationValid:(unit, confValidError list) Result.t)
   (selectedCommand:Opencommand.Command.command option) 
   =
