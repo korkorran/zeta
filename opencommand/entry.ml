@@ -319,6 +319,6 @@ let evalConfiguration (rawEntry:string) (rawCommand:Command.commandPaths) : (str
   List.map (fun (path, head) ->
     let encodedPath = Command.EncodedPath.from_string path in
     let res = evalPath entry encodedPath head in
-    (path, res)
+    (head.feature, res)
   ) (Utils.StringMap.bindings rawCommand)
   | None -> []

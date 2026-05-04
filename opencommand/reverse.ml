@@ -18,8 +18,12 @@ let getEmptyConfiguration (template: Command.configurationTemplate) : Entry.conf
   let args = template.argsTemplate |> Utils.StringMap.map mapDefaultValue in
   { Entry.options; args }
 
-let computeEntry (command:Command.command) (path:string) (configuration:Entry.configuration) : string =
-  let head = Utils.StringMap.find path command.paths in
+let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, string) Result.t =
+  let commandPaths = Utils.StringMap.bindings command.paths in
+  let result = List.find_opt (fun (_, h) -> h.Command.feature = feature) commandPaths in
+  match result with
+  | None -> Result.Error "Feature not found in command paths"
+  | Some (path, head) ->
 (*  let options = head.Command.options in
   let args = head.Command.args in *)
   let encodedPath = Command.EncodedPath.from_string path in
@@ -46,4 +50,6 @@ let computeEntry (command:Command.command) (path:string) (configuration:Entry.co
         List.fold_left (fun acc opt -> if acc = "" then opt else acc ^ " " ^ opt) "" acceptedOptions
   ) encodedPath
   in
-  List.fold_left (fun acc part -> if acc = "" then part else if part = "" then acc else acc ^ " " ^ part) "" entryParts
+  Result.Ok (
+    List.fold_left (fun acc part -> if acc = "" then part else if part = "" then acc else acc ^ " " ^ part) "" entryParts
+  )

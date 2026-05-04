@@ -146,8 +146,11 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let entry = if Result.is_ok configurationValid then
+    let computedEntryResult =
      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) 
+      in
+    let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
+      Result.get_ok computedEntryResult
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
@@ -172,8 +175,10 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let entry = if Result.is_ok configurationValid then
-      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    let computedEntryResult =   Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    in
+    let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
+      Result.get_ok computedEntryResult
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | AddListItem (opt_or_arg, k) -> let newConfig = match model.configuration with
@@ -188,8 +193,10 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let entry = if Result.is_ok configurationValid then
-      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    let computedEntryResult =   Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    in
+    let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
+      Result.get_ok computedEntryResult
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | DeleteListItem (opt_or_arg, k, index) -> let newConfig = match model.configuration with
@@ -204,8 +211,10 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let entry = if Result.is_ok configurationValid then
-      Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    let computedEntryResult = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    in
+    let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
+      Result.get_ok computedEntryResult
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | SelectPath path -> return @@ updateCommandPath model path

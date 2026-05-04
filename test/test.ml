@@ -19,7 +19,5 @@ let () =
         test_case "mv cmd" `Quick (test_tokenizer "mv file1.txt file2.txt" (Some ["mv"; "file1.txt"; "file2.txt"]));
         test_case "tokenize fails" `Quick (test_tokenizer "name Alice \"hello" (None));
       ];
-      "ls", [
-          test_case "[ls] entry evaluation" `Quick (Utils.test_entry "ls [?options] [<directories>]" "ls -a" Native_registry.Ls.ls);
-        ];
+      "ls", Ls.ls_test;
     ]
