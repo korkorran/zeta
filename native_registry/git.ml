@@ -70,11 +70,11 @@ let gitPaths = emptyCommandPaths
         description = "List branches";
         feature = "list_branch";
       }
-  |> addPath "git branch <branch-name>" {
+  |> addPath "git branch <branch_name>" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = (let open Argument in StringMap.empty
-          |> StringMap.add "branch-name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
+          |> StringMap.add "branch_name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
         );
         description = "Create a new branch";
         feature = "create_branch";
