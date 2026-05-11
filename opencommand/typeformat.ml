@@ -1,5 +1,5 @@
 type stringFormat = | QuotedString | SingleWord | FilePath
-[@@deriving yojson]
+[@@deriving yojson, show]
 
 type typeformat = TUnit
                 | TInt
@@ -12,7 +12,7 @@ type typeformat = TUnit
                 | TEnum of string list
 (*                 | TRecord of (string * typeformat) list
                 | TVariant of (string * typeformat option) list *)
-[@@deriving yojson]
+[@@deriving yojson, show]
 
 type value = VUnit
            | VInt of int
@@ -27,6 +27,27 @@ type value = VUnit
            | VVariant of string * value option *)
 [@@deriving yojson]
 
+type validationError = 
+  | TypeMismatch
+  | FormatError of typeformat
+[@@deriving show]
+
+let validationError_to_string = function
+  | TypeMismatch -> "Type mismatch"
+  | FormatError tf -> match tf with
+    | TUnit -> "Value must be 'unit'"
+    | TInt -> "Value must be an integer"
+    | TFloat -> "Value must be a float"
+    | TBool -> "Value must be 'true' or 'false'"
+    | TString (Some QuotedString) -> "Value must be a quoted string"
+    | TString (Some SingleWord) -> "Value must be a single word without spaces"
+    | TString (Some FilePath) -> "Value must be a file path without spaces"
+    | TString None -> "Value must be a string"
+    | TList _ -> "Value must be a list"
+    | TOption _ -> "Value must be an option (None or Some value)"
+    | TTuple _ -> "Value must be a tuple"
+    | TEnum options -> "Value must be one of: " ^ String.concat ", " options
+
     
 let rec validate typeformat value =
   match typeformat, value with
@@ -37,22 +58,22 @@ let rec validate typeformat value =
   | TString format_opt, VString s -> let open Tyre in (match format_opt with
     | Some QuotedString -> 
       let re = start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop in
-        if execp (compile re) s then Result.Ok () else Result.Error "Value must be a quoted string"
+        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some QuotedString)))
     | Some SingleWord -> let re = start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop in
-        if execp (compile re) s then Result.Ok () else Result.Error "Value must be a single word without spaces"
+        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some SingleWord)))
     | Some FilePath -> let re = start *> (rep1 (charset (Charset.union [(Charset.alnum); (Charset.punct)]))) <* stop in
-        if execp (compile re) s then Result.Ok () else Result.Error "Value must be a file path without spaces"
+        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some FilePath)))
     | None -> Result.Ok ())
-  | TList tf, VList vs -> let error_message = ref "" in
-    if List.for_all (fun v -> match validate tf v with Result.Ok () -> true| Result.Error m -> error_message := m; false) vs
-      then Result.Ok () else Result.Error ("List element type mismatch: " ^ !error_message)
+  | TList tf, VList vs -> let error_message = ref None in
+    if List.for_all (fun v -> match validate tf v with Result.Ok () -> true| Result.Error m -> error_message := Some m; false) vs
+      then Result.Ok () else Result.Error (FormatError (TList tf))
   | TOption tf, VOption v -> (match v with Some v' -> validate tf v' | None -> Result.Ok ())
   | TTuple tfs, VTuple vs -> if List.length tfs = List.length vs then
-    let error_message = ref "" in
-    let validate_pair tf v = match validate tf v with Result.Ok () -> true | Result.Error m -> error_message := m; false in
-    ( if List.for_all2 validate_pair tfs vs then Result.Ok () else Result.Error ("element type mismatch: " ^ !error_message ) )
-    else Result.Error "Tuple length mismatch"
-  | TEnum options, VEnum v -> if List.exists ((=) v) options then Result.Ok () else Result.Error ("Value must be one of: " ^ String.concat ", " options)
+    let error_message = ref None in
+    let validate_pair tf v = match validate tf v with Result.Ok () -> true | Result.Error m -> error_message := Some m; false in
+    ( if List.for_all2 validate_pair tfs vs then Result.Ok () else Result.Error (FormatError (TTuple tfs)) )
+    else Result.Error (FormatError (TTuple tfs))
+  | TEnum options, VEnum v -> if List.exists ((=) v) options then Result.Ok () else Result.Error (FormatError (TEnum options))
 (*   | TRecord fields, VRecord values ->
       let field_map = List.fold_left (fun acc (name, tf) -> (name, tf) :: acc) [] fields in
       List.for_all (fun (name, v) ->
@@ -67,7 +88,7 @@ let rec validate typeformat value =
             | None, None -> true
             | _, _ -> false)
        | None -> false) *)
-  | _, _ -> Result.Error "Type mismatch"
+  | _, _ -> Result.Error TypeMismatch
 
   let rec pp_value fmt = function
     | VUnit -> Format.fprintf fmt "unit"

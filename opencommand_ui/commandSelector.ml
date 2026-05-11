@@ -19,8 +19,6 @@ end
 
 module Make(Injectable: Injectable) : S with type 'msg upper_msg := 'msg Injectable.upper_msg = struct
 
-
-type confValidError = (Opencommand.Configuration.optionOrArgument * string * string) (*kind, key, message*)
 type updateKey = Whole of string | ListItem of string * int (*the list item and its index*)
 
 type msg =
@@ -42,7 +40,7 @@ type model = {
   selectedPath : string option;
   configuration : Opencommand.Entry.configuration option;
   configurationTemplate : Opencommand.Configuration.configurationTemplate option;
-  configurationValid : (unit, confValidError list) Result.t;
+  configurationValid : (unit, Opencommand.Configuration.configurationError list) Result.t;
 }
 
 
@@ -59,7 +57,7 @@ let optionOrArgumentValid configurationValid kind k =
   match configurationValid with
   | Result.Ok () -> Result.Ok ()
   | Result.Error errors -> match (List.find_opt (fun (errKind, errKey, _) -> errKind = kind && errKey = k) errors) with
-    | Some (_, _, msg) -> Result.Error msg
+    | Some err -> Result.Error err
     | None -> Result.Ok ()
 
 let updateConfiguration s selectedCommandKey =
@@ -231,7 +229,14 @@ let option ?(selected=false) txt =
   | true -> elt "option" ~a:[value txt; attr "selected" "selected"] [text txt]
   | _ -> elt "option" ~a:[value txt] [text txt]
 
-let displayOptionOrArg (kind:Opencommand.Configuration.optionOrArgument) (k:string) (itemValue :Opencommand.Typeformat.value option) (itemTypeformat:Opencommand.Typeformat.typeformat) (desc:string) (optionOrArgumentValid:(unit, string) Result.t) =
+let displayOptionOrArg 
+  (kind:Opencommand.Configuration.optionOrArgument) 
+  (k:string) 
+  (itemValue :Opencommand.Typeformat.value option) 
+  (itemTypeformat:Opencommand.Typeformat.typeformat) 
+  (desc:string) 
+  (optionOrArgumentValid:(unit, Opencommand.Configuration.configurationError) Result.t) 
+  =
   let activated = match itemValue with Some _ -> true | None -> false in
   let rec displayValue typeformat itemVal updateKey= 
     match typeformat with
@@ -277,7 +282,7 @@ let displayOptionOrArg (kind:Opencommand.Configuration.optionOrArgument) (k:stri
     in
     let display = match optionOrArgumentValid with
       | Result.Ok () -> display
-      | Result.Error msg -> display @ [div ~a:[style "color" "red"; style "font-size" "0.8em"] [text msg]]
+      | Result.Error err -> display @ [div ~a:[style "color" "red"; style "font-size" "0.8em"] [text (Opencommand.Configuration.configurationError_to_string err)]]
     in
     div ~a:[class_ "option-or-arg"] display
 
@@ -287,7 +292,7 @@ let displayConfiguration
   (path : string option) 
   (config:Opencommand.Entry.configuration option) 
   (configurationTemplate:Opencommand.Configuration.configurationTemplate option) 
-  (configurationValid:(unit, confValidError list) Result.t)
+  (configurationValid:(unit, Opencommand.Configuration.configurationError list) Result.t)
   (selectedCommand:Opencommand.Command.command option) 
   =
   let open Opencommand.Entry in

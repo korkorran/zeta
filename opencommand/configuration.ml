@@ -44,16 +44,27 @@ let getEmptyConfiguration (template: configurationTemplate) : Entry.configuratio
 
 type optionOrArgument = Opt | Arg
 [@@deriving show]
+type itemError = Format of Typeformat.validationError | ItemNotInTemplate
+[@@deriving show]
+type configurationError = optionOrArgument * string * itemError
+[@@deriving show]
+let configurationError_to_string (kind, key, err) =
+  let kindStr = match kind with Opt -> "Option" | Arg -> "Argument" in
+  let errorMsg = match err with
+    | Format validationErr -> Typeformat.validationError_to_string validationErr
+    | ItemNotInTemplate -> "Item not in template"
+  in
+  Printf.sprintf "%s '%s': %s" kindStr key errorMsg
 let validateConfiguration config template =
   let optionsErrors = Utils.StringMap.fold (fun k v accErrors->
       match Utils.StringMap.find_opt k template.optionsTemplate with
-      | Some optionTypeformat -> let r = (Typeformat.validate optionTypeformat v) in if Result.is_ok r then accErrors else (Opt, k, Result.get_error r)::accErrors
-      | None -> (Opt, k, "Option not found in template")::accErrors)
+      | Some optionTypeformat -> let r = (Typeformat.validate optionTypeformat v) in if Result.is_ok r then accErrors else (Opt, k, Format (Result.get_error r))::accErrors
+      | None -> (Opt, k, ItemNotInTemplate)::accErrors)
     config.Entry.options [] in
   let argsErrors = Utils.StringMap.fold (fun k v accErrors->
     match Utils.StringMap.find_opt k template.argsTemplate with
-    | Some argTypeformat -> let r = (Typeformat.validate argTypeformat v) in if Result.is_ok r then accErrors else (Arg, k, Result.get_error r)::accErrors
-    | None -> (Arg, k, "Argument not found in template")::accErrors) 
+    | Some argTypeformat -> let r = (Typeformat.validate argTypeformat v) in if Result.is_ok r then accErrors else (Arg, k, Format (Result.get_error r))::accErrors
+    | None -> (Arg, k, ItemNotInTemplate)::accErrors) 
     config.Entry.args [] in
   if optionsErrors = [] && argsErrors = [] then Result.Ok () else Result.Error (optionsErrors @ argsErrors)
 

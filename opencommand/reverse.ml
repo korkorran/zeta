@@ -1,5 +1,5 @@
 
-type error = FeatureNotFound of string | ValidationError of (Configuration.optionOrArgument * string * string) list
+type error = FeatureNotFound of string | ValidationError of (Configuration.configurationError) list
 [@@deriving show]
 
 let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =

@@ -19,3 +19,10 @@ let test_generated_entry expectedEntry command feature configuration () =
   match result with
   | Result.Ok entry -> Alcotest.(check string) "same entry" expectedEntry entry
   | Result.Error err -> Alcotest.failf "Expected entry but got error: %a" Opencommand.Reverse.pp_error err
+
+let test_generated_entry_fails expectedError command feature configuration () =
+  let result = generate_entry command feature configuration in
+  match result with
+  | Result.Ok entry -> Alcotest.failf "Expected error but got entry: %s" entry
+  | Result.Error err -> Format.fprintf Format.std_formatter "Result: %a\n" Opencommand.Reverse.pp_error err;
+    Alcotest.(check bool) "same error" true (err = expectedError)
