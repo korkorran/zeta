@@ -1,6 +1,6 @@
 
 let successfull_feature_Ids entry (command:Opencommand.Command.command) = 
-  let results = Opencommand.Entry.evalConfiguration entry command.paths in
+  let results = Opencommand.Entry.evalConfiguration entry command.features in
   List.filter_map (fun (path, result:string * Opencommand.Entry.result) ->
     Format.fprintf Format.std_formatter "Testing path: %s -> %a \n" path Opencommand.Entry.pp_result result;
     match result with

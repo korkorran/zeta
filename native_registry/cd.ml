@@ -1,14 +1,14 @@
 open Opencommand.Command
 open Opencommand.Utils
 
-let cdPaths = emptyCommandPaths
-  |> addPath "cd <directory>" {
+let cdFeatures = emptyCommandFeatures
+  |> addFeature "change_directory" {
     options = StringMap.empty;
     optionsLocations = StringMap.empty;
     args = StringMap.empty
       |> StringMap.add "directory" { Argument.encoding = Argument.Single (SimpleString (Some FilePath)); description = "Directory to change to" };
     description = "Change the current directory";
-    feature = "change_directory";
+    path = "cd <directory>";
   }
 
 let cd : Opencommand.Command.command = {
@@ -18,5 +18,5 @@ let cd : Opencommand.Command.command = {
     version = "builtin";
     description = "Change the current directory";
   };
-  paths = cdPaths;
+  features = cdFeatures;
 }

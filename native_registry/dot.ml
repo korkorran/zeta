@@ -1,8 +1,8 @@
 open Opencommand.Command
 open Opencommand.Utils
 
-let dotPaths = emptyCommandPaths
-  |> addPath "dot [?options] [<input>]" {
+let dotFeatures = emptyCommandFeatures
+  |> addFeature "generate_visualization" {
     options = StringMap.empty
       |> StringMap.add "output" { CommandOption.encoding = CommandOption.ValueSuffix (["-o"], SimpleString (Some FilePath)); description = "write output in file"; location = "options" };
     optionsLocations = StringMap.empty
@@ -10,7 +10,7 @@ let dotPaths = emptyCommandPaths
     args = StringMap.empty
       |> StringMap.add "input" { Argument.encoding = Argument.ArgList ((SimpleString (Some FilePath)),0,1); description = "Input file/directory" };
     description = "Compute graphviz visualization";
-    feature = "generate_visualization";
+    path = "dot [?options] [<input>]";
   }
 
 let dot : Opencommand.Command.command = {
@@ -20,5 +20,5 @@ let dot : Opencommand.Command.command = {
     version = "UNVERSIONED";
     description = "Compute graphviz visualization";
   };
-  paths = dotPaths;
+  features = dotFeatures;
 }

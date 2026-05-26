@@ -67,13 +67,10 @@ let updateConfiguration s selectedCommandKey =
     (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
     |> Option.value ~default:Native_registry.Git.git in
 (*  Printf.printf "Selected command: %s\n" (match selectedCommandKey with Some k -> k | None -> "None"); *)
-    let results = Opencommand.Entry.evalConfiguration entry (selectedCommand.paths) in
+    let results = Opencommand.Entry.evalConfiguration entry (selectedCommand.features) in
     (match getSelectedConfiguration results with
-      | Some (selectedFeatureId,Opencommand.Entry.Success selectedConfiguration) -> 
-        let selectedPath = (match Opencommand.Reverse.pathFromFeature selectedFeatureId selectedCommand with
-          | Result.Ok p -> p
-          | Result.Error _ -> "") in
-        let head = (Opencommand.Utils.StringMap.find selectedPath selectedCommand.paths) in
+      | Some (selectedFeatureId,Opencommand.Entry.Success selectedConfiguration) ->
+        let head = (Opencommand.Utils.StringMap.find selectedFeatureId selectedCommand.features) in
         let selectedConfigurationTemplate = Opencommand.Configuration.getConfigurationTemplate head in
         { 
           entry; 
@@ -103,7 +100,7 @@ let updateCommandFeature model feature =
       match model.selectedCommand with 
       Some cmd -> 
         (match Opencommand.Reverse.pathFromFeature feature cmd with
-        | Result.Ok path -> let head = Opencommand.Utils.StringMap.find path cmd.paths in
+        | Result.Ok _path -> let head = Opencommand.Utils.StringMap.find feature cmd.features in
           Some (Opencommand.Configuration.getConfigurationTemplate head)
         | Result.Error _ -> None)
       | None -> None in
@@ -308,10 +305,7 @@ let displayConfiguration
   match feature, config, configurationTemplate, selectedCommand with
   | Some feature, Some config, Some configurationTemplate, Some selectedCommand ->
   let args = Opencommand.Utils.StringMap.bindings config.args in
-  let path = match Opencommand.Reverse.pathFromFeature feature selectedCommand with
-    | Result.Ok p -> p
-    | Result.Error _ -> "" in
-  let head = Opencommand.Utils.StringMap.find path selectedCommand.paths in
+  let head = Opencommand.Utils.StringMap.find feature selectedCommand.features in
   let optionsTemplate = configurationTemplate.optionsTemplate in
   let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
   div ~a:[class_ ("configuration" ^ (if Result.is_error configurationValid then " invalid" else ""))] [
@@ -336,11 +330,8 @@ let displayConfiguration
 
   let displayPathResult (command:Opencommand.Command.command) selectedFeature (feature, result) =
     let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
-    let path = match Opencommand.Reverse.pathFromFeature feature command with
-      | Result.Ok p -> p
-      | Result.Error _ -> "" in
-    let getPathDescription path =
-      match Opencommand.Utils.StringMap.find_opt path command.paths with
+    let getPathDescription () =
+      match Opencommand.Utils.StringMap.find_opt feature command.features with
       | Some head -> head.Opencommand.Command.description
       | None -> "Unknown path"
     in
@@ -355,7 +346,7 @@ let displayConfiguration
       onclick (fun _ -> (print_endline "select feature"; Injectable.wrapMessage @@ SelectFeature feature));
       ] [
       div [text feature; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
-      div  ~a:[class_ "description"] (if selectedFeature = feature then [text (getPathDescription path)] else [])
+      div  ~a:[class_ "description"] (if selectedFeature = feature then [text (getPathDescription ())] else [])
     ]
 
 let displaySelectableCommands (selectedCommand:string option) =

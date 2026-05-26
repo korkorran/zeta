@@ -310,15 +310,15 @@ let evalPath (entry:entry) (path:Command.EncodedPath.t) (head:Command.head) : re
   | Overflow x -> Overflow x
   | Ongoing -> Overflow "Evaluation did not finish, this should not happen"
 
-let evalConfiguration (rawEntry:string) (rawCommand:Command.commandPaths) : (string * result) list =
+let evalConfiguration (rawEntry:string) (rawCommand:Command.commandFeatures) : (string * result) list =
   (* let command = Command.parseEncodedCommand rawCommand in *)
   let tokens_opt = Entry_tokenizer.Main.parse_with_error (Lexing.from_string rawEntry) in
   match tokens_opt with
   | Some entry ->
   (* Placeholder implementation *)
-  List.map (fun (path, head) ->
-    let encodedPath = Command.EncodedPath.from_string path in
+  List.map (fun (feature, head) ->
+    let encodedPath = Command.EncodedPath.from_string head.Command.path in
     let res = evalPath entry encodedPath head in
-    (head.feature, res)
+    (feature, res)
   ) (Utils.StringMap.bindings rawCommand)
   | None -> []

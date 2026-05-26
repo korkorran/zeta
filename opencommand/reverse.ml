@@ -3,21 +3,16 @@ type error = FeatureNotFound of string | ValidationError of (Configuration.confi
 [@@deriving show]
 
 let pathFromFeature (feature:string) (command:Command.command) : (string, error) Result.t =
-  let commandPaths = Utils.StringMap.bindings command.paths in
-  let result = List.find_opt (fun (_, h) -> h.Command.feature = feature) commandPaths in
-  match result with
-  | None -> Result.Error (FeatureNotFound feature)
-  | Some (path, _) -> Result.Ok path
+  Result.Ok (Utils.StringMap.find feature command.features).Command.path
 
 let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
-  let commandPaths = Utils.StringMap.bindings command.paths in
-  let result = List.find_opt (fun (_, h) -> h.Command.feature = feature) commandPaths in
+  let result = Utils.StringMap.find_opt feature command.features in
   match result with
   | None -> Result.Error (FeatureNotFound feature)
-  | Some (path, head) ->
+  | Some (head) ->
   let validationResult = Configuration.validateConfiguration configuration (Configuration.getConfigurationTemplate head) in
   if Result.is_error validationResult then Result.Error (ValidationError (Result.get_error validationResult)) else
-  let encodedPath = Command.EncodedPath.from_string path in
+  let encodedPath = Command.EncodedPath.from_string head.Command.path in
   let entryParts = List.map (
     fun token -> match token with
     | Command.Token.Directive s -> s

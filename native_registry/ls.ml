@@ -1,8 +1,8 @@
 open Opencommand.Command
 open Opencommand.Utils
 
-let lsPaths = emptyCommandPaths
-  |> addPath "ls [?options] [<directories>]" {
+let lsFeatures = emptyCommandFeatures
+  |> addFeature "list_directory_contents" {
     options = StringMap.empty
       |> StringMap.add "all" { CommandOption.encoding = CommandOption.SingleString ["-a"]; description = "Show all files"; location = "options" }
       |> StringMap.add "long" { CommandOption.encoding = CommandOption.SingleString ["-l"]; description = "Long format"; location = "options" }
@@ -12,7 +12,7 @@ let lsPaths = emptyCommandPaths
     args = StringMap.empty
       |> StringMap.add "directories" { Argument.encoding = Argument.ArgList ((SimpleString (Some FilePath)),0,10); description = "Directories to list" };
     description = "List directory contents";
-    feature = "list_directory_contents";
+    path = "ls [?options] [<directories>]";
   }
 
 let ls : Opencommand.Command.command = {
@@ -22,5 +22,5 @@ let ls : Opencommand.Command.command = {
     version = "8.32";
     description = "List directory contents";
   };
-  paths = lsPaths;
+  features = lsFeatures;
 }

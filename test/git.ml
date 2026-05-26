@@ -4,7 +4,7 @@ open Opencommand.Utils.StringMap
 let git = Native_registry.Git.git
 (* The tests *)
 let test_description () =
-  (check string) "same string" "Git version control system" (find "git" git.paths).description
+  (check string) "same string" "Git version control system" (find "git_usage" git.features).description
 let git_test = [
   test_case "description match" `Quick test_description;
   test_case "[get_config] entry evaluation" `Quick (Utils.test_evaluated_feature_id "get_config" "git config --list" git);
