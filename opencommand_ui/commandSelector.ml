@@ -37,7 +37,7 @@ type model = {
   selectedCommandKey : string option;
   selectedCommand : Opencommand.Command.command option;
   results : (string * Opencommand.Entry.result) list option;
-  selectedPath : string option;
+  selectedFeature : string option;
   configuration : Opencommand.Entry.configuration option;
   configurationTemplate : Opencommand.Configuration.configurationTemplate option;
   configurationValid : (unit, Opencommand.Configuration.configurationError list) Result.t;
@@ -66,17 +66,22 @@ let updateConfiguration s selectedCommandKey =
     let selectedCommand = Opencommand.Utils.StringMap.find_opt 
     (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
     |> Option.value ~default:Native_registry.Git.git in
+(*  Printf.printf "Selected command: %s\n" (match selectedCommandKey with Some k -> k | None -> "None"); *)
     let results = Opencommand.Entry.evalConfiguration entry (selectedCommand.paths) in
     (match getSelectedConfiguration results with
-      | Some (selectedPath,Opencommand.Entry.Success selectedConfiguration) -> 
-        let selectedConfigurationTemplate = Opencommand.Configuration.getConfigurationTemplate (Opencommand.Utils.StringMap.find selectedPath selectedCommand.paths) in
+      | Some (selectedFeatureId,Opencommand.Entry.Success selectedConfiguration) -> 
+        let selectedPath = (match Opencommand.Reverse.pathFromFeature selectedFeatureId selectedCommand with
+          | Result.Ok p -> p
+          | Result.Error _ -> "") in
+        let head = (Opencommand.Utils.StringMap.find selectedPath selectedCommand.paths) in
+        let selectedConfigurationTemplate = Opencommand.Configuration.getConfigurationTemplate head in
         { 
           entry; 
           tokens; 
           selectedCommandKey = selectedCommandKey;
           selectedCommand = Some selectedCommand;
           results = Some results;
-          selectedPath = Some selectedPath; 
+          selectedFeature = Some selectedFeatureId;
           configuration = Some selectedConfiguration; 
           configurationTemplate = Some selectedConfigurationTemplate ;
           configurationValid = Ok ();
@@ -87,19 +92,23 @@ let updateConfiguration s selectedCommandKey =
         selectedCommandKey = selectedCommandKey;
         selectedCommand = Some selectedCommand;
         results = Some results;
-        selectedPath = None;
+        selectedFeature = None;
         configuration = None;
         configurationTemplate = None;
         configurationValid = Ok ();
       })
 
-let updateCommandPath model path =
-  let template = (
+let updateCommandFeature model feature =
+  let template = 
       match model.selectedCommand with 
-      Some cmd -> Some (Opencommand.Configuration.getConfigurationTemplate (Opencommand.Utils.StringMap.find path cmd.paths)) 
-      | None -> None) in
+      Some cmd -> 
+        (match Opencommand.Reverse.pathFromFeature feature cmd with
+        | Result.Ok path -> let head = Opencommand.Utils.StringMap.find path cmd.paths in
+          Some (Opencommand.Configuration.getConfigurationTemplate head)
+        | Result.Error _ -> None)
+      | None -> None in
   { 
-    model with selectedPath = Some path; 
+    model with selectedFeature = Some feature; 
     configurationTemplate = template;
     configuration = (match template with Some t -> Some (Opencommand.Configuration.getEmptyConfiguration t) | None -> None);
   }
@@ -135,7 +144,7 @@ let update model = function
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
     let computedEntryResult =
-     Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig) 
+     Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedFeature) (Option.get newConfig) 
       in
     let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
       Result.get_ok computedEntryResult
@@ -163,7 +172,7 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let computedEntryResult =   Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    let computedEntryResult =   Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedFeature) (Option.get newConfig)
     in
     let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
       Result.get_ok computedEntryResult
@@ -181,7 +190,7 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let computedEntryResult =   Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    let computedEntryResult =   Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedFeature) (Option.get newConfig)
     in
     let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
       Result.get_ok computedEntryResult
@@ -199,13 +208,13 @@ let update model = function
     | None -> None
     in
     let configurationValid = validateConfiguration newConfig model.configurationTemplate in
-    let computedEntryResult = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedPath) (Option.get newConfig)
+    let computedEntryResult = Opencommand.Reverse.computeEntry (Option.get model.selectedCommand) (Option.get model.selectedFeature) (Option.get newConfig)
     in
     let entry = if Result.is_ok configurationValid && Result.is_ok computedEntryResult then
       Result.get_ok computedEntryResult
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | SelectPath path -> return @@ updateCommandPath model path
+  | SelectPath path -> return @@ updateCommandFeature model path
 
 let init = { 
   entry = "ls -a"; 
@@ -213,7 +222,7 @@ let init = {
   selectedCommandKey = None;
   selectedCommand = None;
   results = None;
-  selectedPath = None;
+  selectedFeature = None;
   configuration = None;
   configurationTemplate = None;  
   configurationValid = Result.Ok ();
@@ -289,16 +298,19 @@ let displayOptionOrArg
 
 
 let displayConfiguration 
-  (path : string option) 
+  (feature : string option) 
   (config:Opencommand.Entry.configuration option) 
   (configurationTemplate:Opencommand.Configuration.configurationTemplate option) 
   (configurationValid:(unit, Opencommand.Configuration.configurationError list) Result.t)
   (selectedCommand:Opencommand.Command.command option) 
   =
   let open Opencommand.Entry in
-  match path, config, configurationTemplate, selectedCommand with
-  | Some path, Some config, Some configurationTemplate, Some selectedCommand ->
+  match feature, config, configurationTemplate, selectedCommand with
+  | Some feature, Some config, Some configurationTemplate, Some selectedCommand ->
   let args = Opencommand.Utils.StringMap.bindings config.args in
+  let path = match Opencommand.Reverse.pathFromFeature feature selectedCommand with
+    | Result.Ok p -> p
+    | Result.Error _ -> "" in
   let head = Opencommand.Utils.StringMap.find path selectedCommand.paths in
   let optionsTemplate = configurationTemplate.optionsTemplate in
   let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
@@ -354,7 +366,7 @@ let displaySelectableCommands (selectedCommand:string option) =
     ] [text k]]) commands)
   ]
 
-let view ({ entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath;configurationTemplate;configuration;configurationValid; }: model)  =
+let view ({ entry;selectedCommandKey;tokens;results;selectedCommand;selectedFeature;configurationTemplate;configuration;configurationValid; }: model)  =
   let firstCol = div [displaySelectableCommands selectedCommandKey] ~a:[class_ "commands"]
   in
   let secondCol = div (
@@ -364,11 +376,11 @@ let view ({ entry;selectedCommandKey;tokens;results;selectedCommand;selectedPath
       | None, _-> div [text "No command selected"] ~a:[style "font-style" "italic"; style "color" "gray"]
       | Some _, None-> div [text "No results"] ~a:[style "font-style" "italic"; style "color" "gray"]
       | Some selectedCommand, Some results -> 
-        let sp = match selectedPath with Some sp -> sp | None -> "" in
-        div (results |> List.map (displayPathResult selectedCommand sp)) ~a:[class_ "paths-results"]]
+        let sf = match selectedFeature with Some sf -> sf | None -> "" in
+        div (results |> List.map (displayPathResult selectedCommand sf)) ~a:[class_ "paths-results"]]
     )
   in
-  let thirdCol = displayConfiguration selectedPath configuration configurationTemplate configurationValid selectedCommand
+  let thirdCol = displayConfiguration selectedFeature configuration configurationTemplate configurationValid selectedCommand
 in div [ firstCol; secondCol; thirdCol  ] ~a:[class_ "columns"]  
 
 end

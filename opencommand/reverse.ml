@@ -2,6 +2,13 @@
 type error = FeatureNotFound of string | ValidationError of (Configuration.configurationError) list
 [@@deriving show]
 
+let pathFromFeature (feature:string) (command:Command.command) : (string, error) Result.t =
+  let commandPaths = Utils.StringMap.bindings command.paths in
+  let result = List.find_opt (fun (_, h) -> h.Command.feature = feature) commandPaths in
+  match result with
+  | None -> Result.Error (FeatureNotFound feature)
+  | Some (path, _) -> Result.Ok path
+
 let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
   let commandPaths = Utils.StringMap.bindings command.paths in
   let result = List.find_opt (fun (_, h) -> h.Command.feature = feature) commandPaths in
