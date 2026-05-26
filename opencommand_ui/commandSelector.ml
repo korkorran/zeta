@@ -29,7 +29,7 @@ type msg =
   | UpdateConf of Opencommand.Configuration.optionOrArgument * updateKey * Opencommand.Typeformat.value (* kind, key or list item, new value *)
   | AddListItem of Opencommand.Configuration.optionOrArgument * string (* kind, key *)
   | DeleteListItem of Opencommand.Configuration.optionOrArgument * string * int (* kind, key, index *)
-  | SelectPath of string
+  | SelectFeature of string
 
 type model = {
   entry : string;
@@ -214,7 +214,7 @@ let update model = function
       Result.get_ok computedEntryResult
     else model.entry in
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
-  | SelectPath path -> return @@ updateCommandFeature model path
+  | SelectFeature feature -> return @@ updateCommandFeature model feature
 
 let init = { 
   entry = "ls -a"; 
@@ -334,8 +334,11 @@ let displayConfiguration
   ]
   | _ -> div [text "No configuration to display"] ~a:[style "font-style" "italic"; style "color" "gray"; class_ "configuration"]
 
-  let displayPathResult (command:Opencommand.Command.command) selectedPath (path, result) =
+  let displayPathResult (command:Opencommand.Command.command) selectedFeature (feature, result) =
     let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
+    let path = match Opencommand.Reverse.pathFromFeature feature command with
+      | Result.Ok p -> p
+      | Result.Error _ -> "" in
     let getPathDescription path =
       match Opencommand.Utils.StringMap.find_opt path command.paths with
       | Some head -> head.Opencommand.Command.description
@@ -348,11 +351,11 @@ let displayConfiguration
       | Opencommand.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
     in
     div ~a:[
-      class_ (if selectedPath = path then "path-result selected" else "path-result");
-      onclick (fun _ -> (print_endline "select path"; Injectable.wrapMessage @@ SelectPath path));
+      class_ (if selectedFeature = feature then "path-result selected" else "path-result");
+      onclick (fun _ -> (print_endline "select feature"; Injectable.wrapMessage @@ SelectFeature feature));
       ] [
-      div [text path; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
-      div  ~a:[class_ "description"] (if selectedPath = path then [text (getPathDescription path)] else [])
+      div [text feature; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
+      div  ~a:[class_ "description"] (if selectedFeature = feature then [text (getPathDescription path)] else [])
     ]
 
 let displaySelectableCommands (selectedCommand:string option) =
