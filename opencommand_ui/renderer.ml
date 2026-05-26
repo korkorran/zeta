@@ -62,7 +62,8 @@ let view { commandSelector; responses } =
   in
   let displayResponses = div ~a:[class_ "responses"] (List.map (fun (_k, v) -> elt "pre" ~a:[class_ "response"] [text ((* k ^ ": " ^ *) v)]) responses) in
   div ( (div ~a:[class_ "header"] [elt "h1" [icon; text "Commandpedia"];
-  elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))]])
+  (* elt "p" [text (Lib.electron_version ^ " version - Desktop mode: " ^ (string_of_bool Lib.is_desktop_mode))] *)
+  ])
     :: (CommandSelectorApp.view commandSelector)
     :: displayResponses
     :: [])  

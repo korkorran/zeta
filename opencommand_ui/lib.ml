@@ -51,7 +51,7 @@ let cmd_handler ctx = function
 
 let () = Vdom_blit.(register (cmd {f = cmd_handler}))
 
-let unused = Dom_html.document##.title := Js.string "New Title"
+let unused = Dom_html.document##.title := Js.string "Commandpedia"
 
 let electron_version = try
   Js.to_string (Js.Unsafe.js_expr "window.electronAPI.electron_version()")

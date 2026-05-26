@@ -4,6 +4,11 @@
     margin-bottom: 20px;
     width: 100%;
     text-align: center;
+    background-color: #29B6F6;
+    color: white;
+    padding: 6px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
 }
 
 .columns {
