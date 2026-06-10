@@ -335,19 +335,28 @@ let displayConfiguration
       | Some head -> head.Opencommand.Command.description
       | None -> "Unknown path"
     in
+    let getPathFromFeature () =
+      match Opencommand.Utils.StringMap.find_opt feature command.features with
+      | Some head -> head.Opencommand.Command.path
+      | None -> "Unknown path"
+    in
     let (desc, _conf) = (match result with
       | Opencommand.Entry.Success c -> ("Success", Some c)
       | Opencommand.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Opencommand.Command.Token.token_to_string t), None
       | Opencommand.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Opencommand.Command.Token.token_to_string t), None
       | Opencommand.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
     in
-    div ~a:[
-      class_ (if selectedFeature = feature then "path-result selected" else "path-result");
-      onclick (fun _ -> (print_endline "select feature"; Injectable.wrapMessage @@ SelectFeature feature));
-      ] [
-      div [text feature; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
-      div  ~a:[class_ "description"] (if selectedFeature = feature then [text (getPathDescription ())] else [])
-    ]
+    div ~a:[class_ (if selectedFeature = feature then "path-result selected" else "path-result")] [
+      div ~a:[
+        class_ "row";
+        onclick (fun _ -> (print_endline "select feature"; Injectable.wrapMessage @@ SelectFeature feature));
+        ] [
+        div [text feature; text " -> "; elt "span" ~a:[class_ (if isPathSuccessfull then "success" else "")] [text desc]];
+        div  ~a:[class_ "description"] (if selectedFeature = feature then [text (getPathDescription ())] else []);
+        elt "br" [];
+      ];
+      div ~a:[class_ "path"] [text (getPathFromFeature ())];
+     ]
 
 let displaySelectableCommands (selectedCommand:string option) =
   let commands = Native_registry.Registry.registry |> Opencommand.Utils.StringMap.bindings in

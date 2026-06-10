@@ -43,16 +43,26 @@
     border-left: 1px solid lightgray;
     border-radius: 10px;
     margin-bottom: 5px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
     cursor: pointer;
 
-    .description {
-        margin-left: auto;
-        margin-right: 10px;
+    .row {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+
+        .description {
+            margin-left: auto;
+            margin-right: 10px;
+        }
+    }
+
+    .path {
+        font-family: monospace;
+        color: darkgray;
+        display: block;
     }
 }
+
 
 .path-result:hover::before {
   content: ">"; /* ou une icône personnalisée */
