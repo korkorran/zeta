@@ -49,9 +49,9 @@ let compare_ongoingResult r1 r2 =
     
   
 
-let getOptionsFromLocation (feature:Feature.feature) (location:string) : (string * Feature.CommandOption.t) list =
+let getOptionsFromAnchor (feature:Feature.feature) (availableAnchor:string) : (string * Feature.CommandOption.t) list =
   StringMap.bindings feature.options
-  |> List.filter (fun (_, opt) -> opt.Feature.CommandOption.location = location)
+  |> List.filter (fun (_, opt) -> opt.Feature.CommandOption.location = availableAnchor)
 
 let evalOption 
   (id, option: string* Feature.CommandOption.t) 
@@ -94,7 +94,7 @@ let evalOption
 let evalTokens 
   (head :Feature.feature) 
   (ongoingResult : ongoingResult)
-  (availableOptionsLocation: string list)
+  (availableOptionsAnchors: string list)
   : ongoingResult list =
   let currentConfig = ongoingResult.configuration in
   let currentState = ongoingResult.evaluationState in
@@ -126,7 +126,7 @@ let evalTokens
              [{ongoingResult with case = Incomplete hc}])
     | _ -> [{ongoingResult with case = Incomplete hc}])
   | (h::_, []) -> 
-    let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
+    let availableOptions = List.flatten (List.map (getOptionsFromAnchor head) availableOptionsAnchors) in
     let succeededOptions = List.filter_map (fun opt -> evalOption opt currentState.restEntry currentConfig) availableOptions in
     (match succeededOptions with
     | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
@@ -137,7 +137,7 @@ let evalTokens
       } |> fun state -> [{ongoingResult with configuration = newConfig; evaluationState = state}]
     | [] -> [{ongoingResult with case = Overflow h}])
   | (_, _) -> 
-    let availableOptions = List.flatten (List.map (getOptionsFromLocation head) availableOptionsLocation) in
+    let availableOptions = List.flatten (List.map (getOptionsFromAnchor head) availableOptionsAnchors) in
     let succeededOptions = List.filter_map (fun opt -> evalOption opt currentState.restEntry currentConfig) availableOptions in
     match succeededOptions with
     | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
@@ -268,8 +268,6 @@ type result = Success of configuration
 [@@deriving show]
 
 
-let getAllOptionsLocations (head:Feature.feature) : string list =
-  StringMap.bindings head.anchors |> List.map (fun (id,_) -> id)
 let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.feature) : result =
   let rec aux 
     (currentResult_list: ongoingResult list) 
@@ -279,7 +277,10 @@ let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.featur
       (* Printf.printf "Current result: %s\n" (show_ongoingResult currentResult); *)
     match currentResult.case with
     | Ongoing ->
-        let anchors = getAllOptionsLocations head in
+        let anchors = OptionAnchor.getApplicableAnchors 
+          head.anchors 
+          currentResult.evaluationState.evaluatedCommand 
+          currentResult.evaluationState.restCommand in
         let nextResult = evalTokens head currentResult anchors in
         aux nextResult
     | _ -> [currentResult]) 
