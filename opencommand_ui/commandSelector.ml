@@ -63,14 +63,14 @@ let optionOrArgumentValid configurationValid kind k =
 let updateConfiguration s selectedCommandKey =
     let entry = s in
     let tokens = Entry_tokenizer.Main.parse_with_error (Lexing.from_string entry) in
-    let selectedCommand = Opencommand.Utils.StringMap.find_opt 
+    let selectedCommand = Opencommand.StringMap.find_opt 
     (selectedCommandKey |> Option.value ~default:"git") (Native_registry.Registry.registry) 
     |> Option.value ~default:Native_registry.Git.git in
 (*  Printf.printf "Selected command: %s\n" (match selectedCommandKey with Some k -> k | None -> "None"); *)
     let results = Opencommand.Entry.evalConfiguration entry (selectedCommand.features) in
     (match getSelectedConfiguration results with
       | Some (selectedFeatureId,Opencommand.Entry.Success selectedConfiguration) ->
-        let head = (Opencommand.Utils.StringMap.find selectedFeatureId selectedCommand.features) in
+        let head = (Opencommand.StringMap.find selectedFeatureId selectedCommand.features) in
         let selectedConfigurationTemplate = Opencommand.Configuration.getConfigurationTemplate head in
         { 
           entry; 
@@ -100,7 +100,7 @@ let updateCommandFeature model feature =
       match model.selectedCommand with 
       Some cmd -> 
         (match Opencommand.Reverse.pathFromFeature feature cmd with
-        | Result.Ok _path -> let head = Opencommand.Utils.StringMap.find feature cmd.features in
+        | Result.Ok _path -> let head = Opencommand.StringMap.find feature cmd.features in
           Some (Opencommand.Configuration.getConfigurationTemplate head)
         | Result.Error _ -> None)
       | None -> None in
@@ -128,14 +128,14 @@ let update model = function
     | Some config -> 
         let v = match model.configurationTemplate with
           | None -> v
-          | Some template -> (match Opencommand.Utils.StringMap.find_opt k template.optionsTemplate with
+          | Some template -> (match Opencommand.StringMap.find_opt k template.optionsTemplate with
             | Some optionTypeformat -> (match optionTypeformat with
               | Opencommand.Typeformat.TUnit -> Opencommand.Typeformat.VUnit
               | Opencommand.Typeformat.TEnum l -> (match v with Opencommand.Typeformat.VEnum s -> Opencommand.Typeformat.VEnum s | _ -> Opencommand.Typeformat.VEnum (List.hd l))
               | Opencommand.Typeformat.TString _ -> (match v with Opencommand.Typeformat.VString s -> Opencommand.Typeformat.VString s | _ -> v)
               | _ -> v)
             | None -> v) in
-        let newOptions = if on then Opencommand.Utils.StringMap.add k v config.Opencommand.Entry.options else Opencommand.Utils.StringMap.remove k config.Opencommand.Entry.options in
+        let newOptions = if on then Opencommand.StringMap.add k v config.Opencommand.Entry.options else Opencommand.StringMap.remove k config.Opencommand.Entry.options in
         Some { config with Opencommand.Entry.options = newOptions }
     | None -> None
     in
@@ -150,20 +150,20 @@ let update model = function
   | UpdateConf (opt_or_arg, k, v) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
       | Opt -> (match k with 
-        | Whole key -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add key v config.Opencommand.Entry.options }
-        | ListItem (key, index) -> let currentVal = Opencommand.Utils.StringMap.find_opt key config.Opencommand.Entry.options in
+        | Whole key -> Some { config with Opencommand.Entry.options = Opencommand.StringMap.add key v config.Opencommand.Entry.options }
+        | ListItem (key, index) -> let currentVal = Opencommand.StringMap.find_opt key config.Opencommand.Entry.options in
           (match currentVal with
           | Some (Opencommand.Typeformat.VList vs) -> 
               let newList = if index < List.length vs then List.mapi (fun i item -> if i = index then v else item) vs else vs @ [v] in
-              Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.add key (Opencommand.Typeformat.VList newList) config.Opencommand.Entry.options }
+              Some { config with Opencommand.Entry.options = Opencommand.StringMap.add key (Opencommand.Typeformat.VList newList) config.Opencommand.Entry.options }
           | _ -> None))
       | Arg -> (match k with 
-        | Whole key -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.add key v config.Opencommand.Entry.args }
-        | ListItem (key, index) -> let currentVal = Opencommand.Utils.StringMap.find_opt key config.Opencommand.Entry.args in
+        | Whole key -> Some { config with Opencommand.Entry.args = Opencommand.StringMap.add key v config.Opencommand.Entry.args }
+        | ListItem (key, index) -> let currentVal = Opencommand.StringMap.find_opt key config.Opencommand.Entry.args in
           (match currentVal with
           | Some (Opencommand.Typeformat.VList vs) -> 
               let newList = if index < List.length vs then List.mapi (fun i item -> if i = index then v else item) vs else vs @ [v] in
-              Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.add key (Opencommand.Typeformat.VList newList) config.Opencommand.Entry.args }
+              Some { config with Opencommand.Entry.args = Opencommand.StringMap.add key (Opencommand.Typeformat.VList newList) config.Opencommand.Entry.args }
           | _ -> None))
     )
     | None -> None
@@ -177,10 +177,10 @@ let update model = function
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | AddListItem (opt_or_arg, k) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
-      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
+      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.StringMap.update k (function
         | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (vs @ [Opencommand.Typeformat.VUnit]))
         | _ -> Some (Opencommand.Typeformat.VList [Opencommand.Typeformat.VUnit])) config.Opencommand.Entry.options }
-      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.update k (function
+      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.StringMap.update k (function
         | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (vs @ [Opencommand.Typeformat.VUnit]))
         | _ -> Some (Opencommand.Typeformat.VList [Opencommand.Typeformat.VUnit])) config.Opencommand.Entry.args }
     )
@@ -195,10 +195,10 @@ let update model = function
     return @@ { model with configuration = newConfig; entry = entry; configurationValid = configurationValid }
   | DeleteListItem (opt_or_arg, k, index) -> let newConfig = match model.configuration with
     | Some config -> (match opt_or_arg with
-      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.Utils.StringMap.update k (function
+      | Opt -> Some { config with Opencommand.Entry.options = Opencommand.StringMap.update k (function
         | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (List.filteri (fun i _ -> i <> index) vs))
         | _ -> None) config.Opencommand.Entry.options }
-      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.Utils.StringMap.update k (function
+      | Arg -> Some { config with Opencommand.Entry.args = Opencommand.StringMap.update k (function
         | Some (Opencommand.Typeformat.VList vs) -> Some (Opencommand.Typeformat.VList (List.filteri (fun i _ -> i <> index) vs))
         | _ -> None) config.Opencommand.Entry.args }
     )
@@ -304,25 +304,25 @@ let displayConfiguration
   let open Opencommand.Entry in
   match feature, config, configurationTemplate, selectedCommand with
   | Some feature, Some config, Some configurationTemplate, Some selectedCommand ->
-  let args = Opencommand.Utils.StringMap.bindings config.args in
-  let head = Opencommand.Utils.StringMap.find feature selectedCommand.features in
+  let args = Opencommand.StringMap.bindings config.args in
+  let head = Opencommand.StringMap.find feature selectedCommand.features in
   let optionsTemplate = configurationTemplate.optionsTemplate in
-  let optionsBindings = Opencommand.Utils.StringMap.bindings optionsTemplate in
+  let optionsBindings = Opencommand.StringMap.bindings optionsTemplate in
   div ~a:[class_ ("configuration" ^ (if Result.is_error configurationValid then " invalid" else ""))] [
     text "Options:";
     if optionsBindings = [] then div [text "No options"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
     div (List.map (fun (k, optionTypeformat) -> 
-      let optionValue = Opencommand.Utils.StringMap.find_opt k config.options in
-      let optionDescription = (Opencommand.Utils.StringMap.find k head.options).Opencommand.Command.CommandOption.description in
+      let optionValue = Opencommand.StringMap.find_opt k config.options in
+      let optionDescription = (Opencommand.StringMap.find k head.options).Opencommand.Command.CommandOption.description in
       displayOptionOrArg Opt k optionValue optionTypeformat optionDescription (optionOrArgumentValid configurationValid Opt k)
     ) optionsBindings);
     text "Arguments:";
     if args = [] then div [text "No arguments"] ~a:[style "font-style" "italic"; style "color" "gray"]
     else
     div (List.map 
-    (fun (k, v) -> let argTypeformat = (Opencommand.Utils.StringMap.find k configurationTemplate.argsTemplate) in 
-      let description = (Opencommand.Utils.StringMap.find k head.args).Opencommand.Command.Argument.description in
+    (fun (k, v) -> let argTypeformat = (Opencommand.StringMap.find k configurationTemplate.argsTemplate) in 
+      let description = (Opencommand.StringMap.find k head.args).Opencommand.Command.Argument.description in
       displayOptionOrArg Arg k (Some v) argTypeformat description (optionOrArgumentValid configurationValid Arg k))
      args);
   ]
@@ -331,12 +331,12 @@ let displayConfiguration
   let displayPathResult (command:Opencommand.Command.command) selectedFeature (feature, result) =
     let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
     let getPathDescription () =
-      match Opencommand.Utils.StringMap.find_opt feature command.features with
+      match Opencommand.StringMap.find_opt feature command.features with
       | Some head -> head.Opencommand.Command.description
       | None -> "Unknown path"
     in
     let getPathFromFeature () =
-      match Opencommand.Utils.StringMap.find_opt feature command.features with
+      match Opencommand.StringMap.find_opt feature command.features with
       | Some head -> head.Opencommand.Command.path
       | None -> "Unknown path"
     in
@@ -359,7 +359,7 @@ let displayConfiguration
      ]
 
 let displaySelectableCommands (selectedCommand:string option) =
-  let commands = Native_registry.Registry.registry |> Opencommand.Utils.StringMap.bindings in
+  let commands = Native_registry.Registry.registry |> Opencommand.StringMap.bindings in
   div [
     text "Available commands:";
     div (List.map (fun (k, _head) -> div [elt "a" ~a:[

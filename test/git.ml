@@ -1,5 +1,5 @@
 open Alcotest
-open Opencommand.Utils.StringMap
+open Opencommand.StringMap
 
 let git = Native_registry.Git.git
 (* The tests *)

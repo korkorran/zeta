@@ -1,7 +1,7 @@
 
 
 type entry = string list
-type configuration = {options : (Typeformat.value) Utils.StringMap.t; args : Typeformat.value Utils.StringMap.t}
+type configuration = {options : (Typeformat.value) StringMap.t; args : Typeformat.value StringMap.t}
 [@@deriving show]
 
 
@@ -50,7 +50,7 @@ let compare_ongoingResult r1 r2 =
   
 
 let getOptionsFromLocation (head:Command.head) (location:string) : (string * Command.CommandOption.t) list =
-  Utils.StringMap.bindings head.options
+  StringMap.bindings head.options
   |> List.filter (fun (_, opt) -> opt.Command.CommandOption.location = location)
 
 let evalOption 
@@ -64,7 +64,7 @@ let evalOption
     | [] -> None
     | he::te ->
         if List.exists (fun enc -> enc = he) encodings then
-          let updatedOptions = Utils.StringMap.add id (Typeformat.VUnit) currentConfig.options in
+          let updatedOptions = StringMap.add id (Typeformat.VUnit) currentConfig.options in
           Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
         else
           None )
@@ -76,7 +76,7 @@ let evalOption
         match value_opt with
         | None -> None
         | Some value ->
-        let updatedOptions = Utils.StringMap.add id value currentConfig.options in
+        let updatedOptions = StringMap.add id value currentConfig.options in
         Some ({options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
       else
         None
@@ -110,12 +110,12 @@ let evalTokens
             restCommand = tc;
           }}]
       | Command.Token.ArgumentLocation l ->
-        (let encoding = (Utils.StringMap.find l head.args).encoding in
+        (let encoding = (StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
         | ArgList (_tf, min, _max) ->
           if min = 0 then 
-            let newConfig = {options=currentConfig.options; args=Utils.StringMap.add l (Typeformat.VList []) currentConfig.args} in
+            let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList []) currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry;
               restEntry = currentState.restEntry;
@@ -170,7 +170,7 @@ let evalTokens
             restCommand = tc;
           }}]
       | SingleArgumentLocation l ->
-        (let encoding = (Utils.StringMap.find l head.args).encoding in
+        (let encoding = (StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.ArgList _ -> failwith "argument encoding should not be ArgList (reserved to ArgumentLocation), this should have been caught in parsing"
         | Command.Argument.Single encoding ->
@@ -179,7 +179,7 @@ let evalTokens
             match value_opt with
               | None -> [{ongoingResult with case = Unmatched hc}]
               | Some value ->
-            let newArgs = Utils.StringMap.add l value currentConfig.args in
+            let newArgs = StringMap.add l value currentConfig.args in
             let newConfig = {options=currentConfig.options; args=newArgs} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry @ [he];
@@ -188,15 +188,15 @@ let evalTokens
               restCommand = List.tl currentState.restCommand;
             }}])
       | Command.Token.ArgumentLocation l ->
-        let encoding = (Utils.StringMap.find l head.args).encoding in
+        let encoding = (StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
         | ArgList (_tf, min, max) ->
-          let currentArgumentLocationState = Utils.StringMap.find_opt l currentConfig.args in
+          let currentArgumentLocationState = StringMap.find_opt l currentConfig.args in
           (match currentArgumentLocationState with
           | None -> 
               let he = List.hd currentState.restEntry in
-              let newArgs = Utils.StringMap.add l (Typeformat.VList [Typeformat.VString he]) currentConfig.args in
+              let newArgs = StringMap.add l (Typeformat.VList [Typeformat.VString he]) currentConfig.args in
               let newConfig = {options=currentConfig.options; args=newArgs} in
               let result = [{ongoingResult with configuration = newConfig; evaluationState = {
                 evaluatedEntry = currentState.evaluatedEntry @ [he];
@@ -224,7 +224,7 @@ let evalTokens
                 failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l max)
               else
                 let he = List.hd currentState.restEntry in
-                let newArgs = Utils.StringMap.add l (Typeformat.VList (l_args @ [Typeformat.VString he])) currentConfig.args in
+                let newArgs = StringMap.add l (Typeformat.VList (l_args @ [Typeformat.VString he])) currentConfig.args in
                 let newConfig = {options=currentConfig.options; args=newArgs} in
                 let newEvaluatedCommand = currentState.evaluatedCommand @ [hc] in
                 let newRestCommand =  List.tl currentState.restCommand in
@@ -269,7 +269,7 @@ type result = Success of configuration
 
 
 let getAllOptionsLocations (head:Command.head) : string list =
-  Utils.StringMap.bindings head.optionsLocations |> List.map (fun (id,_) -> id)
+  StringMap.bindings head.optionsLocations |> List.map (fun (id,_) -> id)
 let evalPath (entry:entry) (path:Command.EncodedPath.t) (head:Command.head) : result =
   let rec aux 
     (currentResult_list: ongoingResult list) 
@@ -286,7 +286,7 @@ let evalPath (entry:entry) (path:Command.EncodedPath.t) (head:Command.head) : re
     |> List.flatten
   in
   let initState = { case= Ongoing;
-       configuration = {options=Utils.StringMap.empty;args=Utils.StringMap.empty};
+       configuration = {options=StringMap.empty;args=StringMap.empty};
        evaluationState ={
         evaluatedEntry = [];
         restEntry = entry;
@@ -320,5 +320,5 @@ let evalConfiguration (rawEntry:string) (rawCommand:Command.commandFeatures) : (
     let encodedPath = Command.EncodedPath.from_string head.Command.path in
     let res = evalPath entry encodedPath head in
     (feature, res)
-  ) (Utils.StringMap.bindings rawCommand)
+  ) (StringMap.bindings rawCommand)
   | None -> []

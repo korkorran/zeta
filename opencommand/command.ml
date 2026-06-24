@@ -103,14 +103,14 @@ type optionLocation = {
 }
 
 type head = {
-  options: CommandOption.t Utils.StringMap.t;
-  optionsLocations: optionLocation Utils.StringMap.t;
-  args: Argument.t Utils.StringMap.t;
+  options: CommandOption.t StringMap.t;
+  optionsLocations: optionLocation StringMap.t;
+  args: Argument.t StringMap.t;
   description: string;
   path: string;
 }
 
-type commandFeatures = head Utils.StringMap.t
+type commandFeatures = head StringMap.t
 
 type info = {
   commandName: string;
@@ -131,7 +131,7 @@ let parseEncodedCommand (c:rawCommand) : command =
     EncodedPathMap.add encodedPath head acc
   ) c EncodedPathMap.empty *)
 
-let emptyCommandFeatures : commandFeatures = Utils.StringMap.empty
+let emptyCommandFeatures : commandFeatures = StringMap.empty
 
 let addFeature path (head:head) cmdFeatures =
-  Utils.StringMap.add path head cmdFeatures
+  StringMap.add path head cmdFeatures

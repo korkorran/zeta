@@ -1,5 +1,5 @@
 open Opencommand.Command
-open Opencommand.Utils
+open Opencommand
 
 let cdFeatures = emptyCommandFeatures
   |> addFeature "change_directory" {

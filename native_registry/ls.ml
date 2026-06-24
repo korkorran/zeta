@@ -1,5 +1,5 @@
 open Opencommand.Command
-open Opencommand.Utils
+open Opencommand
 
 let lsFeatures = emptyCommandFeatures
   |> addFeature "list_directory_contents" {

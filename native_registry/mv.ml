@@ -1,5 +1,5 @@
 open Opencommand.Command
-open Opencommand.Utils
+open Opencommand
 open Opencommand.TokenEncoding
 
 let mvFeatures = emptyCommandFeatures

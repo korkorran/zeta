@@ -1,5 +1,5 @@
 open Opencommand.Command
-open Opencommand.Utils
+open Opencommand
 
 let dotFeatures = emptyCommandFeatures
   |> addFeature "generate_visualization" {

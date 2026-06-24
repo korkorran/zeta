@@ -1,4 +1,3 @@
-module StringMap = struct
   include Map.Make(String);;
   let pp pp_v fmt m =
     let bindings = bindings m in
@@ -22,4 +21,3 @@ module StringMap = struct
           | Error _e -> acc  (* You might want to handle errors differently *)
         ) empty bindings)
     | _ -> Error "Invalid JSON format for StringMap"  (* You might want to handle this case differently *)
-end

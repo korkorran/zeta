@@ -1,6 +1,6 @@
 
 open Opencommand.Typeformat
-open Opencommand.Utils
+open Opencommand
 open Opencommand.Command
 let gitFeatures = emptyCommandFeatures
   |> addFeature "git_usage" {

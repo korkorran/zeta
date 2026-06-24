@@ -3,10 +3,10 @@ type error = FeatureNotFound of string | ValidationError of (Configuration.confi
 [@@deriving show]
 
 let pathFromFeature (feature:string) (command:Command.command) : (string, error) Result.t =
-  Result.Ok (Utils.StringMap.find feature command.features).Command.path
+  Result.Ok (StringMap.find feature command.features).Command.path
 
 let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
-  let result = Utils.StringMap.find_opt feature command.features in
+  let result = StringMap.find_opt feature command.features in
   match result with
   | None -> Result.Error (FeatureNotFound feature)
   | Some (head) ->
@@ -17,14 +17,14 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
     fun token -> match token with
     | Command.Token.Directive s -> s
     | Command.Token.SingleArgumentLocation l | Command.Token.ArgumentLocation l -> 
-        let argValue = Utils.StringMap.find_opt l configuration.Entry.args in
+        let argValue = StringMap.find_opt l configuration.Entry.args in
         (match argValue with
         | Some v -> Format.asprintf "%a" Typeformat.pp_value v
         | None -> Format.asprintf "%s" l)
     | Command.Token.OptionLocation l | Command.Token.SingleOptionLocation l ->
         let acceptableOptions = Entry.getOptionsFromLocation head l in
         let acceptedOptions = List.filter_map (fun (optName, opt) ->
-          let optValue = Utils.StringMap.find_opt optName configuration.Entry.options in
+          let optValue = StringMap.find_opt optName configuration.Entry.options in
           match optValue with
           | Some v -> (
           match opt.Command.CommandOption.encoding with

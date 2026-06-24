@@ -1,5 +1,5 @@
 open Opencommand.Command
-open Opencommand.Utils
+open Opencommand
 
 let pwdFeatures = emptyCommandFeatures
   |> addFeature "print_working_directory" {
