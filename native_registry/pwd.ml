@@ -5,8 +5,8 @@ let pwdFeatures = StringMap.empty
     options = StringMap.empty
     |> StringMap.add "physicPath" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-P"]; description = "Follow the physical directory structure"; location = "options" }
     |> StringMap.add "logicalPath" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-L"]; description = "Follow the logical directory structure"; location = "options" };
-    optionsLocations = StringMap.empty
-    |> StringMap.add "options" { Feature.from = 1; Feature.to_ = 10 };
+    anchors = StringMap.empty
+    |> StringMap.add "options" [];
     args = StringMap.empty;
     description = "Print the name of the current directory";
     path = "pwd [?options]";

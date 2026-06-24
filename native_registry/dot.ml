@@ -4,8 +4,8 @@ let dotFeatures = StringMap.empty
   |> Feature.addFeature "generate_visualization" {
     options = StringMap.empty
       |> StringMap.add "output" { Feature.CommandOption.encoding = Feature.CommandOption.ValueSuffix (["-o"], TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "write output in file"; location = "options" };
-    optionsLocations = StringMap.empty
-      |> StringMap.add "options" { Feature.from = 1; Feature.to_ = 10 };
+    anchors = StringMap.empty
+      |> StringMap.add "options" [];
     args = StringMap.empty
       |> StringMap.add "input" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),0,1); description = "Input file/directory" };
     description = "Compute graphviz visualization";

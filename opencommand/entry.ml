@@ -269,7 +269,7 @@ type result = Success of configuration
 
 
 let getAllOptionsLocations (head:Feature.feature) : string list =
-  StringMap.bindings head.optionsLocations |> List.map (fun (id,_) -> id)
+  StringMap.bindings head.anchors |> List.map (fun (id,_) -> id)
 let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.feature) : result =
   let rec aux 
     (currentResult_list: ongoingResult list) 
@@ -279,8 +279,8 @@ let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.featur
       (* Printf.printf "Current result: %s\n" (show_ongoingResult currentResult); *)
     match currentResult.case with
     | Ongoing ->
-        let optionsLocations = getAllOptionsLocations head in
-        let nextResult = evalTokens head currentResult optionsLocations in
+        let anchors = getAllOptionsLocations head in
+        let nextResult = evalTokens head currentResult anchors in
         aux nextResult
     | _ -> [currentResult]) 
     |> List.flatten

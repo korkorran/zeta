@@ -6,8 +6,8 @@ let lsFeatures = StringMap.empty
       |> StringMap.add "all" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-a"]; description = "Show all files"; location = "options" }
       |> StringMap.add "long" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-l"]; description = "Long format"; location = "options" }
       |> StringMap.add "verbose" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" };
-    optionsLocations = StringMap.empty
-      |> StringMap.add "options" { Feature.from = 1; Feature.to_ = 10 };
+    anchors = StringMap.empty
+      |> StringMap.add "options" [];
     args = StringMap.empty
       |> StringMap.add "directories" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),0,10); description = "Directories to list" };
     description = "List directory contents";

@@ -3,7 +3,7 @@ open Opencommand
 let gitFeatures = StringMap.empty
   |> Feature.addFeature "git_usage" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Git version control system";
         path = "git";
@@ -26,8 +26,8 @@ let gitFeatures = StringMap.empty
               location = "options";
             }
         );
-        optionsLocations = (StringMap.empty
-          |> StringMap.add "options" {Feature.from=1; Feature.to_=100}
+        anchors = (StringMap.empty
+          |> StringMap.add "options" []
         );
         args = StringMap.empty;
         description = "Record changes to the repository";
@@ -35,42 +35,42 @@ let gitFeatures = StringMap.empty
       }
   |> Feature.addFeature "push" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Update remote refs along with associated objects";
         path = "git push";
       }
   |> Feature.addFeature "pull" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Fetch from and integrate with another repository or a local branch";
         path = "git pull";
       }
   |> Feature.addFeature "status" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Show the working tree status";
         path = "git status";
       }
   |> Feature.addFeature "clone" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Clone a repository into a new directory";
         path = "git clone";
       }
   |> Feature.addFeature "list_branch" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "List branches";
         path = "git branch";
       }
   |> Feature.addFeature "create_branch" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = (let open Feature.Argument in StringMap.empty
           |> StringMap.add "branch_name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
         );
@@ -79,7 +79,7 @@ let gitFeatures = StringMap.empty
       }
   |> Feature.addFeature "checkout" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Switch branches or restore working tree files";
         path = "git checkout";
@@ -107,8 +107,8 @@ let gitFeatures = StringMap.empty
               location = "options";
             }
         );
-        optionsLocations = (StringMap.empty
-          |> StringMap.add "options" {Feature.from=1; Feature.to_=100}
+        anchors = (StringMap.empty
+          |> StringMap.add "options" []
         );
         args = StringMap.empty;
         description = "Get repository or global options";
@@ -116,7 +116,7 @@ let gitFeatures = StringMap.empty
       }
   |> Feature.addFeature "set_config" {
         options = StringMap.empty;
-        optionsLocations = StringMap.empty;
+        anchors = StringMap.empty;
         args = (let open Feature.Argument in StringMap.empty
           |> StringMap.add "key" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the config key"}
           |> StringMap.add "value" {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"}
@@ -227,8 +227,8 @@ let gitFeatures = StringMap.empty
               location = "options";
             }
           );
-        optionsLocations = (StringMap.empty
-          |> StringMap.add "options" {Feature.from=1; Feature.to_=100}
+        anchors = (StringMap.empty
+          |> StringMap.add "options" []
         );
         args = (StringMap.empty
           |> StringMap.add "branch-name" (let open Feature.Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})

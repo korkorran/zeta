@@ -23,14 +23,11 @@ module Argument = struct
   }
 end
 
-type optionLocation = {
-  from : int;
-  to_ : int;
-}
+
 
 type feature = {
   options: CommandOption.t StringMap.t;
-  optionsLocations: optionLocation StringMap.t;
+  anchors: OptionAnchor.anchor StringMap.t;
   args: Argument.t StringMap.t;
   description: string;
   path: string;

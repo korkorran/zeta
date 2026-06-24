@@ -3,7 +3,7 @@ open Opencommand
 let cdFeatures = StringMap.empty
   |> Feature.addFeature "change_directory" {
     options = StringMap.empty;
-    optionsLocations = StringMap.empty;
+    anchors = StringMap.empty;
     args = StringMap.empty
       |> StringMap.add "directory" { Feature.Argument.encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Directory to change to" };
     description = "Change the current directory";
