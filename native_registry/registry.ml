@@ -7,3 +7,4 @@ let registry : Opencommand.Command.command StringMap.t = StringMap.empty
   |> StringMap.add "pwd" Pwd.pwd
   |> StringMap.add "ls" Ls.ls
   |> StringMap.add "dot" Dot.dot
+  |> StringMap.add "tar" Tar.tar

@@ -20,4 +20,5 @@ let () =
         test_case "tokenize fails" `Quick (test_tokenizer "name Alice \"hello" (None));
       ];
       "ls", Ls.ls_test;
+      "tar", Tar.tar_test;
     ]

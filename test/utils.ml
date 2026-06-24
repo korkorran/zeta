@@ -7,8 +7,11 @@ let successfull_feature_Ids entry (command:Opencommand.Command.command) =
     | Opencommand.Entry.Success _ -> Some path
     | _ -> None
   ) results 
-let test_evaluated_feature_id path entry cmd () =
-  Alcotest.(check (list string)) "same path" [path] (successfull_feature_Ids entry cmd)
+let test_evaluated_feature_id feature entry cmd () =
+  Alcotest.(check (list string)) "same path" [feature] (successfull_feature_Ids entry cmd)
+
+let test_evaluated_feature_id_fails entry cmd () =
+  Alcotest.(check (list string)) "same path" [] (successfull_feature_Ids entry cmd)
 
 
 let generate_entry (command:Opencommand.Command.command) (feature:string) (configuration:Opencommand.Entry.configuration) : (string, Opencommand.Reverse.error) Result.t =
