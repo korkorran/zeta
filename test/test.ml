@@ -9,4 +9,5 @@ let () =
       "git", Git.git_test;
       "ls", Ls.ls_test;
       "tar", Tar.tar_test;
+      "mv", Mv.mv_test;
     ]
