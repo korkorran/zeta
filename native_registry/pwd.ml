@@ -1,13 +1,12 @@
-open Opencommand.Command
 open Opencommand
 
-let pwdFeatures = emptyCommandFeatures
-  |> addFeature "print_working_directory" {
+let pwdFeatures = StringMap.empty
+  |> Feature.addFeature "print_working_directory" {
     options = StringMap.empty
-    |> StringMap.add "physicPath" { CommandOption.encoding = CommandOption.SingleString ["-P"]; description = "Follow the physical directory structure"; location = "options" }
-    |> StringMap.add "logicalPath" { CommandOption.encoding = CommandOption.SingleString ["-L"]; description = "Follow the logical directory structure"; location = "options" };
+    |> StringMap.add "physicPath" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-P"]; description = "Follow the physical directory structure"; location = "options" }
+    |> StringMap.add "logicalPath" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-L"]; description = "Follow the logical directory structure"; location = "options" };
     optionsLocations = StringMap.empty
-    |> StringMap.add "options" { from = 1; to_ = 10 };
+    |> StringMap.add "options" { Feature.from = 1; Feature.to_ = 10 };
     args = StringMap.empty;
     description = "Print the name of the current directory";
     path = "pwd [?options]";

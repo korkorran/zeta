@@ -1,17 +1,17 @@
 
 open Opencommand.Typeformat
 open Opencommand
-open Opencommand.Command
-let gitFeatures = emptyCommandFeatures
-  |> addFeature "git_usage" {
+
+let gitFeatures = StringMap.empty
+  |> Feature.addFeature "git_usage" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Git version control system";
         path = "git";
       }
-  |> addFeature "commit" {
-        options = (let open CommandOption in StringMap.empty
+  |> Feature.addFeature "commit" {
+        options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--message" {
               encoding = ValueSuffix (["-m"; "--message"], (SimpleString (Some QuotedString)));
               description = "Use the given message as the commit message";
@@ -29,65 +29,65 @@ let gitFeatures = emptyCommandFeatures
             }
         );
         optionsLocations = (StringMap.empty
-          |> StringMap.add "options" {from=1; to_=100}
+          |> StringMap.add "options" {Feature.from=1; Feature.to_=100}
         );
         args = StringMap.empty;
         description = "Record changes to the repository";
         path = "git commit [?options]";
       }
-  |> addFeature "push" {
+  |> Feature.addFeature "push" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Update remote refs along with associated objects";
         path = "git push";
       }
-  |> addFeature "pull" {
+  |> Feature.addFeature "pull" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Fetch from and integrate with another repository or a local branch";
         path = "git pull";
       }
-  |> addFeature "status" {
+  |> Feature.addFeature "status" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Show the working tree status";
         path = "git status";
       }
-  |> addFeature "clone" {
+  |> Feature.addFeature "clone" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Clone a repository into a new directory";
         path = "git clone";
       }
-  |> addFeature "list_branch" {
+  |> Feature.addFeature "list_branch" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "List branches";
         path = "git branch";
       }
-  |> addFeature "create_branch" {
+  |> Feature.addFeature "create_branch" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
-        args = (let open Argument in StringMap.empty
+        args = (let open Feature.Argument in StringMap.empty
           |> StringMap.add "branch_name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
         );
         description = "Create a new branch";
         path = "git branch <branch_name>";
       }
-  |> addFeature "checkout" {
+  |> Feature.addFeature "checkout" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
         args = StringMap.empty;
         description = "Switch branches or restore working tree files";
         path = "git checkout";
       }
-  |> addFeature "get_config" {
-        options = (let open CommandOption in StringMap.empty
+  |> Feature.addFeature "get_config" {
+        options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--global" {
               encoding = SingleString ["--global"];
               description = "Use global config file";
@@ -110,24 +110,24 @@ let gitFeatures = emptyCommandFeatures
             }
         );
         optionsLocations = (StringMap.empty
-          |> StringMap.add "options" {from=1; to_=100}
+          |> StringMap.add "options" {Feature.from=1; Feature.to_=100}
         );
         args = StringMap.empty;
         description = "Get repository or global options";
         path = "git config [?options]";
       }
-  |> addFeature "set_config" {
+  |> Feature.addFeature "set_config" {
         options = StringMap.empty;
         optionsLocations = StringMap.empty;
-        args = (let open Argument in StringMap.empty
+        args = (let open Feature.Argument in StringMap.empty
           |> StringMap.add "key" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the config key"}
           |> StringMap.add "value" {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"}
         );
         description = "Set a config value";
         path = "git config <key> <value>";
       }
-  |> addFeature "merge" {
-        options = (let open CommandOption in StringMap.empty
+  |> Feature.addFeature "merge" {
+        options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--no-ff" {
               encoding = SingleString ["--no-ff"];
               description = "Create a merge commit even when the merge resolves as a fast-forward";
@@ -230,10 +230,10 @@ let gitFeatures = emptyCommandFeatures
             }
           );
         optionsLocations = (StringMap.empty
-          |> StringMap.add "options" {from=1; to_=100}
+          |> StringMap.add "options" {Feature.from=1; Feature.to_=100}
         );
         args = (StringMap.empty
-          |> StringMap.add "branch-name" (let open Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
+          |> StringMap.add "branch-name" (let open Feature.Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
         path = "git merge [?options] <branch-name>";

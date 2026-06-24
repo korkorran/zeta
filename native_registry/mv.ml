@@ -1,18 +1,17 @@
 open Opencommand.Command
 open Opencommand
-open Opencommand.TokenEncoding
 
-let mvFeatures = emptyCommandFeatures
-  |> addFeature "move_or_rename" {
+let mvFeatures = StringMap.empty
+  |> Feature.addFeature "move_or_rename" {
     options = StringMap.empty
-      |> StringMap.add "force" { CommandOption.encoding = CommandOption.SingleString ["-f"]; description = "Force move"; location = "options" }
-      |> StringMap.add "verbose" { CommandOption.encoding = CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" }
-      |> StringMap.add "interactive" { CommandOption.encoding = CommandOption.SingleString ["-i"]; description = "Prompt before move"; location = "options" };
+      |> StringMap.add "force" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-f"]; description = "Force move"; location = "options" }
+      |> StringMap.add "verbose" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" }
+      |> StringMap.add "interactive" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-i"]; description = "Prompt before move"; location = "options" };
     optionsLocations = StringMap.empty
-      |> StringMap.add "options" { from = 1; to_ = 10 };
+      |> StringMap.add "options" { Feature.from = 1; Feature.to_ = 10 };
     args = StringMap.empty
-      |> StringMap.add "source" { Argument.encoding = Argument.ArgList ((SimpleString (Some SingleWord)),1,3); description = "Source file/directory" }
-      |> StringMap.add "destination" { Argument.encoding = Argument.Single (SimpleString (Some SingleWord)); description = "Destination file/directory" };
+      |> StringMap.add "source" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.SingleWord)),1,3); description = "Source file/directory" }
+      |> StringMap.add "destination" { Feature.Argument.encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.SingleWord)); description = "Destination file/directory" };
     description = "Move or rename a file, a directory, or a symlink";
     path = "mv [?options] [<source>] <destination>";
   }

@@ -3,7 +3,7 @@ type error = FeatureNotFound of string | ValidationError of (Configuration.confi
 [@@deriving show]
 
 let pathFromFeature (feature:string) (command:Command.command) : (string, error) Result.t =
-  Result.Ok (StringMap.find feature command.features).Command.path
+  Result.Ok (StringMap.find feature command.features).Feature.path
 
 let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
   let result = StringMap.find_opt feature command.features in
@@ -12,7 +12,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
   | Some (head) ->
   let validationResult = Configuration.validateConfiguration configuration (Configuration.getConfigurationTemplate head) in
   if Result.is_error validationResult then Result.Error (ValidationError (Result.get_error validationResult)) else
-  let encodedPath = FeaturePath.EncodedPath.from_string head.Command.path in
+  let encodedPath = FeaturePath.EncodedPath.from_string head.Feature.path in
   let entryParts = List.map (
     fun token -> match token with
     | FeaturePath.Token.Directive s -> s
@@ -27,7 +27,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
           let optValue = StringMap.find_opt optName configuration.Entry.options in
           match optValue with
           | Some v -> (
-          match opt.Command.CommandOption.encoding with
+          match opt.Feature.CommandOption.encoding with
           | SingleString encodings -> Some (List.hd encodings)
           | ValueSuffix (suffixes, _valueFormat) -> 
               Some (List.hd suffixes ^ (Format.asprintf " %a" Typeformat.pp_value v)))

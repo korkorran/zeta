@@ -49,17 +49,17 @@ let compare_ongoingResult r1 r2 =
     
   
 
-let getOptionsFromLocation (head:Command.head) (location:string) : (string * Command.CommandOption.t) list =
-  StringMap.bindings head.options
-  |> List.filter (fun (_, opt) -> opt.Command.CommandOption.location = location)
+let getOptionsFromLocation (feature:Feature.feature) (location:string) : (string * Feature.CommandOption.t) list =
+  StringMap.bindings feature.options
+  |> List.filter (fun (_, opt) -> opt.Feature.CommandOption.location = location)
 
 let evalOption 
-  (id, option: string* Command.CommandOption.t) 
+  (id, option: string* Feature.CommandOption.t) 
   (restEntry: string list) 
   (currentConfig: configuration) 
   : (configuration * string list * string list) option =
-  match option.Command.CommandOption.encoding with
-  | Command.CommandOption.SingleString encodings -> (
+  match option.Feature.CommandOption.encoding with
+  | Feature.CommandOption.SingleString encodings -> (
     match restEntry with
     | [] -> None
     | he::te ->
@@ -68,7 +68,7 @@ let evalOption
           Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
         else
           None )
-  | Command.CommandOption.ValueSuffix (prefixes, encoding) -> (
+  | Feature.CommandOption.ValueSuffix (prefixes, encoding) -> (
     match restEntry with
     | h1::h2::te -> 
       if List.exists (fun prefix -> prefix = h1) prefixes then
@@ -92,7 +92,7 @@ let evalOption
   | he::te -> *)
 
 let evalTokens 
-  (head :Command.head)
+  (head :Feature.feature) 
   (ongoingResult : ongoingResult)
   (availableOptionsLocation: string list)
   : ongoingResult list =
@@ -112,7 +112,7 @@ let evalTokens
       | FeaturePath.Token.ArgumentLocation l ->
         (let encoding = (StringMap.find l head.args).encoding in
         match encoding with
-        | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        | Feature.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
         | ArgList (_tf, min, _max) ->
           if min = 0 then 
             let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList []) currentConfig.args} in
@@ -172,8 +172,8 @@ let evalTokens
       | SingleArgumentLocation l ->
         (let encoding = (StringMap.find l head.args).encoding in
         match encoding with
-        | Command.Argument.ArgList _ -> failwith "argument encoding should not be ArgList (reserved to ArgumentLocation), this should have been caught in parsing"
-        | Command.Argument.Single encoding ->
+        | Feature.Argument.ArgList _ -> failwith "argument encoding should not be ArgList (reserved to ArgumentLocation), this should have been caught in parsing"
+        | Feature.Argument.Single encoding ->
             let he = List.hd currentState.restEntry in
             let value_opt = Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he in
             match value_opt with
@@ -190,7 +190,7 @@ let evalTokens
       | FeaturePath.Token.ArgumentLocation l ->
         let encoding = (StringMap.find l head.args).encoding in
         match encoding with
-        | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        | Feature.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
         | ArgList (_tf, min, max) ->
           let currentArgumentLocationState = StringMap.find_opt l currentConfig.args in
           (match currentArgumentLocationState with
@@ -268,9 +268,9 @@ type result = Success of configuration
 [@@deriving show]
 
 
-let getAllOptionsLocations (head:Command.head) : string list =
+let getAllOptionsLocations (head:Feature.feature) : string list =
   StringMap.bindings head.optionsLocations |> List.map (fun (id,_) -> id)
-let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Command.head) : result =
+let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.feature) : result =
   let rec aux 
     (currentResult_list: ongoingResult list) 
     : (ongoingResult list) =
@@ -310,14 +310,14 @@ let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Command.head) 
   | Overflow x -> Overflow x
   | Ongoing -> Overflow "Evaluation did not finish, this should not happen"
 
-let evalConfiguration (rawEntry:string) (rawCommand:Command.commandFeatures) : (string * result) list =
+let evalConfiguration (rawEntry:string) (rawCommand:Feature.featureMap) : (string * result) list =
   (* let command = Command.parseEncodedCommand rawCommand in *)
   let tokens_opt = Entry_tokenizer.Main.parse_with_error (Lexing.from_string rawEntry) in
   match tokens_opt with
   | Some entry ->
   (* Placeholder implementation *)
   List.map (fun (feature, head) ->
-    let encodedPath = FeaturePath.EncodedPath.from_string head.Command.path in
+    let encodedPath = FeaturePath.EncodedPath.from_string head.Feature.path in
     let res = evalPath entry encodedPath head in
     (feature, res)
   ) (StringMap.bindings rawCommand)

@@ -1,4 +1,3 @@
-open Command
 
 
 type configurationTemplate = {
@@ -6,19 +5,19 @@ type configurationTemplate = {
   argsTemplate: Typeformat.typeformat StringMap.t;
 }
 
-let getConfigurationTemplate (head: head) : configurationTemplate =
+let getConfigurationTemplate (head: Feature.feature) : configurationTemplate =
   let optionsTemplate = head.options 
   |> StringMap.map (fun (opt) -> (
-    match opt.CommandOption.encoding with
-    | CommandOption.SingleString _ -> Typeformat.TUnit
-    | CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
+    match opt.Feature.CommandOption.encoding with
+    | Feature.CommandOption.SingleString _ -> Typeformat.TUnit
+    | Feature.CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
     )) 
   in
   let argsTemplate = head.args
   |> StringMap.map (fun (arg) -> (
-    match arg.Argument.encoding with
-    | Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
-    | Argument.ArgList (enc, _, _) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
+    match arg.Feature.Argument.encoding with
+    | Feature.Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
+    | Feature.Argument.ArgList (enc, _, _) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
   )) in
   { optionsTemplate; argsTemplate }
 

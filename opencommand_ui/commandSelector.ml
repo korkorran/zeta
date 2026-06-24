@@ -314,7 +314,7 @@ let displayConfiguration
     else
     div (List.map (fun (k, optionTypeformat) -> 
       let optionValue = Opencommand.StringMap.find_opt k config.options in
-      let optionDescription = (Opencommand.StringMap.find k head.options).Opencommand.Command.CommandOption.description in
+      let optionDescription = (Opencommand.StringMap.find k head.options).Opencommand.Feature.CommandOption.description in
       displayOptionOrArg Opt k optionValue optionTypeformat optionDescription (optionOrArgumentValid configurationValid Opt k)
     ) optionsBindings);
     text "Arguments:";
@@ -322,7 +322,7 @@ let displayConfiguration
     else
     div (List.map 
     (fun (k, v) -> let argTypeformat = (Opencommand.StringMap.find k configurationTemplate.argsTemplate) in 
-      let description = (Opencommand.StringMap.find k head.args).Opencommand.Command.Argument.description in
+      let description = (Opencommand.StringMap.find k head.args).Opencommand.Feature.Argument.description in
       displayOptionOrArg Arg k (Some v) argTypeformat description (optionOrArgumentValid configurationValid Arg k))
      args);
   ]
@@ -332,12 +332,12 @@ let displayConfiguration
     let isPathSuccessfull = match result with Opencommand.Entry.Success _ -> true | _ -> false in
     let getPathDescription () =
       match Opencommand.StringMap.find_opt feature command.features with
-      | Some head -> head.Opencommand.Command.description
+      | Some head -> head.Opencommand.Feature.description
       | None -> "Unknown path"
     in
     let getPathFromFeature () =
       match Opencommand.StringMap.find_opt feature command.features with
-      | Some head -> head.Opencommand.Command.path
+      | Some head -> head.Opencommand.Feature.path
       | None -> "Unknown path"
     in
     let (desc, _conf) = (match result with

@@ -1,14 +1,14 @@
 open Opencommand.Command
 open Opencommand
 
-let dotFeatures = emptyCommandFeatures
-  |> addFeature "generate_visualization" {
+let dotFeatures = StringMap.empty
+  |> Feature.addFeature "generate_visualization" {
     options = StringMap.empty
-      |> StringMap.add "output" { CommandOption.encoding = CommandOption.ValueSuffix (["-o"], SimpleString (Some FilePath)); description = "write output in file"; location = "options" };
+      |> StringMap.add "output" { Feature.CommandOption.encoding = Feature.CommandOption.ValueSuffix (["-o"], TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "write output in file"; location = "options" };
     optionsLocations = StringMap.empty
-      |> StringMap.add "options" { from = 1; to_ = 10 };
+      |> StringMap.add "options" { Feature.from = 1; Feature.to_ = 10 };
     args = StringMap.empty
-      |> StringMap.add "input" { Argument.encoding = Argument.ArgList ((SimpleString (Some FilePath)),0,1); description = "Input file/directory" };
+      |> StringMap.add "input" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),0,1); description = "Input file/directory" };
     description = "Compute graphviz visualization";
     path = "dot [?options] [<input>]";
   }

@@ -1,12 +1,12 @@
 open Opencommand.Command
 open Opencommand
 
-let cdFeatures = emptyCommandFeatures
-  |> addFeature "change_directory" {
+let cdFeatures = StringMap.empty
+  |> Feature.addFeature "change_directory" {
     options = StringMap.empty;
     optionsLocations = StringMap.empty;
     args = StringMap.empty
-      |> StringMap.add "directory" { Argument.encoding = Argument.Single (SimpleString (Some FilePath)); description = "Directory to change to" };
+      |> StringMap.add "directory" { Feature.Argument.encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Directory to change to" };
     description = "Change the current directory";
     path = "cd <directory>";
   }
