@@ -12,16 +12,16 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
   | Some (head) ->
   let validationResult = Configuration.validateConfiguration configuration (Configuration.getConfigurationTemplate head) in
   if Result.is_error validationResult then Result.Error (ValidationError (Result.get_error validationResult)) else
-  let encodedPath = Command.EncodedPath.from_string head.Command.path in
+  let encodedPath = FeaturePath.EncodedPath.from_string head.Command.path in
   let entryParts = List.map (
     fun token -> match token with
-    | Command.Token.Directive s -> s
-    | Command.Token.SingleArgumentLocation l | Command.Token.ArgumentLocation l -> 
+    | FeaturePath.Token.Directive s -> s
+    | FeaturePath.Token.SingleArgumentLocation l | FeaturePath.Token.ArgumentLocation l -> 
         let argValue = StringMap.find_opt l configuration.Entry.args in
         (match argValue with
         | Some v -> Format.asprintf "%a" Typeformat.pp_value v
         | None -> Format.asprintf "%s" l)
-    | Command.Token.OptionLocation l | Command.Token.SingleOptionLocation l ->
+    | FeaturePath.Token.OptionLocation l | FeaturePath.Token.SingleOptionLocation l ->
         let acceptableOptions = Entry.getOptionsFromLocation head l in
         let acceptedOptions = List.filter_map (fun (optName, opt) ->
           let optValue = StringMap.find_opt optName configuration.Entry.options in

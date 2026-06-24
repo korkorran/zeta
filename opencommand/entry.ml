@@ -8,16 +8,16 @@ type configuration = {options : (Typeformat.value) StringMap.t; args : Typeforma
 type evaluationState = {
   evaluatedEntry: string list;
   restEntry: string list;
-  evaluatedCommand: Command.Token.t list;
-  restCommand: Command.Token.t list;
+  evaluatedCommand: FeaturePath.Token.t list;
+  restCommand: FeaturePath.Token.t list;
 }
 [@@deriving show]
 
 type ongoingCase = 
   | Ongoing
   | Success 
-  | Unmatched of Command.Token.t 
-  | Incomplete of Command.Token.t
+  | Unmatched of FeaturePath.Token.t 
+  | Incomplete of FeaturePath.Token.t
   | Overflow of string
 [@@deriving show]
 
@@ -39,10 +39,10 @@ let compare_ongoingResult r1 r2 =
     | (Ongoing, Ongoing) -> 0
     | (Ongoing, _) -> -1
     | (_, Ongoing) -> 1
-    | (Unmatched t1, Unmatched t2) -> Command.Token.compare t1 t2
+    | (Unmatched t1, Unmatched t2) -> FeaturePath.Token.compare t1 t2
     | (Unmatched _, _) -> -1
     | (_, Unmatched _) -> 1
-    | (Incomplete t1, Incomplete t2) -> Command.Token.compare t1 t2
+    | (Incomplete t1, Incomplete t2) -> FeaturePath.Token.compare t1 t2
     | (Incomplete _, _) -> -1
     | (_, Incomplete _) -> 1
     | (Overflow s1, Overflow s2) -> compare s1 s2
@@ -101,7 +101,7 @@ let evalTokens
   match (currentState.restEntry, currentState.restCommand) with
   | [] , [] -> [{ongoingResult with case = Success}]
   | ([], hc::_) -> (match hc with 
-    Command.Token.OptionLocation _ | SingleOptionLocation _ -> 
+    FeaturePath.Token.OptionLocation _ | SingleOptionLocation _ -> 
       let tc = List.tl currentState.restCommand in
           [{ongoingResult with evaluationState = {
             evaluatedEntry = currentState.evaluatedEntry;
@@ -109,7 +109,7 @@ let evalTokens
             evaluatedCommand = currentState.evaluatedCommand @ [hc];
             restCommand = tc;
           }}]
-      | Command.Token.ArgumentLocation l ->
+      | FeaturePath.Token.ArgumentLocation l ->
         (let encoding = (StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
@@ -149,7 +149,7 @@ let evalTokens
     | [] ->
       let hc = List.hd currentState.restCommand in
       match hc with
-      | Command.Token.Directive d -> 
+      | FeaturePath.Token.Directive d -> 
           let he = List.hd currentState.restEntry in
           if he = d then
             [{ongoingResult with evaluationState = {
@@ -160,7 +160,7 @@ let evalTokens
             }}]
           else
             [{ongoingResult with case = Unmatched hc}]
-      | Command.Token.OptionLocation _ | SingleOptionLocation _  ->
+      | FeaturePath.Token.OptionLocation _ | SingleOptionLocation _  ->
          let hc = List.hd currentState.restCommand in
          let tc = List.tl currentState.restCommand in
           [{ongoingResult with evaluationState = {
@@ -187,7 +187,7 @@ let evalTokens
               evaluatedCommand = currentState.evaluatedCommand @ [hc];
               restCommand = List.tl currentState.restCommand;
             }}])
-      | Command.Token.ArgumentLocation l ->
+      | FeaturePath.Token.ArgumentLocation l ->
         let encoding = (StringMap.find l head.args).encoding in
         match encoding with
         | Command.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
@@ -262,15 +262,15 @@ let evalTokens
 
 
 type result = Success of configuration 
-  | Unmatched of Command.Token.t
-  | Incomplete of Command.Token.t 
+  | Unmatched of FeaturePath.Token.t
+  | Incomplete of FeaturePath.Token.t 
   | Overflow of string 
 [@@deriving show]
 
 
 let getAllOptionsLocations (head:Command.head) : string list =
   StringMap.bindings head.optionsLocations |> List.map (fun (id,_) -> id)
-let evalPath (entry:entry) (path:Command.EncodedPath.t) (head:Command.head) : result =
+let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Command.head) : result =
   let rec aux 
     (currentResult_list: ongoingResult list) 
     : (ongoingResult list) =
@@ -317,7 +317,7 @@ let evalConfiguration (rawEntry:string) (rawCommand:Command.commandFeatures) : (
   | Some entry ->
   (* Placeholder implementation *)
   List.map (fun (feature, head) ->
-    let encodedPath = Command.EncodedPath.from_string head.Command.path in
+    let encodedPath = FeaturePath.EncodedPath.from_string head.Command.path in
     let res = evalPath entry encodedPath head in
     (feature, res)
   ) (StringMap.bindings rawCommand)

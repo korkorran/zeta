@@ -342,8 +342,8 @@ let displayConfiguration
     in
     let (desc, _conf) = (match result with
       | Opencommand.Entry.Success c -> ("Success", Some c)
-      | Opencommand.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Opencommand.Command.Token.token_to_string t), None
-      | Opencommand.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Opencommand.Command.Token.token_to_string t), None
+      | Opencommand.Entry.Unmatched t -> Printf.sprintf "Unmatched token: %s" (Opencommand.FeaturePath.Token.token_to_string t), None
+      | Opencommand.Entry.Incomplete t -> Printf.sprintf "Incomplete token: %s" (Opencommand.FeaturePath.Token.token_to_string t), None
       | Opencommand.Entry.Overflow s -> Printf.sprintf "Overflow: %s" s,None) 
     in
     div ~a:[class_ (if selectedFeature = feature then "path-result selected" else "path-result")] [
