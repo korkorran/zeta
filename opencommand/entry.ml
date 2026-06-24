@@ -101,7 +101,7 @@ let evalTokens
   match (currentState.restEntry, currentState.restCommand) with
   | [] , [] -> [{ongoingResult with case = Success}]
   | ([], hc::_) -> (match hc with 
-    FeaturePath.Token.OptionLocation _ | SingleOptionLocation _ -> 
+    FeaturePath.Token.Anchor _ | FeaturePath.Token.SingleOptionAnchor _ -> 
       let tc = List.tl currentState.restCommand in
           [{ongoingResult with evaluationState = {
             evaluatedEntry = currentState.evaluatedEntry;
@@ -160,7 +160,7 @@ let evalTokens
             }}]
           else
             [{ongoingResult with case = Unmatched hc}]
-      | FeaturePath.Token.OptionLocation _ | SingleOptionLocation _  ->
+      | FeaturePath.Token.Anchor _ | FeaturePath.Token.SingleOptionAnchor _  ->
          let hc = List.hd currentState.restCommand in
          let tc = List.tl currentState.restCommand in
           [{ongoingResult with evaluationState = {
