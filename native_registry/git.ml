@@ -1,5 +1,3 @@
-
-open Opencommand.Typeformat
 open Opencommand
 
 let gitFeatures = StringMap.empty
@@ -13,7 +11,7 @@ let gitFeatures = StringMap.empty
   |> Feature.addFeature "commit" {
         options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--message" {
-              encoding = ValueSuffix (["-m"; "--message"], (SimpleString (Some QuotedString)));
+              encoding = ValueSuffix (["-m"; "--message"], (TokenEncoding.SimpleString (Some Typeformat.QuotedString)));
               description = "Use the given message as the commit message";
               location = "options";
             }

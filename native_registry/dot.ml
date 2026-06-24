@@ -1,4 +1,3 @@
-open Opencommand.Command
 open Opencommand
 
 let dotFeatures = StringMap.empty

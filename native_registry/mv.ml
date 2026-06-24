@@ -1,4 +1,3 @@
-open Opencommand.Command
 open Opencommand
 
 let mvFeatures = StringMap.empty
