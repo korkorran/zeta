@@ -7,7 +7,9 @@ let test_description () =
   (check string) "same string" "Git version control system" (find "git_usage" git.features).description
 let git_test = [
   test_case "description match" `Quick test_description;
-  test_case "[get_config] entry evaluation" `Quick (Utils.test_evaluated_feature_id "get_config" "git config --list" git);
+  test_case "[get_config] entry evaluation succeeds #1" `Quick (Utils.test_evaluated_feature_id "get_config" "git config --list" git);
+  test_case "[commit] entry evaluation succeeds #2" `Quick (Utils.test_evaluated_feature_id "commit" "git commit -m \"Initial commit\"" git);
+  test_case "[commit] entry evaluation fails : bad option location" `Quick (Utils.test_evaluated_feature_id_fails "git -m \"Initial commit\" commit" git);
   test_case "[get_config] generated entry #1" `Quick (Utils.test_generated_entry 
     "git config" 
     git 

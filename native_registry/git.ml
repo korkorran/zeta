@@ -27,7 +27,7 @@ let gitFeatures = StringMap.empty
             }
         );
         anchors = (StringMap.empty
-          |> StringMap.add "options" []
+          |> StringMap.add "options" [OptionAnchor.AfterLastDirective]
         );
         args = StringMap.empty;
         description = "Record changes to the repository";
