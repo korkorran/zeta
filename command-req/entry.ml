@@ -99,6 +99,52 @@ let argumentBounds : type a. a Feature.Argument.encoding -> int * int option = f
   | [] -> None
   | he::te -> *)
 
+(* evaluates the next entry token against a list argument location [hc] (named [l]),
+   holding between [min] and [max] values (max = None means unbounded) *)
+let evalListArgument
+  (ongoingResult : ongoingResult)
+  (hc : FeaturePath.Token.t)
+  (l : string)
+  (skipArgument : ongoingResult)
+  (min : int)
+  (max : int option)
+  (encoding : 'a TokenEncoding.tokenEncoding)
+  : ongoingResult list =
+  let currentConfig = ongoingResult.configuration in
+  let currentState = ongoingResult.evaluationState in
+  let reachesMax n = match max with Some m -> n >= m | None -> false in
+  let l_args = match StringMap.find_opt l currentConfig.args with
+    | None -> []
+    | Some (Typeformat.VList l_args) -> l_args
+    | Some _ -> failwith "This should not happen, argument location (multiple strings) should always be associated with a list in the configuration"
+  in
+  let n = List.length l_args in
+  if reachesMax n then
+    failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l (Option.get max))
+  else
+  (* the argument can be left empty only before any value has been consumed *)
+  let skipped =
+    if min = 0 && not (StringMap.mem l currentConfig.args) then
+      [{skipArgument with configuration = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList []) currentConfig.args}}]
+    else []
+  in
+  let he = List.hd currentState.restEntry in
+  match Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he with
+  | None -> if skipped = [] then [{ongoingResult with case = Unmatched hc}] else skipped
+  | Some value ->
+    let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList (l_args @ [value])) currentConfig.args} in
+    let consumed evaluatedCommand restCommand = {ongoingResult with configuration = newConfig; evaluationState = {
+      evaluatedEntry = currentState.evaluatedEntry @ [he];
+      restEntry = List.tl currentState.restEntry;
+      evaluatedCommand;
+      restCommand;
+    }} in
+    (* close the list: only once it holds enough values *)
+    let closed = if n + 1 >= min then [consumed (currentState.evaluatedCommand @ [hc]) (List.tl currentState.restCommand)] else [] in
+    (* keep the list open for more values: only while below the maximum *)
+    let kept = if reachesMax (n + 1) then [] else [consumed currentState.evaluatedCommand currentState.restCommand] in
+    skipped @ closed @ kept
+
 let evalTokens 
   (head :Feature.feature) 
   (ongoingResult : ongoingResult)
@@ -124,7 +170,9 @@ let evalTokens
           | Feature.Argument.Optional _ -> Typeformat.VOption None
           | Feature.Argument.Over _ | Feature.Argument.Between _ -> Typeformat.VList []
         in
-          if fst (argumentBounds arg.encoding) = 0 then 
+          (* a list argument already holding values was kept open when its values were consumed:
+             the alternative that closes it has been generated at that time *)
+          if fst (argumentBounds arg.encoding) = 0 && not (StringMap.mem l currentConfig.args) then 
             let newConfig = {options=currentConfig.options; args=StringMap.add l emptyValue currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry;
@@ -221,63 +269,10 @@ let evalTokens
               evaluatedCommand = currentState.evaluatedCommand @ [hc];
               restCommand = List.tl currentState.restCommand;
             }}; skipped])
-        | Feature.Argument.Over _ | Feature.Argument.Between _ ->
-          let (min, max) = argumentBounds arg.encoding in
-          let reachesMax n = match max with Some m -> n >= m | None -> false in
-          let currentArgumentLocationState = StringMap.find_opt l currentConfig.args in
-          (match currentArgumentLocationState with
-          | None -> 
-              let he = List.hd currentState.restEntry in
-              let newArgs = StringMap.add l (Typeformat.VList [Typeformat.VString he]) currentConfig.args in
-              let newConfig = {options=currentConfig.options; args=newArgs} in
-              let result = [{ongoingResult with configuration = newConfig; evaluationState = {
-                evaluatedEntry = currentState.evaluatedEntry @ [he];
-                restEntry = List.tl currentState.restEntry;
-                evaluatedCommand = currentState.evaluatedCommand;
-                restCommand = currentState.restCommand;
-              }};
-              {ongoingResult with configuration = newConfig; evaluationState = {
-                evaluatedEntry = currentState.evaluatedEntry @ [he];
-                restEntry = List.tl currentState.restEntry;
-                evaluatedCommand = currentState.evaluatedCommand @ [hc];
-                restCommand = List.tl currentState.restCommand;
-              }};
-              ] in 
-              if min = 0 then 
-                let emptyConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList []) currentConfig.args} in
-                {skipArgument with configuration = emptyConfig}::result
-              else result
-          | Some (Typeformat.VList l_args) -> let n = List.length l_args in
-              if reachesMax n then
-                failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l (Option.get max))
-              else
-                let he = List.hd currentState.restEntry in
-                let newArgs = StringMap.add l (Typeformat.VList (l_args @ [Typeformat.VString he])) currentConfig.args in
-                let newConfig = {options=currentConfig.options; args=newArgs} in
-                let newEvaluatedCommand = currentState.evaluatedCommand @ [hc] in
-                let newRestCommand =  List.tl currentState.restCommand in
-                if reachesMax (n + 1) then
-                  [{ongoingResult with configuration = newConfig; evaluationState = {
-                    evaluatedEntry = currentState.evaluatedEntry @ [he];
-                    restEntry = List.tl currentState.restEntry;
-                    evaluatedCommand = newEvaluatedCommand;
-                    restCommand = newRestCommand;
-                  }}]
-                else [
-                  {ongoingResult with configuration = newConfig; evaluationState = {
-                    evaluatedEntry = currentState.evaluatedEntry @ [he];
-                    restEntry = List.tl currentState.restEntry;
-                    evaluatedCommand = newEvaluatedCommand;
-                    restCommand = newRestCommand;
-                  }};
-                  {ongoingResult with configuration = newConfig; evaluationState = {
-                    evaluatedEntry = currentState.evaluatedEntry @ [he];
-                    restEntry = List.tl currentState.restEntry;
-                    evaluatedCommand = currentState.evaluatedCommand;
-                    restCommand = currentState.restCommand;
-                  }}
-                ]
-          | Some _ -> failwith "This should not happen, argument location (multiple strings) should always be associated with a list in the configuration")
+        | Feature.Argument.Over (min, encoding) ->
+          evalListArgument ongoingResult hc l skipArgument min None encoding
+        | Feature.Argument.Between (min, max, encoding) ->
+          evalListArgument ongoingResult hc l skipArgument min (Some max) encoding
 (*         let he = List.hd restEntry in
         let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
         let newConfig = {options=currentConfig.options; args=newArgs} in

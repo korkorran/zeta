@@ -36,4 +36,18 @@ let mv_test = [
         Opencommand.StringMap.add "destination" (Opencommand.Typeformat.VString "file2.txt")
       }
     );
+  test_case "[mv] entry evaluation succeeds with configuration - many sources" `Quick 
+    (Utils.test_evaluated_feature_id_with_configuration 
+      "move_or_rename" 
+      "mv a.txt b.txt c.txt d.txt dir" 
+      Native_registry.Mv.mv
+      { 
+      Command_req.Entry.options = Opencommand.StringMap.empty; 
+      args = Opencommand.StringMap.empty |>
+        Opencommand.StringMap.add "source" (
+          Opencommand.Typeformat.VList (List.map (fun s -> Opencommand.Typeformat.VString s) ["a.txt"; "b.txt"; "c.txt"; "d.txt"])
+        ) |>
+        Opencommand.StringMap.add "destination" (Opencommand.Typeformat.VString "dir")
+      }
+    );
 ]

@@ -10,4 +10,6 @@ let () =
       "ls", Ls.ls_test;
       "tar", Tar.tar_test;
       "mv", Mv.mv_test;
+      "dot", Dot.dot_test;
+      "list_arguments", List_arguments.list_arguments_test;
     ]
