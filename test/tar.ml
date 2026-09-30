@@ -16,7 +16,7 @@ let tar_test = [
       Command_req.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "files" (
-          Command_req.Typeformat.VList [Command_req.Typeformat.VString "file1.txt"; Command_req.Typeformat.VString "-c"]
+          Command_req.Typeformat.(Value (TList (TString None), ["file1.txt"; "-c"]))
         ) 
       }
     );

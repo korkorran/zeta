@@ -26,7 +26,7 @@ let list_arguments_test = [
       "sum" 
       "sum 1 2" 
       sum
-      { Command_req.Entry.options = empty; args = empty |> add "numbers" (VList [VInt 1; VInt 2]) }
+      { Command_req.Entry.options = empty; args = empty |> add "numbers" (Value (TList TInt, [1; 2])) }
     );
   test_case "[list] entry evaluation succeeds : maximum reached" `Quick 
     (Utils.test_evaluated_feature_id "sum" "sum 1 2 3" sum);

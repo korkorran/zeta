@@ -13,11 +13,15 @@ let test_evaluated_feature_id feature entry cmd () =
 let test_evaluated_feature_id_fails entry cmd () =
   Alcotest.(check (list string)) "same path" [] (List.map fst (successfull_feature_Ids entry cmd))
 
+let equal_configuration (c1:Command_req.Entry.configuration) (c2:Command_req.Entry.configuration) =
+  Opencommand.StringMap.equal Command_req.Typeformat.equal_value c1.options c2.options
+  && Opencommand.StringMap.equal Command_req.Typeformat.equal_value c1.args c2.args
+
 let test_evaluated_feature_id_with_configuration feature entry cmd expectedConfiguration () =
   let results = successfull_feature_Ids entry cmd in
   Alcotest.(check (list string)) "same path" [feature] (List.map fst results);
   match results with
-  | [(_path, configuration)] -> Alcotest.(check bool) "same configuration" true (expectedConfiguration=configuration)
+  | [(_path, configuration)] -> Alcotest.(check bool) "same configuration" true (equal_configuration expectedConfiguration configuration)
   | _ -> Alcotest.failf "Expected one successful feature evaluation but got %d" (List.length results)
 
 

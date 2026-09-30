@@ -1,5 +1,5 @@
 (library
  (name command_req)
  (modules typeformat entry reverse configuration optionAnchor)
- (preprocess (pps ppx_deriving.show ppx_deriving_yojson))
- (libraries opencommand entry_tokenizer tyre yojson ppx_deriving_yojson.runtime))
+ (preprocess (pps ppx_deriving.show))
+ (libraries opencommand entry_tokenizer tyre))

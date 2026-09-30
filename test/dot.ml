@@ -10,14 +10,14 @@ let dot_test = [
       "generate_visualization" 
       "dot" 
       dot
-      { Command_req.Entry.options = empty; args = empty |> add "input" (VOption None) }
+      { Command_req.Entry.options = empty; args = empty |> add "input" (Value (TOption (TString None), None)) }
     );
   test_case "[dot] entry evaluation succeeds : input provided" `Quick 
     (Utils.test_evaluated_feature_id_with_configuration 
       "generate_visualization" 
       "dot graph.gv" 
       dot
-      { Command_req.Entry.options = empty; args = empty |> add "input" (VOption (Some (VString "graph.gv"))) }
+      { Command_req.Entry.options = empty; args = empty |> add "input" (Value (TOption (TString None), Some "graph.gv")) }
     );
   test_case "[dot] entry evaluation succeeds : option and input provided" `Quick 
     (Utils.test_evaluated_feature_id_with_configuration 
@@ -25,8 +25,8 @@ let dot_test = [
       "dot -o out.png graph.gv" 
       dot
       { 
-      Command_req.Entry.options = empty |> add "output" (VString "out.png"); 
-      args = empty |> add "input" (VOption (Some (VString "graph.gv")))
+      Command_req.Entry.options = empty |> add "output" (Value (TString None, "out.png")); 
+      args = empty |> add "input" (Value (TOption (TString None), Some "graph.gv"))
       }
     );
   test_case "[dot] entry evaluation fails : too many inputs" `Quick 
@@ -35,15 +35,15 @@ let dot_test = [
     "dot" 
     dot 
     "generate_visualization" 
-    { Command_req.Entry.options = empty; args = empty |> add "input" (VOption None) }
+    { Command_req.Entry.options = empty; args = empty |> add "input" (Value (TOption (TString None), None)) }
   );
   test_case "[dot] generated entry : input provided" `Quick (Utils.test_generated_entry 
     "dot -o out.png graph.gv" 
     dot 
     "generate_visualization" 
     { 
-    Command_req.Entry.options = empty |> add "output" (VString "out.png"); 
-    args = empty |> add "input" (VOption (Some (VString "graph.gv")))
+    Command_req.Entry.options = empty |> add "output" (Value (TString None, "out.png")); 
+    args = empty |> add "input" (Value (TOption (TString None), Some "graph.gv"))
     }
   );
 ]
