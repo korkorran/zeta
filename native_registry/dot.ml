@@ -7,7 +7,7 @@ let dotFeatures = StringMap.empty
     anchors = StringMap.empty
       |> StringMap.add "options" [];
     args = StringMap.empty
-      |> StringMap.add "input" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),0,1); description = "Input file/directory" };
+      |> StringMap.add "input" (Feature.Argument.Any { encoding = Feature.Argument.Optional (TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Input file/directory" });
     description = "Compute graphviz visualization";
     path = FeaturePath.Token.[Directive "dot"; Anchor "options"; ArgumentLocation "input"];
   }

@@ -72,7 +72,7 @@ let gitFeatures = StringMap.empty
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = (let open Feature.Argument in StringMap.empty
-          |> StringMap.add "branch_name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
+          |> StringMap.add "branch_name" (Any {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"})
         );
         description = "Create a new branch";
         path = FeaturePath.Token.[Directive "git"; Directive "branch"; SingleArgumentLocation "branch_name"];
@@ -118,8 +118,8 @@ let gitFeatures = StringMap.empty
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = (let open Feature.Argument in StringMap.empty
-          |> StringMap.add "key" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the config key"}
-          |> StringMap.add "value" {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"}
+          |> StringMap.add "key" (Any {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the config key"})
+          |> StringMap.add "value" (Any {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"})
         );
         description = "Set a config value";
         path = FeaturePath.Token.[Directive "git"; Directive "config"; SingleArgumentLocation "key"; SingleArgumentLocation "value"];
@@ -231,7 +231,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "options" []
         );
         args = (StringMap.empty
-          |> StringMap.add "branch-name" (let open Feature.Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
+          |> StringMap.add "branch-name" (let open Feature.Argument in Any {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
         path = FeaturePath.Token.[Directive "git"; Directive "merge"; Anchor "options"; SingleArgumentLocation "branch-name"];

@@ -13,14 +13,18 @@ end
 
 
 module Argument = struct
-  type encoding = 
-    | Single : 'a TokenEncoding.tokenEncoding -> encoding
-    | ArgList : ('a TokenEncoding.tokenEncoding*int*int) -> encoding  (* min, max *)
+  type 'a encoding = 
+    | Optional : 'a TokenEncoding.tokenEncoding -> 'a option encoding
+    | Single : 'a TokenEncoding.tokenEncoding -> 'a encoding
+    | Over : int * 'a TokenEncoding.tokenEncoding -> 'a list encoding
+    | Between : int * int * 'a TokenEncoding.tokenEncoding -> 'a list encoding
 
-  type t = {
-    encoding: encoding;
+  type 'a t = {
+    encoding: 'a encoding;
     description: string;
   }
+
+  type any = Any : 'a t -> any
 end
 
 module OptionAnchor = struct
@@ -36,7 +40,7 @@ type feature = {
   path: FeaturePath.EncodedPath.t;
   options: CommandOption.t StringMap.t;
   anchors: OptionAnchor.t StringMap.t;
-  args: Argument.t StringMap.t;
+  args: Argument.any StringMap.t;
   description: string;
 }
 

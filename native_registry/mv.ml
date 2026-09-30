@@ -9,8 +9,8 @@ let mvFeatures = StringMap.empty
     anchors = StringMap.empty
       |> StringMap.add "options" [Feature.OptionAnchor.ExactLocation];
     args = StringMap.empty
-      |> StringMap.add "source" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.SingleWord)),1,3); description = "Source file/directory" }
-      |> StringMap.add "destination" { Feature.Argument.encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.SingleWord)); description = "Destination file/directory" };
+      |> StringMap.add "source" (Feature.Argument.Any { encoding = Feature.Argument.Between (1, 3, TokenEncoding.SimpleString (Some Typeformat.SingleWord)); description = "Source file/directory" })
+      |> StringMap.add "destination" (Feature.Argument.Any { encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.SingleWord)); description = "Destination file/directory" });
     description = "Move or rename a file, a directory, or a symlink";
     path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; SingleArgumentLocation "destination"];
   }

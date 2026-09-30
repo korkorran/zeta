@@ -8,7 +8,7 @@ let tarFeatures = StringMap.empty
     anchors = StringMap.empty
     |> StringMap.add "options" [ Feature.OptionAnchor.ExactLocation ];
     args = StringMap.empty
-    |> StringMap.add "files" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),1,10); description = "Files to include in the archive" };
+    |> StringMap.add "files" (Feature.Argument.Any { encoding = Feature.Argument.Between (1, 10, TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Files to include in the archive" });
     description = "Create a tar archive";
     path = FeaturePath.Token.[Directive "tar"; Anchor "options"; ArgumentLocation "files"];
   }

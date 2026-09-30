@@ -20,6 +20,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
     | FeaturePath.Token.SingleArgumentLocation l | FeaturePath.Token.ArgumentLocation l -> 
         let argValue = StringMap.find_opt l configuration.Entry.args in
         (match argValue with
+        | Some (Typeformat.VOption None) -> ""
         | Some v -> Format.asprintf "%a" Typeformat.pp_value v
         | None -> Format.asprintf "%s" l)
     | FeaturePath.Token.Anchor a ->

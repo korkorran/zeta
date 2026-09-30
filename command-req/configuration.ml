@@ -14,12 +14,14 @@ let getConfigurationTemplate (head: Feature.feature) : configurationTemplate =
     | Feature.CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
     )) 
   in
-  let argsTemplate = head.args
-  |> StringMap.map (fun (arg) -> (
-    match arg.Feature.Argument.encoding with
+  let typeformat_of_encoding : type a. a Feature.Argument.encoding -> Typeformat.typeformat = function
     | Feature.Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
-    | Feature.Argument.ArgList (enc, _, _) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
-  )) in
+    | Feature.Argument.Optional enc -> Typeformat.TOption (TokenEncoding.typeformat_of_tokenEncoding enc)
+    | Feature.Argument.Over (_, enc) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
+    | Feature.Argument.Between (_, _, enc) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
+  in
+  let argsTemplate = head.args
+  |> StringMap.map (fun (Feature.Argument.Any arg) -> typeformat_of_encoding arg.encoding) in
   { optionsTemplate; argsTemplate }
 
 let getEmptyConfiguration (template: configurationTemplate) : Entry.configuration =

@@ -83,6 +83,13 @@ let evalOption
         None
     | _ -> None)
 
+(* (min, max) number of entry tokens accepted by an argument, max = None means unbounded *)
+let argumentBounds : type a. a Feature.Argument.encoding -> int * int option = function
+  | Feature.Argument.Single _ -> (1, Some 1)
+  | Feature.Argument.Optional _ -> (0, Some 1)
+  | Feature.Argument.Over (min, _) -> (min, None)
+  | Feature.Argument.Between (min, max, _) -> (min, Some max)
+
 (*let evalArgument
   (id, option: string* Command.argument) 
   (restEntry: string list) 
@@ -111,12 +118,14 @@ let evalTokens
             restCommand = tc;
           }}]
       | FeaturePath.Token.ArgumentLocation l ->
-        (let encoding = (StringMap.find l head.args).encoding in
-        match encoding with
-        | Feature.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
-        | ArgList (_tf, min, _max) ->
-          if min = 0 then 
-            let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList []) currentConfig.args} in
+        (let (Feature.Argument.Any arg) = StringMap.find l head.args in
+        let emptyValue = match arg.encoding with
+          | Feature.Argument.Single _ -> failwith "argument encoding should not be Single (reserved to SingleArgumentLocation), this should have been caught in parsing"
+          | Feature.Argument.Optional _ -> Typeformat.VOption None
+          | Feature.Argument.Over _ | Feature.Argument.Between _ -> Typeformat.VList []
+        in
+          if fst (argumentBounds arg.encoding) = 0 then 
+            let newConfig = {options=currentConfig.options; args=StringMap.add l emptyValue currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry;
               restEntry = currentState.restEntry;
@@ -171,9 +180,9 @@ let evalTokens
             restCommand = tc;
           }}]
       | SingleArgumentLocation l ->
-        (let encoding = (StringMap.find l head.args).encoding in
-        match encoding with
-        | Feature.Argument.ArgList _ -> failwith "argument encoding should not be ArgList (reserved to ArgumentLocation), this should have been caught in parsing"
+        (let (Feature.Argument.Any arg) = StringMap.find l head.args in
+        match arg.encoding with
+        | Feature.Argument.Optional _ | Feature.Argument.Over _ | Feature.Argument.Between _ -> failwith "argument encoding should be Single (other encodings are reserved to ArgumentLocation), this should have been caught in parsing"
         | Feature.Argument.Single encoding ->
             let he = List.hd currentState.restEntry in
             let value_opt = Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he in
@@ -189,10 +198,32 @@ let evalTokens
               restCommand = List.tl currentState.restCommand;
             }}])
       | FeaturePath.Token.ArgumentLocation l ->
-        let encoding = (StringMap.find l head.args).encoding in
-        match encoding with
-        | Feature.Argument.Single _ -> failwith "argument encoding should not be SingleString (reserved to SingleArgumentLocation), this should have been caught in parsing"
-        | ArgList (_tf, min, max) ->
+        let (Feature.Argument.Any arg) = StringMap.find l head.args in
+        let skipArgument = {ongoingResult with evaluationState = {
+          evaluatedEntry = currentState.evaluatedEntry;
+          restEntry = currentState.restEntry;
+          evaluatedCommand = currentState.evaluatedCommand @ [hc];
+          restCommand = List.tl currentState.restCommand;
+        }} in
+        match arg.encoding with
+        | Feature.Argument.Single _ -> failwith "argument encoding should not be Single (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        | Feature.Argument.Optional encoding ->
+          let noValueConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VOption None) currentConfig.args} in
+          let skipped = {skipArgument with configuration = noValueConfig} in
+          let he = List.hd currentState.restEntry in
+          (match Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he with
+          | None -> [skipped]
+          | Some value ->
+            let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VOption (Some value)) currentConfig.args} in
+            [{ongoingResult with configuration = newConfig; evaluationState = {
+              evaluatedEntry = currentState.evaluatedEntry @ [he];
+              restEntry = List.tl currentState.restEntry;
+              evaluatedCommand = currentState.evaluatedCommand @ [hc];
+              restCommand = List.tl currentState.restCommand;
+            }}; skipped])
+        | Feature.Argument.Over _ | Feature.Argument.Between _ ->
+          let (min, max) = argumentBounds arg.encoding in
+          let reachesMax n = match max with Some m -> n >= m | None -> false in
           let currentArgumentLocationState = StringMap.find_opt l currentConfig.args in
           (match currentArgumentLocationState with
           | None -> 
@@ -213,23 +244,19 @@ let evalTokens
               }};
               ] in 
               if min = 0 then 
-                {ongoingResult with configuration = newConfig; evaluationState = {
-                evaluatedEntry = currentState.evaluatedEntry;
-                restEntry = currentState.restEntry;
-                evaluatedCommand = currentState.evaluatedCommand @ [hc];
-                restCommand = List.tl currentState.restCommand;
-              }}::result
+                let emptyConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList []) currentConfig.args} in
+                {skipArgument with configuration = emptyConfig}::result
               else result
           | Some (Typeformat.VList l_args) -> let n = List.length l_args in
-              if n >= max then
-                failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l max)
+              if reachesMax n then
+                failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l (Option.get max))
               else
                 let he = List.hd currentState.restEntry in
                 let newArgs = StringMap.add l (Typeformat.VList (l_args @ [Typeformat.VString he])) currentConfig.args in
                 let newConfig = {options=currentConfig.options; args=newArgs} in
                 let newEvaluatedCommand = currentState.evaluatedCommand @ [hc] in
                 let newRestCommand =  List.tl currentState.restCommand in
-                if n + 1 >= max then
+                if reachesMax (n + 1) then
                   [{ongoingResult with configuration = newConfig; evaluationState = {
                     evaluatedEntry = currentState.evaluatedEntry @ [he];
                     restEntry = List.tl currentState.restEntry;
