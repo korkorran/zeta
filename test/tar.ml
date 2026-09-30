@@ -13,7 +13,7 @@ let tar_test = [
       "tar file1.txt -c" 
       Native_registry.Tar.tar
       { 
-      Opencommand.Entry.options = Opencommand.StringMap.empty; 
+      Command_req.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "files" (
           Opencommand.Typeformat.VList [Opencommand.Typeformat.VString "file1.txt"; Opencommand.Typeformat.VString "-c"]

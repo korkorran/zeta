@@ -1,3 +1,4 @@
+open Opencommand
 
 let checkConstraint (evaluatedCommand) (restCommand) (constraint_) (id) =
   match constraint_ with

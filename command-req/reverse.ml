@@ -1,3 +1,4 @@
+open Opencommand
 
 type error = FeatureNotFound of string | ValidationError of (Configuration.configurationError) list
 [@@deriving show]

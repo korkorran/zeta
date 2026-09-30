@@ -13,7 +13,7 @@ let mv_test = [
       "mv -v file1.txt file2.txt" 
       Native_registry.Mv.mv
       { 
-      Opencommand.Entry.options = Opencommand.StringMap.empty |>
+      Command_req.Entry.options = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "verbose" (Opencommand.Typeformat.VUnit); 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "source" (
@@ -28,7 +28,7 @@ let mv_test = [
       "mv file1.txt -v file2.txt" 
       Native_registry.Mv.mv
       { 
-      Opencommand.Entry.options = Opencommand.StringMap.empty; 
+      Command_req.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "source" (
           Opencommand.Typeformat.VList [Opencommand.Typeformat.VString "file1.txt"; Opencommand.Typeformat.VString "-v"]

@@ -1,3 +1,4 @@
+open Opencommand
 
 
 type configurationTemplate = {
