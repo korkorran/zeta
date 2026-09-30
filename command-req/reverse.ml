@@ -3,7 +3,7 @@ open Opencommand
 type error = FeatureNotFound of string | ValidationError of (Configuration.configurationError) list
 [@@deriving show]
 
-let pathFromFeature (feature:string) (command:Command.command) : (string, error) Result.t =
+let pathFromFeature (feature:string) (command:Command.command) : (FeaturePath.EncodedPath.t, error) Result.t =
   Result.Ok (StringMap.find feature command.features).Feature.path
 
 let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
@@ -13,7 +13,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
   | Some (head) ->
   let validationResult = Configuration.validateConfiguration configuration (Configuration.getConfigurationTemplate head) in
   if Result.is_error validationResult then Result.Error (ValidationError (Result.get_error validationResult)) else
-  let encodedPath = FeaturePath.EncodedPath.from_string head.Feature.path in
+  let encodedPath = head.Feature.path in
   let entryParts = List.map (
     fun token -> match token with
     | FeaturePath.Token.Directive s -> s

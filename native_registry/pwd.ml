@@ -9,7 +9,7 @@ let pwdFeatures = StringMap.empty
     |> StringMap.add "options" [];
     args = StringMap.empty;
     description = "Print the name of the current directory";
-    path = "pwd ?options";
+    path = FeaturePath.Token.[Directive "pwd"; Anchor "options"];
   }
 
 let pwd : Opencommand.Command.command = {

@@ -12,7 +12,7 @@ let mvFeatures = StringMap.empty
       |> StringMap.add "source" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.SingleWord)),1,3); description = "Source file/directory" }
       |> StringMap.add "destination" { Feature.Argument.encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.SingleWord)); description = "Destination file/directory" };
     description = "Move or rename a file, a directory, or a symlink";
-    path = "mv ?options [<source>] <destination>";
+    path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; SingleArgumentLocation "destination"];
   }
 
 let mv : Opencommand.Command.command = {

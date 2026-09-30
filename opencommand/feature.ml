@@ -33,11 +33,11 @@ end
 
 
 type feature = {
+  path: FeaturePath.EncodedPath.t;
   options: CommandOption.t StringMap.t;
   anchors: OptionAnchor.t StringMap.t;
   args: Argument.t StringMap.t;
   description: string;
-  path: string;
 }
 
 type featureMap = feature StringMap.t

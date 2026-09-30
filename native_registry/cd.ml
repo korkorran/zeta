@@ -7,7 +7,7 @@ let cdFeatures = StringMap.empty
     args = StringMap.empty
       |> StringMap.add "directory" { Feature.Argument.encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Directory to change to" };
     description = "Change the current directory";
-    path = "cd <directory>";
+    path = FeaturePath.Token.[Directive "cd"; SingleArgumentLocation "directory"];
   }
 
 let cd : Opencommand.Command.command = {

@@ -10,7 +10,7 @@ let tarFeatures = StringMap.empty
     args = StringMap.empty
     |> StringMap.add "files" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),1,10); description = "Files to include in the archive" };
     description = "Create a tar archive";
-    path = "tar ?options [<files>]";
+    path = FeaturePath.Token.[Directive "tar"; Anchor "options"; ArgumentLocation "files"];
   }
 
 let tar : Opencommand.Command.command = {

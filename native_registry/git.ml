@@ -6,7 +6,7 @@ let gitFeatures = StringMap.empty
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Git version control system";
-        path = "git";
+        path = FeaturePath.Token.[Directive "git"];
       }
   |> Feature.addFeature "commit" {
         options = (let open Feature.CommandOption in StringMap.empty
@@ -31,42 +31,42 @@ let gitFeatures = StringMap.empty
         );
         args = StringMap.empty;
         description = "Record changes to the repository";
-        path = "git commit ?options";
+        path = FeaturePath.Token.[Directive "git"; Directive "commit"; Anchor "options"];
       }
   |> Feature.addFeature "push" {
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Update remote refs along with associated objects";
-        path = "git push";
+        path = FeaturePath.Token.[Directive "git"; Directive "push"];
       }
   |> Feature.addFeature "pull" {
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Fetch from and integrate with another repository or a local branch";
-        path = "git pull";
+        path = FeaturePath.Token.[Directive "git"; Directive "pull"];
       }
   |> Feature.addFeature "status" {
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Show the working tree status";
-        path = "git status";
+        path = FeaturePath.Token.[Directive "git"; Directive "status"];
       }
   |> Feature.addFeature "clone" {
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Clone a repository into a new directory";
-        path = "git clone";
+        path = FeaturePath.Token.[Directive "git"; Directive "clone"];
       }
   |> Feature.addFeature "list_branch" {
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "List branches";
-        path = "git branch";
+        path = FeaturePath.Token.[Directive "git"; Directive "branch"];
       }
   |> Feature.addFeature "create_branch" {
         options = StringMap.empty;
@@ -75,14 +75,14 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "branch_name" {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"}
         );
         description = "Create a new branch";
-        path = "git branch <branch_name>";
+        path = FeaturePath.Token.[Directive "git"; Directive "branch"; SingleArgumentLocation "branch_name"];
       }
   |> Feature.addFeature "checkout" {
         options = StringMap.empty;
         anchors = StringMap.empty;
         args = StringMap.empty;
         description = "Switch branches or restore working tree files";
-        path = "git checkout";
+        path = FeaturePath.Token.[Directive "git"; Directive "checkout"];
       }
   |> Feature.addFeature "get_config" {
         options = (let open Feature.CommandOption in StringMap.empty
@@ -112,7 +112,7 @@ let gitFeatures = StringMap.empty
         );
         args = StringMap.empty;
         description = "Get repository or global options";
-        path = "git config ?options";
+        path = FeaturePath.Token.[Directive "git"; Directive "config"; Anchor "options"];
       }
   |> Feature.addFeature "set_config" {
         options = StringMap.empty;
@@ -122,7 +122,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "value" {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"}
         );
         description = "Set a config value";
-        path = "git config <key> <value>";
+        path = FeaturePath.Token.[Directive "git"; Directive "config"; SingleArgumentLocation "key"; SingleArgumentLocation "value"];
       }
   |> Feature.addFeature "merge" {
         options = (let open Feature.CommandOption in StringMap.empty
@@ -234,7 +234,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "branch-name" (let open Feature.Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
-        path = "git merge ?options <branch-name>";
+        path = FeaturePath.Token.[Directive "git"; Directive "merge"; Anchor "options"; SingleArgumentLocation "branch-name"];
       }
 
 

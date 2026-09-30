@@ -319,7 +319,7 @@ let evalConfiguration (rawEntry:string) (rawCommand:Feature.featureMap) : (strin
   | Some entry ->
   (* Placeholder implementation *)
   List.map (fun (feature, head) ->
-    let encodedPath = FeaturePath.EncodedPath.from_string head.Feature.path in
+    let encodedPath = head.Feature.path in
     let res = evalPath entry encodedPath head in
     (feature, res)
   ) (StringMap.bindings rawCommand)

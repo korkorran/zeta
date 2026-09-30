@@ -11,7 +11,7 @@ let lsFeatures = StringMap.empty
     args = StringMap.empty
       |> StringMap.add "directories" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),0,10); description = "Directories to list" };
     description = "List directory contents";
-    path = "ls ?options [<directories>]";
+    path = FeaturePath.Token.[Directive "ls"; Anchor "options"; ArgumentLocation "directories"];
   }
 
 let ls : Opencommand.Command.command = {
