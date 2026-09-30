@@ -73,7 +73,7 @@ let evalOption
     match restEntry with
     | h1::h2::te -> 
       if List.exists (fun prefix -> prefix = h1) prefixes then
-        let value_opt = Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) h2 in
+        let value_opt = Typeformat.value_of_token (Typeformat.typeformat_of_tokenEncoding encoding) h2 in
         match value_opt with
         | None -> None
         | Some value ->
@@ -129,7 +129,7 @@ let evalListArgument
     else []
   in
   let he = List.hd currentState.restEntry in
-  match Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he with
+  match Typeformat.value_of_token (Typeformat.typeformat_of_tokenEncoding encoding) he with
   | None -> if skipped = [] then [{ongoingResult with case = Unmatched hc}] else skipped
   | Some value ->
     let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VList (l_args @ [value])) currentConfig.args} in
@@ -233,7 +233,7 @@ let evalTokens
         | Feature.Argument.Optional _ | Feature.Argument.Over _ | Feature.Argument.Between _ -> failwith "argument encoding should be Single (other encodings are reserved to ArgumentLocation), this should have been caught in parsing"
         | Feature.Argument.Single encoding ->
             let he = List.hd currentState.restEntry in
-            let value_opt = Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he in
+            let value_opt = Typeformat.value_of_token (Typeformat.typeformat_of_tokenEncoding encoding) he in
             match value_opt with
               | None -> [{ongoingResult with case = Unmatched hc}]
               | Some value ->
@@ -259,7 +259,7 @@ let evalTokens
           let noValueConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VOption None) currentConfig.args} in
           let skipped = {skipArgument with configuration = noValueConfig} in
           let he = List.hd currentState.restEntry in
-          (match Typeformat.value_of_token (TokenEncoding.typeformat_of_tokenEncoding encoding) he with
+          (match Typeformat.value_of_token (Typeformat.typeformat_of_tokenEncoding encoding) he with
           | None -> [skipped]
           | Some value ->
             let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.VOption (Some value)) currentConfig.args} in

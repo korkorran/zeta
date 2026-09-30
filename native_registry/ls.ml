@@ -9,7 +9,7 @@ let lsFeatures = StringMap.empty
     anchors = StringMap.empty
       |> StringMap.add "options" [];
     args = StringMap.empty
-      |> StringMap.add "directories" (Feature.Argument.Any { encoding = Feature.Argument.Between (0, 10, TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Directories to list" });
+      |> StringMap.add "directories" (Feature.Argument.Any { encoding = Feature.Argument.Between (0, 10, TokenEncoding.SimpleString (Some TokenEncoding.FilePath)); description = "Directories to list" });
     description = "List directory contents";
     path = FeaturePath.Token.[Directive "ls"; Anchor "options"; ArgumentLocation "directories"];
   }

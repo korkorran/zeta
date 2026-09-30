@@ -1,7 +1,7 @@
 open Alcotest
 open Opencommand
 open Opencommand.StringMap
-open Opencommand.Typeformat
+open Command_req.Typeformat
 
 (* a command taking between 2 and 3 integers *)
 let sum : Command.command = {

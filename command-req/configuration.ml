@@ -9,16 +9,16 @@ type configurationTemplate = {
 let getConfigurationTemplate (head: Feature.feature) : configurationTemplate =
   let typeformat_of_option_encoding : type a. a Feature.CommandOption.encoding -> Typeformat.typeformat = function
     | Feature.CommandOption.SingleString _ -> Typeformat.TUnit
-    | Feature.CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
+    | Feature.CommandOption.ValueSuffix (_, enc) -> Typeformat.typeformat_of_tokenEncoding enc
   in
   let optionsTemplate = head.options 
   |> StringMap.map (fun (Feature.CommandOption.Any opt) -> typeformat_of_option_encoding opt.encoding) 
   in
   let typeformat_of_encoding : type a. a Feature.Argument.encoding -> Typeformat.typeformat = function
-    | Feature.Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
-    | Feature.Argument.Optional enc -> Typeformat.TOption (TokenEncoding.typeformat_of_tokenEncoding enc)
-    | Feature.Argument.Over (_, enc) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
-    | Feature.Argument.Between (_, _, enc) -> Typeformat.TList (TokenEncoding.typeformat_of_tokenEncoding enc)
+    | Feature.Argument.Single enc -> Typeformat.typeformat_of_tokenEncoding enc
+    | Feature.Argument.Optional enc -> Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding enc)
+    | Feature.Argument.Over (_, enc) -> Typeformat.TList (Typeformat.typeformat_of_tokenEncoding enc)
+    | Feature.Argument.Between (_, _, enc) -> Typeformat.TList (Typeformat.typeformat_of_tokenEncoding enc)
   in
   let argsTemplate = head.args
   |> StringMap.map (fun (Feature.Argument.Any arg) -> typeformat_of_encoding arg.encoding) in
@@ -29,9 +29,9 @@ let getEmptyConfiguration (template: configurationTemplate) : Entry.configuratio
   let rec mapDefaultValue tf = match tf with 
       Typeformat.TUnit -> Typeformat.VUnit 
       | TString format_opt -> (match format_opt with
-          Some Typeformat.QuotedString -> Typeformat.VString ""
-          | Some Typeformat.SingleWord -> Typeformat.VString ""
-          | Some Typeformat.FilePath -> Typeformat.VString ""
+          Some TokenEncoding.QuotedString -> Typeformat.VString ""
+          | Some TokenEncoding.SingleWord -> Typeformat.VString ""
+          | Some TokenEncoding.FilePath -> Typeformat.VString ""
           | None -> Typeformat.VString "")
       | TInt -> Typeformat.VInt 0
       | TFloat -> Typeformat.VFloat 0.0

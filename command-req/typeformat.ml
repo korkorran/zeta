@@ -1,11 +1,10 @@
-type stringFormat = | QuotedString | SingleWord | FilePath
-[@@deriving yojson, show]
+open Opencommand
 
 type typeformat = TUnit
                 | TInt
                 | TFloat
                 | TBool
-                | TString of stringFormat option
+                | TString of TokenEncoding.stringFormat option
                 | TList of typeformat
                 | TOption of typeformat
                 | TTuple of typeformat list
@@ -39,9 +38,9 @@ let validationError_to_string = function
     | TInt -> "Value must be an integer"
     | TFloat -> "Value must be a float"
     | TBool -> "Value must be 'true' or 'false'"
-    | TString (Some QuotedString) -> "Value must be a quoted string"
-    | TString (Some SingleWord) -> "Value must be a single word without spaces"
-    | TString (Some FilePath) -> "Value must be a file path without spaces"
+    | TString (Some TokenEncoding.QuotedString) -> "Value must be a quoted string"
+    | TString (Some TokenEncoding.SingleWord) -> "Value must be a single word without spaces"
+    | TString (Some TokenEncoding.FilePath) -> "Value must be a file path without spaces"
     | TString None -> "Value must be a string"
     | TList _ -> "Value must be a list"
     | TOption _ -> "Value must be an option (None or Some value)"
@@ -56,13 +55,13 @@ let rec validate typeformat value =
   | TFloat, VFloat _ -> Result.Ok ()
   | TBool, VBool _ -> Result.Ok ()
   | TString format_opt, VString s -> let open Tyre in (match format_opt with
-    | Some QuotedString -> 
+    | Some TokenEncoding.QuotedString -> 
       let re = start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop in
-        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some QuotedString)))
-    | Some SingleWord -> let re = start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop in
-        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some SingleWord)))
-    | Some FilePath -> let re = start *> (rep1 (charset (Charset.union [(Charset.alnum); (Charset.punct)]))) <* stop in
-        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some FilePath)))
+        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some TokenEncoding.QuotedString)))
+    | Some TokenEncoding.SingleWord -> let re = start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop in
+        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some TokenEncoding.SingleWord)))
+    | Some TokenEncoding.FilePath -> let re = start *> (rep1 (charset (Charset.union [(Charset.alnum); (Charset.punct)]))) <* stop in
+        if execp (compile re) s then Result.Ok () else Result.Error (FormatError (TString (Some TokenEncoding.FilePath)))
     | None -> Result.Ok ())
   | TList tf, VList vs -> let error_message = ref None in
     if List.for_all (fun v -> match validate tf v with Result.Ok () -> true| Result.Error m -> error_message := Some m; false) vs
@@ -123,3 +122,8 @@ let value_of_token typeformat token =
   | TString _, s -> Some (VString s)
   | TEnum options, s when List.exists ((=) s) options -> Some (VEnum s)
   | _, _ -> None
+
+let typeformat_of_tokenEncoding : type a. a TokenEncoding.tokenEncoding -> typeformat = function
+  | TokenEncoding.SimpleString fmt -> TString fmt
+  | TokenEncoding.Integer -> TInt
+  | TokenEncoding.Enum options -> TEnum options

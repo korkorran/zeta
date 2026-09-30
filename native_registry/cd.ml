@@ -5,7 +5,7 @@ let cdFeatures = StringMap.empty
     options = StringMap.empty;
     anchors = StringMap.empty;
     args = StringMap.empty
-      |> StringMap.add "directory" (Feature.Argument.Any { encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "Directory to change to" });
+      |> StringMap.add "directory" (Feature.Argument.Any { encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some TokenEncoding.FilePath)); description = "Directory to change to" });
     description = "Change the current directory";
     path = FeaturePath.Token.[Directive "cd"; SingleArgumentLocation "directory"];
   }

@@ -1,6 +1,6 @@
 open Alcotest
 open Opencommand.StringMap
-open Opencommand.Typeformat
+open Command_req.Typeformat
 
 let dot = Native_registry.Dot.dot
 

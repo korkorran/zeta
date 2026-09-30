@@ -11,7 +11,7 @@ let gitFeatures = StringMap.empty
   |> Feature.addFeature "commit" {
         options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--message" (Any {
-              encoding = ValueSuffix (["-m"; "--message"], (TokenEncoding.SimpleString (Some Typeformat.QuotedString)));
+              encoding = ValueSuffix (["-m"; "--message"], (TokenEncoding.SimpleString (Some TokenEncoding.QuotedString)));
               description = "Use the given message as the commit message";
               location = "options";
             })

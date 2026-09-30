@@ -20,18 +20,18 @@ let git_test = [
     "git config --list" 
     git 
     "get_config" 
-    { Command_req.Entry.options = empty |> add "--list" (Opencommand.Typeformat.VUnit); args = empty }
+    { Command_req.Entry.options = empty |> add "--list" (Command_req.Typeformat.VUnit); args = empty }
   );
   test_case "[create_branch] generated entry #3" `Quick (Utils.test_generated_entry 
     "git branch my_branch" 
     git 
     "create_branch" 
-    { Command_req.Entry.options = empty; args = empty |> add "branch_name" (Opencommand.Typeformat.VString "my_branch") }
+    { Command_req.Entry.options = empty; args = empty |> add "branch_name" (Command_req.Typeformat.VString "my_branch") }
   );
   test_case "[create_branch] generated entry #4 (fails)" `Quick (Utils.test_generated_entry_fails 
-    (Command_req.Reverse.ValidationError [(Command_req.Configuration.Arg , "branch_name", Command_req.Configuration.Format (Opencommand.Typeformat.FormatError (Opencommand.Typeformat.TString (Some Opencommand.Typeformat.SingleWord))))])
+    (Command_req.Reverse.ValidationError [(Command_req.Configuration.Arg , "branch_name", Command_req.Configuration.Format (Command_req.Typeformat.FormatError (Command_req.Typeformat.TString (Some Opencommand.TokenEncoding.SingleWord))))])
     git 
     "create_branch" 
-    { Command_req.Entry.options = empty; args = empty |> add "branch_name" (Opencommand.Typeformat.VString "my branch") }
+    { Command_req.Entry.options = empty; args = empty |> add "branch_name" (Command_req.Typeformat.VString "my branch") }
   );
 ]
