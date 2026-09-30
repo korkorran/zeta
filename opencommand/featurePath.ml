@@ -1,6 +1,5 @@
-module Token = struct 
-  type t = Directive of string 
-    | SingleOptionAnchor of string 
+module Token = struct
+  type t = Directive of string
     | Anchor of string
     | SingleArgumentLocation of string
     | ArgumentLocation of string
@@ -8,64 +7,47 @@ module Token = struct
 
   let token_to_string = function
     | Directive s -> s
-    | SingleOptionAnchor s -> "?" ^ s
-    | Anchor s -> "[?" ^ s ^ "]"
+    | Anchor s -> "?" ^ s
     | SingleArgumentLocation s -> "<" ^ s ^ ">"
     | ArgumentLocation s -> "[<" ^ s ^ ">]"
 
+  (* returns the content of s between prefix and suffix, if s is wrapped by them *)
+  let unwrap prefix suffix s =
+    let lp = String.length prefix and ls = String.length suffix and l = String.length s in
+    if l > lp + ls && String.starts_with ~prefix s && String.ends_with ~suffix s then
+      Some (String.sub s lp (l - lp - ls))
+    else
+      None
+
   let token_of_string s =
-      if String.length s = 0 then
-        failwith "Empty token string"
-      else
-        match s.[0] with
-        | '?' -> SingleOptionAnchor (String.sub s 1 (String.length s - 1))
-        | '[' ->
-            if String.length s >= 3 && s.[1] = '?' && s.[String.length s - 1] = ']' then
-              Anchor (String.sub s 2 (String.length s - 3))
-            else if String.length s >= 4 && s.[1] = '<' && s.[String.length s - 2] = '>' && s.[String.length s - 1] = ']' then
-              ArgumentLocation (String.sub s 2 (String.length s - 4))
-            else
-              failwith ("Invalid token: " ^ s)
-        | '<' ->
-            if String.length s >= 3 && s.[String.length s - 1] = '>' then
-              SingleArgumentLocation (String.sub s 1 (String.length s - 2))
-            else
-              failwith ("Invalid argument token: " ^ s)
-        | _ -> Directive s
+    if s = "" then failwith "Empty token string";
+    match unwrap "?" "" s, unwrap "[<" ">]" s, unwrap "<" ">" s with
+    | Some a, _, _ -> Anchor a
+    | _, Some l, _ -> ArgumentLocation l
+    | _, _, Some l -> SingleArgumentLocation l
+    | _ when s.[0] = '?' || s.[0] = '[' || s.[0] = '<' -> failwith ("Invalid token: " ^ s)
+    | _ -> Directive s
 
   let compare t1 t2 =
+    let rank = function
+      | Directive _ -> 0
+      | Anchor _ -> 1
+      | ArgumentLocation _ -> 2
+      | SingleArgumentLocation _ -> 3
+    in
     match (t1, t2) with
-    | (Directive s1, Directive s2) -> String.compare s1 s2
-    | (Anchor s1, Anchor s2) -> String.compare s1 s2
-    | (ArgumentLocation s1, ArgumentLocation s2) -> String.compare s1 s2
+    | (Directive s1, Directive s2)
+    | (Anchor s1, Anchor s2)
+    | (ArgumentLocation s1, ArgumentLocation s2)
     | (SingleArgumentLocation s1, SingleArgumentLocation s2) -> String.compare s1 s2
-    | (SingleOptionAnchor s1, SingleOptionAnchor s2) -> String.compare s1 s2
-    | (Directive _, _) -> -1
-    | (_, Directive _) -> 1
-    | (Anchor _, _) -> -1
-    | (_, Anchor _) -> 1
-    | (SingleOptionAnchor _, _) -> -1
-    | (_, SingleOptionAnchor _) -> 1
-    | (ArgumentLocation _, _) -> -1
-    | (_, ArgumentLocation _) -> 1
+    | _ -> Int.compare (rank t1) (rank t2)
 end
 
 module EncodedPath = struct
   type t = Token.t list
 
   let from_string str =
-    let token_strings = String.split_on_char ' ' str |> List.map String.trim in
-    List.map Token.token_of_string token_strings
+    String.split_on_char ' ' str |> List.map String.trim |> List.map Token.token_of_string
 
-  let compare t1 t2 =
-    let rec aux l1 l2 =
-      match (l1, l2) with
-      | ([], []) -> 0
-      | ([], _) -> -1
-      | (_, []) -> 1
-      | (h1::t1, h2::t2) ->
-          let cmp = Token.compare h1 h2 in
-          if cmp <> 0 then cmp else aux t1 t2
-    in
-    aux t1 t2
+  let compare = List.compare Token.compare
 end

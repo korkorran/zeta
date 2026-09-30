@@ -15,11 +15,11 @@ let checkConstraint (evaluatedCommand) (restCommand) (constraint_) (id) =
     | [] -> false
     | firstToken::_ ->
       (match firstToken with
-      | FeaturePath.Token.SingleOptionAnchor anchorId | FeaturePath.Token.Anchor anchorId -> anchorId = id
+      | FeaturePath.Token.Anchor anchorId -> anchorId = id
       | _ -> false))
   | AfterLastDirective -> 
     (* if the anchor's id is in the evaluatedCommand, then the constraint is satisfied *)
-    if List.exists (fun token -> match token with FeaturePath.Token.Anchor a | FeaturePath.Token.SingleOptionAnchor a -> a = id | _ -> false) evaluatedCommand then
+    if List.exists (fun token -> match token with FeaturePath.Token.Anchor a -> a = id | _ -> false) evaluatedCommand then
       true
     else
       (* Check if there is any directive before the anchor's id in restCommand *)
@@ -29,7 +29,7 @@ let checkConstraint (evaluatedCommand) (restCommand) (constraint_) (id) =
         | token::rest ->
           (match token with
           | FeaturePath.Token.Directive _ -> true
-          | FeaturePath.Token.Anchor a | FeaturePath.Token.SingleOptionAnchor a -> if a = id then false else findIfDirectiveBeforeAnchor rest id
+          | FeaturePath.Token.Anchor a -> if a = id then false else findIfDirectiveBeforeAnchor rest id
           | _ -> findIfDirectiveBeforeAnchor rest id)
       in
       not (findIfDirectiveBeforeAnchor restCommand id)

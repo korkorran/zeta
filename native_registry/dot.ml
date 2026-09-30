@@ -9,7 +9,7 @@ let dotFeatures = StringMap.empty
     args = StringMap.empty
       |> StringMap.add "input" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),0,1); description = "Input file/directory" };
     description = "Compute graphviz visualization";
-    path = "dot [?options] [<input>]";
+    path = "dot ?options [<input>]";
   }
 
 let dot : Opencommand.Command.command = {

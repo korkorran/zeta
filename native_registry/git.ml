@@ -31,7 +31,7 @@ let gitFeatures = StringMap.empty
         );
         args = StringMap.empty;
         description = "Record changes to the repository";
-        path = "git commit [?options]";
+        path = "git commit ?options";
       }
   |> Feature.addFeature "push" {
         options = StringMap.empty;
@@ -112,7 +112,7 @@ let gitFeatures = StringMap.empty
         );
         args = StringMap.empty;
         description = "Get repository or global options";
-        path = "git config [?options]";
+        path = "git config ?options";
       }
   |> Feature.addFeature "set_config" {
         options = StringMap.empty;
@@ -234,7 +234,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "branch-name" (let open Feature.Argument in {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
-        path = "git merge [?options] <branch-name>";
+        path = "git merge ?options <branch-name>";
       }
 
 

@@ -17,7 +17,7 @@ type git_mapping = {
 
 let git_mapping : git_mapping = {
   commit = {
-    path = "git commit [?options]";
+    path = "git commit ?options";
     options = {
       message = {
         encoding = ValueSuffix (["-m"; "--message"], Lib.SimpleString);
