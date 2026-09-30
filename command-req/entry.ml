@@ -50,16 +50,16 @@ let compare_ongoingResult r1 r2 =
     
   
 
-let getOptionsFromAnchor (feature:Feature.feature) (availableAnchor:string) : (string * Feature.CommandOption.t) list =
+let getOptionsFromAnchor (feature:Feature.feature) (availableAnchor:string) : (string * Feature.CommandOption.any) list =
   StringMap.bindings feature.options
-  |> List.filter (fun (_, opt) -> opt.Feature.CommandOption.location = availableAnchor)
+  |> List.filter (fun (_, Feature.CommandOption.Any opt) -> opt.location = availableAnchor)
 
 let evalOption 
-  (id, option: string* Feature.CommandOption.t) 
+  (id, Feature.CommandOption.Any option: string* Feature.CommandOption.any) 
   (restEntry: string list) 
   (currentConfig: configuration) 
   : (configuration * string list * string list) option =
-  match option.Feature.CommandOption.encoding with
+  match option.encoding with
   | Feature.CommandOption.SingleString encodings -> (
     match restEntry with
     | [] -> None

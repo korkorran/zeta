@@ -10,21 +10,21 @@ let gitFeatures = StringMap.empty
       }
   |> Feature.addFeature "commit" {
         options = (let open Feature.CommandOption in StringMap.empty
-          |> StringMap.add "--message" {
+          |> StringMap.add "--message" (Any {
               encoding = ValueSuffix (["-m"; "--message"], (TokenEncoding.SimpleString (Some Typeformat.QuotedString)));
               description = "Use the given message as the commit message";
               location = "options";
-            }
-          |> StringMap.add "--all" {
+            })
+          |> StringMap.add "--all" (Any {
               encoding = SingleString ["-a"; "--all"];
               description = "Automatically stage files that have been modified and deleted, but new files you have not told Git about are not affected";
               location = "options";
-            }
-          |> StringMap.add "--amend" {
+            })
+          |> StringMap.add "--amend" (Any {
               encoding = SingleString ["--amend"];
               description = "Replace the tip of the current branch by creating a new commit";
               location = "options";
-            }
+            })
         );
         anchors = (StringMap.empty
           |> StringMap.add "options" [Feature.OptionAnchor.AfterLastDirective]
@@ -86,26 +86,26 @@ let gitFeatures = StringMap.empty
       }
   |> Feature.addFeature "get_config" {
         options = (let open Feature.CommandOption in StringMap.empty
-          |> StringMap.add "--global" {
+          |> StringMap.add "--global" (Any {
               encoding = SingleString ["--global"];
               description = "Use global config file";
               location = "options";
-            }
-          |> StringMap.add "--system" {
+            })
+          |> StringMap.add "--system" (Any {
               encoding = SingleString ["--system"];
               description = "Use system config file";
               location = "options";
-            }
-          |> StringMap.add "--local" {
+            })
+          |> StringMap.add "--local" (Any {
               encoding = SingleString ["--local"];
               description = "Use local config file";
               location = "options";
-            }
-          |> StringMap.add "--list" {
+            })
+          |> StringMap.add "--list" (Any {
               encoding = SingleString ["--list"];
               description = "List all config settings";
               location = "options";
-            }
+            })
         );
         anchors = (StringMap.empty
           |> StringMap.add "options" []
@@ -126,106 +126,106 @@ let gitFeatures = StringMap.empty
       }
   |> Feature.addFeature "merge" {
         options = (let open Feature.CommandOption in StringMap.empty
-          |> StringMap.add "--no-ff" {
+          |> StringMap.add "--no-ff" (Any {
               encoding = SingleString ["--no-ff"];
               description = "Create a merge commit even when the merge resolves as a fast-forward";
               location = "options";
-            }
-          |> StringMap.add "--ff-only" {
+            })
+          |> StringMap.add "--ff-only" (Any {
               encoding = SingleString ["--ff-only"];
               description = "Refuse to merge and exit with a non-zero status unless the current HEAD is already up to date or the merge can be resolved as a fast-forward";
               location = "options";
-            }
-          |> StringMap.add "--squash" {
+            })
+          |> StringMap.add "--squash" (Any {
               encoding = SingleString ["--squash"];
               description = "Produce the working tree and index state as if a real merge happened (except no commit is made), but do not actually make a commit or move the HEAD, and pretend as if the merge failed to allow further manipulation (e.g. by squashing the resulting changes into another commit)";
               location = "options";
-            }
-          |> StringMap.add "--no-squash" {
+            })
+          |> StringMap.add "--no-squash" (Any {
               encoding = SingleString ["--no-squash"];
               description = "Perform a normal merge (the default)";
               location = "options";
-            }
-          |> StringMap.add "--commit" {
+            })
+          |> StringMap.add "--commit" (Any {
               encoding = SingleString ["--commit"];
               description = "Perform a merge and commit the result (the default)";
               location = "options";
-            }
-          |> StringMap.add "--no-commit" {
+            })
+          |> StringMap.add "--no-commit" (Any {
               encoding = SingleString ["--no-commit"];
               description = "Perform a merge and do not commit the result";
               location = "options";
-            }
-          |> StringMap.add "--edit" {
+            })
+          |> StringMap.add "--edit" (Any {
               encoding = SingleString ["--edit"; "-e"];
               description = "Invoke the editor before committing the resulting merge to edit the auto-generated merge message";
               location = "options";
-            }
-          |> StringMap.add "--no-edit" {
+            })
+          |> StringMap.add "--no-edit" (Any {
               encoding = SingleString ["--no-edit"];
               description = "Use the auto-generated merge message without launching an editor";
               location = "options";
-            }
-          |> StringMap.add "--abort" {
+            })
+          |> StringMap.add "--abort" (Any {
               encoding = SingleString ["--abort"];
               description = "Abort the merge and try to reconstruct the pre-merge state";
               location = "options";
-            }
-          |> StringMap.add "--continue" {
+            })
+          |> StringMap.add "--continue" (Any {
               encoding = SingleString ["--continue"];
               description = "Continue the merge after having resolved any conflicts";
               location = "options";
-            }
-          |> StringMap.add "--quit" {
+            })
+          |> StringMap.add "--quit" (Any {
               encoding = SingleString ["--quit"];
               description = "Abort the merge and keep the working tree as it is";
               location = "options";
-            }
-          |> StringMap.add "--no-verify" {
+            })
+          |> StringMap.add "--no-verify" (Any {
               encoding = SingleString ["--no-verify"];
               description = "Bypass the pre-merge and commit-msg hooks";
               location = "options";
-            }
-          |> StringMap.add "--verify" {
+            })
+          |> StringMap.add "--verify" (Any {
               encoding = SingleString ["--verify"];
               description = "Run the pre-merge and commit-msg hooks (the default)";
               location = "options";
-            }
-          |> StringMap.add "--verify-signatures" {
+            })
+          |> StringMap.add "--verify-signatures" (Any {
               encoding = SingleString ["--verify-signatures"];
               description = "Verify the GPG signature of the commits being merged";
               location = "options";
-            }
-          |> StringMap.add "--no-verify-signatures" {
+            })
+          |> StringMap.add "--no-verify-signatures" (Any {
               encoding = SingleString ["--no-verify-signatures"];
               description = "Do not verify the GPG signature of the commits being merged (the default)";
               location = "options";
-            }
-          |> StringMap.add "--signoff" {
+            })
+          |> StringMap.add "--signoff" (Any {
               encoding = SingleString ["--signoff"; "-s"];
               description = "Add Signed-off-by line by the committer at the end of the commit log message";
               location = "options";
-            }
-          |> StringMap.add "--no-signoff" {
+            })
+          |> StringMap.add "--no-signoff" (Any {
               encoding = SingleString ["--no-signoff"];
               description = "Do not add Signed-off-by line by the committer at the end of the commit log message (the default)";
               location = "options";
-            }
-          |> StringMap.add "--gpg-sign" {
+            })
+          |> StringMap.add "--gpg-sign" (Any {
               encoding = SingleString ["--gpg-sign"; "-S"];
               description = "GPG-sign the commits being merged";
               location = "options";
-            }
-          |> StringMap.add "--no-gpg-sign" {
+            })
+          |> StringMap.add "--no-gpg-sign" (Any {
               encoding = SingleString ["--no-gpg-sign"];
               description = "Do not GPG-sign the commits being merged (the default)";
               location = "options";
-            }
-          |> StringMap.add "--strategy" {
+            })
+          |> StringMap.add "--strategy" (Any {
               encoding = ValueSuffix (["--strategy"], Enum ["resolve"; "recursive"; "octopus"; "ours"; "subtree"]);
               description = "Use the given merge strategy";
               location = "options";
-            }
+            })
           );
         anchors = (StringMap.empty
           |> StringMap.add "options" []

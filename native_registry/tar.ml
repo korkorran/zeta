@@ -3,8 +3,8 @@ open Opencommand
 let tarFeatures = StringMap.empty
   |> Feature.addFeature "create_archive" {
     options = StringMap.empty
-    |> StringMap.add "create" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-c"]; description = "Create archive"; location = "options" }
-    |> StringMap.add "verbose" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" };
+    |> StringMap.add "create" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-c"]; description = "Create archive"; location = "options" })
+    |> StringMap.add "verbose" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" });
     anchors = StringMap.empty
     |> StringMap.add "options" [ Feature.OptionAnchor.ExactLocation ];
     args = StringMap.empty

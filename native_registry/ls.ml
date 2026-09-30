@@ -3,9 +3,9 @@ open Opencommand
 let lsFeatures = StringMap.empty
   |> Feature.addFeature "list_directory_contents" {
     options = StringMap.empty
-      |> StringMap.add "all" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-a"]; description = "Show all files"; location = "options" }
-      |> StringMap.add "long" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-l"]; description = "Long format"; location = "options" }
-      |> StringMap.add "verbose" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" };
+      |> StringMap.add "all" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-a"]; description = "Show all files"; location = "options" })
+      |> StringMap.add "long" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-l"]; description = "Long format"; location = "options" })
+      |> StringMap.add "verbose" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" });
     anchors = StringMap.empty
       |> StringMap.add "options" [];
     args = StringMap.empty

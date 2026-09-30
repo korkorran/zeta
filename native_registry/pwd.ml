@@ -3,8 +3,8 @@ open Opencommand
 let pwdFeatures = StringMap.empty
   |> Feature.addFeature "print_working_directory" {
     options = StringMap.empty
-    |> StringMap.add "physicPath" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-P"]; description = "Follow the physical directory structure"; location = "options" }
-    |> StringMap.add "logicalPath" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-L"]; description = "Follow the logical directory structure"; location = "options" };
+    |> StringMap.add "physicPath" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-P"]; description = "Follow the physical directory structure"; location = "options" })
+    |> StringMap.add "logicalPath" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-L"]; description = "Follow the logical directory structure"; location = "options" });
     anchors = StringMap.empty
     |> StringMap.add "options" [];
     args = StringMap.empty;

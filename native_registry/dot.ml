@@ -3,7 +3,7 @@ open Opencommand
 let dotFeatures = StringMap.empty
   |> Feature.addFeature "generate_visualization" {
     options = StringMap.empty
-      |> StringMap.add "output" { Feature.CommandOption.encoding = Feature.CommandOption.ValueSuffix (["-o"], TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "write output in file"; location = "options" };
+      |> StringMap.add "output" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.ValueSuffix (["-o"], TokenEncoding.SimpleString (Some Typeformat.FilePath)); description = "write output in file"; location = "options" });
     anchors = StringMap.empty
       |> StringMap.add "options" [];
     args = StringMap.empty

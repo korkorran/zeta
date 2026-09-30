@@ -1,14 +1,16 @@
 module CommandOption = struct
 
-  type encoding =
-  | SingleString : string list -> encoding
-  | ValueSuffix : string list * ('a TokenEncoding.tokenEncoding) -> encoding
+  type 'a encoding =
+  | SingleString : string list -> unit option encoding
+  | ValueSuffix : string list * ('a TokenEncoding.tokenEncoding) -> 'a encoding
 
-  type t = {
-    encoding: encoding;
+  type 'a t = {
+    encoding: 'a encoding;
     description: string;
     location: string;
   }
+
+  type any = Any : 'a t -> any
 end
 
 
@@ -38,7 +40,7 @@ end
 
 type feature = {
   path: FeaturePath.EncodedPath.t;
-  options: CommandOption.t StringMap.t;
+  options: CommandOption.any StringMap.t;
   anchors: OptionAnchor.t StringMap.t;
   args: Argument.any StringMap.t;
   description: string;

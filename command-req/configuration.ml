@@ -7,12 +7,12 @@ type configurationTemplate = {
 }
 
 let getConfigurationTemplate (head: Feature.feature) : configurationTemplate =
-  let optionsTemplate = head.options 
-  |> StringMap.map (fun (opt) -> (
-    match opt.Feature.CommandOption.encoding with
+  let typeformat_of_option_encoding : type a. a Feature.CommandOption.encoding -> Typeformat.typeformat = function
     | Feature.CommandOption.SingleString _ -> Typeformat.TUnit
     | Feature.CommandOption.ValueSuffix (_, enc) -> TokenEncoding.typeformat_of_tokenEncoding enc
-    )) 
+  in
+  let optionsTemplate = head.options 
+  |> StringMap.map (fun (Feature.CommandOption.Any opt) -> typeformat_of_option_encoding opt.encoding) 
   in
   let typeformat_of_encoding : type a. a Feature.Argument.encoding -> Typeformat.typeformat = function
     | Feature.Argument.Single enc -> TokenEncoding.typeformat_of_tokenEncoding enc
