@@ -1,15 +1,7 @@
 
-type optionConstraint = 
-  | ExactLocation
-  | AfterLastDirective
-
-type anchor = optionConstraint list
-
-type anchorsMap = anchor StringMap.t
-
 let checkConstraint (evaluatedCommand) (restCommand) (constraint_) (id) =
   match constraint_ with
-  | ExactLocation -> 
+  | Feature.OptionAnchor.ExactLocation -> 
     (* Check if the anchor's id is in the first token of restCommand *)
     (match restCommand with
     | [] -> false
@@ -17,7 +9,7 @@ let checkConstraint (evaluatedCommand) (restCommand) (constraint_) (id) =
       (match firstToken with
       | FeaturePath.Token.Anchor anchorId -> anchorId = id
       | _ -> false))
-  | AfterLastDirective -> 
+  | Feature.OptionAnchor.AfterLastDirective -> 
     (* if the anchor's id is in the evaluatedCommand, then the constraint is satisfied *)
     if List.exists (fun token -> match token with FeaturePath.Token.Anchor a -> a = id | _ -> false) evaluatedCommand then
       true
@@ -35,7 +27,7 @@ let checkConstraint (evaluatedCommand) (restCommand) (constraint_) (id) =
       not (findIfDirectiveBeforeAnchor restCommand id)
 
 let getApplicableAnchors 
-    (anchors:anchorsMap)
+    (anchors: Feature.OptionAnchor.t StringMap.t)
     (evaluatedCommand: FeaturePath.Token.t list)
     (restCommand: FeaturePath.Token.t list)
      : string list 

@@ -6,7 +6,7 @@ let tarFeatures = StringMap.empty
     |> StringMap.add "create" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-c"]; description = "Create archive"; location = "options" }
     |> StringMap.add "verbose" { Feature.CommandOption.encoding = Feature.CommandOption.SingleString ["-v"]; description = "Verbose output"; location = "options" };
     anchors = StringMap.empty
-    |> StringMap.add "options" [ OptionAnchor.ExactLocation ];
+    |> StringMap.add "options" [ Feature.OptionAnchor.ExactLocation ];
     args = StringMap.empty
     |> StringMap.add "files" { Feature.Argument.encoding = Feature.Argument.ArgList ((TokenEncoding.SimpleString (Some Typeformat.FilePath)),1,10); description = "Files to include in the archive" };
     description = "Create a tar archive";

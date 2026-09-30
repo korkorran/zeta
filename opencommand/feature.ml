@@ -23,11 +23,18 @@ module Argument = struct
   }
 end
 
+module OptionAnchor = struct
+  type constraint_ = ExactLocation | AfterLastDirective
+
+  type t = constraint_ list
+end
+
+
 
 
 type feature = {
   options: CommandOption.t StringMap.t;
-  anchors: OptionAnchor.anchor StringMap.t;
+  anchors: OptionAnchor.t StringMap.t;
   args: Argument.t StringMap.t;
   description: string;
   path: string;
