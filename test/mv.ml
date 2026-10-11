@@ -2,16 +2,16 @@ open Alcotest
 
 let mv_test = [
   test_case "[mv] entry evaluation fails : Option as first token" `Quick 
-    (Utils.test_evaluated_feature_id_fails "-f mv -v" Native_registry.Mv.mv);
+    (Utils.test_evaluated_feature_id_fails "-f mv -v" Registry.Mv.mv);
   test_case "[mv] entry evaluation fails : No arguments provided" `Quick 
-    (Utils.test_evaluated_feature_id_fails "mv -f -v README.md" Native_registry.Mv.mv);
+    (Utils.test_evaluated_feature_id_fails "mv -f -v README.md" Registry.Mv.mv);
   test_case "[mv] entry evaluation succeeds : Arguments provided" `Quick 
-    (Utils.test_evaluated_feature_id "move_or_rename" "mv file1.txt file2.txt" Native_registry.Mv.mv);
+    (Utils.test_evaluated_feature_id "move_or_rename" "mv file1.txt file2.txt" Registry.Mv.mv);
   test_case "[mv] entry evaluation succeeds with configuration" `Quick 
     (Utils.test_evaluated_feature_id_with_configuration 
       "move_or_rename" 
       "mv -v file1.txt file2.txt" 
-      Native_registry.Mv.mv
+      Registry.Mv.mv
       { 
       Zeta.Entry.options = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "verbose" Zeta.Typeformat.(Value (TOption TUnit, Some ())); 
@@ -26,7 +26,7 @@ let mv_test = [
     (Utils.test_evaluated_feature_id_with_configuration 
       "move_or_rename" 
       "mv file1.txt -v file2.txt" 
-      Native_registry.Mv.mv
+      Registry.Mv.mv
       { 
       Zeta.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
@@ -40,7 +40,7 @@ let mv_test = [
     (Utils.test_evaluated_feature_id_with_configuration 
       "move_or_rename" 
       "mv a.txt b.txt c.txt d.txt dir" 
-      Native_registry.Mv.mv
+      Registry.Mv.mv
       { 
       Zeta.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>

@@ -1,7 +1,7 @@
 open Alcotest
 open Opencommand.StringMap
 
-let git = Native_registry.Git.git
+let git = Registry.Git.git
 (* The tests *)
 let test_description () =
   (check string) "same string" "Git version control system" (find "git_usage" git.features).description

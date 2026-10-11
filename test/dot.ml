@@ -2,7 +2,7 @@ open Alcotest
 open Opencommand.StringMap
 open Zeta.Typeformat
 
-let dot = Native_registry.Dot.dot
+let dot = Registry.Dot.dot
 
 let dot_test = [
   test_case "[dot] entry evaluation succeeds : no input" `Quick 
