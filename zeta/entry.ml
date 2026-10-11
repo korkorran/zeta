@@ -76,7 +76,7 @@ let evalOption
         match Typeformat.value_of_token typeformat h2 with
         | None -> None
         | Some value ->
-        let updatedOptions = StringMap.add id (Typeformat.Value (typeformat, value)) currentConfig.options in
+        let updatedOptions = StringMap.add id (Typeformat.Value (Typeformat.TOption typeformat, Some value)) currentConfig.options in
         Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
       else
         None

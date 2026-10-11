@@ -29,9 +29,9 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Confi
         let acceptedOptions = List.filter_map (fun (optName, Feature.CommandOption.Any opt) ->
           let optValue = StringMap.find_opt optName configuration.Configuration.options in
           match optValue with
+          | Some (Typeformat.Value (Typeformat.TOption _, None)) -> None
           | Some v -> (
           match opt.encoding with
-          | Feature.CommandOption.SingleString _ when v = Typeformat.Value (Typeformat.TOption Typeformat.TUnit, None) -> None
           | Feature.CommandOption.SingleString encodings -> Some (List.hd encodings)
           | ValueSuffix (suffixes, _valueFormat) -> 
               Some (List.hd suffixes ^ (Format.asprintf " %a" Typeformat.pp_value v)))

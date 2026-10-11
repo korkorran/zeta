@@ -15,7 +15,7 @@ type configuration = {
 let getConfigurationTemplate (head: Feature.feature) : template =
   let typeformat_of_option_encoding : type a. a Feature.CommandOption.encoding -> a Typeformat.typeformat = function
     | Feature.CommandOption.SingleString _ -> Typeformat.TOption Typeformat.TUnit
-    | Feature.CommandOption.ValueSuffix (_, enc) -> Typeformat.typeformat_of_tokenEncoding enc
+    | Feature.CommandOption.ValueSuffix (_, enc) -> Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding enc)
   in
   let optionsT = head.options 
   |> StringMap.map (fun (Feature.CommandOption.Any opt) -> Typeformat.Any (typeformat_of_option_encoding opt.encoding)) 
@@ -31,7 +31,6 @@ let getConfigurationTemplate (head: Feature.feature) : template =
   { optionsT; argsT }
 
 let getEmptyConfiguration (template: template) : configuration =
-  let options = StringMap.empty in
   let rec defaultValue : type a. a Typeformat.typeformat -> a = function
       | Typeformat.TUnit -> ()
       | TString _ -> ""
@@ -43,7 +42,10 @@ let getEmptyConfiguration (template: template) : configuration =
       | TPair (a, b) -> (defaultValue a, defaultValue b)
       | TList _ -> []
   in
-  let args = template.argsT |> StringMap.map (fun (Typeformat.Any tf) -> Typeformat.Value (tf, defaultValue tf)) in
+  let defaultOf (Typeformat.Any tf) = Typeformat.Value (tf, defaultValue tf) in
+  (* every option template is an option type: options default to None *)
+  let options = template.optionsT |> StringMap.map defaultOf in
+  let args = template.argsT |> StringMap.map defaultOf in
   { options; args }
 
 type optionOrArgument = Opt | Arg

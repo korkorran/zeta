@@ -25,7 +25,7 @@ let dot_test = [
       "dot -o out.png graph.gv" 
       dot
       { 
-      Repr.Configuration.options = empty |> add "output" (Value (TString None, "out.png")); 
+      Repr.Configuration.options = empty |> add "output" (Value (TOption (TString None), Some "out.png")); 
       args = empty |> add "input" (Value (TOption (TString None), Some "graph.gv"))
       }
     );
@@ -42,8 +42,22 @@ let dot_test = [
     dot 
     "generate_visualization" 
     { 
-    Repr.Configuration.options = empty |> add "output" (Value (TString None, "out.png")); 
+    Repr.Configuration.options = empty |> add "output" (Value (TOption (TString None), Some "out.png")); 
     args = empty |> add "input" (Value (TOption (TString None), Some "graph.gv"))
     }
+  );
+  test_case "[dot] empty configuration : options and optional input are None" `Quick (fun () ->
+    let template = Repr.Configuration.getConfigurationTemplate (find "generate_visualization" dot.features) in
+    let expected = { 
+      Repr.Configuration.options = empty |> add "output" (Value (TOption (TString None), None)); 
+      args = empty |> add "input" (Value (TOption (TString None), None))
+    } in
+    Alcotest.(check bool) "same configuration" true (Utils.equal_configuration expected (Repr.Configuration.getEmptyConfiguration template))
+  );
+  test_case "[dot] generated entry : empty configuration" `Quick (Utils.test_generated_entry 
+    "dot" 
+    dot 
+    "generate_visualization" 
+    (Repr.Configuration.getEmptyConfiguration (Repr.Configuration.getConfigurationTemplate (find "generate_visualization" dot.features)))
   );
 ]
