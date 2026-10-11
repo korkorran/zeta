@@ -13,13 +13,13 @@ let mv_test = [
       "mv -v file1.txt file2.txt" 
       Native_registry.Mv.mv
       { 
-      Command_req.Entry.options = Opencommand.StringMap.empty |>
-        Opencommand.StringMap.add "verbose" Command_req.Typeformat.(Value (TOption TUnit, Some ())); 
+      Zeta.Entry.options = Opencommand.StringMap.empty |>
+        Opencommand.StringMap.add "verbose" Zeta.Typeformat.(Value (TOption TUnit, Some ())); 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "source" (
-          Command_req.Typeformat.(Value (TList (TString None), ["file1.txt"]))
+          Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"]))
         ) |>
-        Opencommand.StringMap.add "destination" Command_req.Typeformat.(Value (TString None, "file2.txt"))
+        Opencommand.StringMap.add "destination" Zeta.Typeformat.(Value (TString None, "file2.txt"))
       }
     );
   test_case "[mv] entry evaluation succeeds with configuration - bad option location" `Quick 
@@ -28,12 +28,12 @@ let mv_test = [
       "mv file1.txt -v file2.txt" 
       Native_registry.Mv.mv
       { 
-      Command_req.Entry.options = Opencommand.StringMap.empty; 
+      Zeta.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "source" (
-          Command_req.Typeformat.(Value (TList (TString None), ["file1.txt"; "-v"]))
+          Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"; "-v"]))
         ) |>
-        Opencommand.StringMap.add "destination" Command_req.Typeformat.(Value (TString None, "file2.txt"))
+        Opencommand.StringMap.add "destination" Zeta.Typeformat.(Value (TString None, "file2.txt"))
       }
     );
   test_case "[mv] entry evaluation succeeds with configuration - many sources" `Quick 
@@ -42,12 +42,12 @@ let mv_test = [
       "mv a.txt b.txt c.txt d.txt dir" 
       Native_registry.Mv.mv
       { 
-      Command_req.Entry.options = Opencommand.StringMap.empty; 
+      Zeta.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "source" (
-          Command_req.Typeformat.(Value (TList (TString None), ["a.txt"; "b.txt"; "c.txt"; "d.txt"]))
+          Zeta.Typeformat.(Value (TList (TString None), ["a.txt"; "b.txt"; "c.txt"; "d.txt"]))
         ) |>
-        Opencommand.StringMap.add "destination" Command_req.Typeformat.(Value (TString None, "dir"))
+        Opencommand.StringMap.add "destination" Zeta.Typeformat.(Value (TString None, "dir"))
       }
     );
 ]

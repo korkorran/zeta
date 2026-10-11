@@ -14,24 +14,24 @@ let git_test = [
     "git config" 
     git 
     "get_config" 
-    { Command_req.Entry.options = empty; args = empty }
+    { Zeta.Entry.options = empty; args = empty }
   );
   test_case "[get_config] generated entry #2" `Quick (Utils.test_generated_entry 
     "git config --list" 
     git 
     "get_config" 
-    { Command_req.Entry.options = empty |> add "--list" Command_req.Typeformat.(Value (TOption TUnit, Some ())); args = empty }
+    { Zeta.Entry.options = empty |> add "--list" Zeta.Typeformat.(Value (TOption TUnit, Some ())); args = empty }
   );
   test_case "[create_branch] generated entry #3" `Quick (Utils.test_generated_entry 
     "git branch my_branch" 
     git 
     "create_branch" 
-    { Command_req.Entry.options = empty; args = empty |> add "branch_name" Command_req.Typeformat.(Value (TString None, "my_branch")) }
+    { Zeta.Entry.options = empty; args = empty |> add "branch_name" Zeta.Typeformat.(Value (TString None, "my_branch")) }
   );
   test_case "[create_branch] generated entry #4 (fails)" `Quick (Utils.test_generated_entry_fails 
-    (Command_req.Reverse.ValidationError [(Command_req.Configuration.Arg , "branch_name", Command_req.Configuration.Format (Command_req.Typeformat.FormatError (Command_req.Typeformat.Any (Command_req.Typeformat.TString (Some Opencommand.TokenEncoding.SingleWord)))))])
+    (Zeta.Reverse.ValidationError [(Zeta.Configuration.Arg , "branch_name", Zeta.Configuration.Format (Zeta.Typeformat.FormatError (Zeta.Typeformat.Any (Zeta.Typeformat.TString (Some Opencommand.TokenEncoding.SingleWord)))))])
     git 
     "create_branch" 
-    { Command_req.Entry.options = empty; args = empty |> add "branch_name" Command_req.Typeformat.(Value (TString None, "my branch")) }
+    { Zeta.Entry.options = empty; args = empty |> add "branch_name" Zeta.Typeformat.(Value (TString None, "my branch")) }
   );
 ]

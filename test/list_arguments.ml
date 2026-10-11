@@ -1,7 +1,7 @@
 open Alcotest
 open Opencommand
 open Opencommand.StringMap
-open Command_req.Typeformat
+open Zeta.Typeformat
 
 (* a command taking between 2 and 3 integers *)
 let sum : Command.command = {
@@ -26,7 +26,7 @@ let list_arguments_test = [
       "sum" 
       "sum 1 2" 
       sum
-      { Command_req.Entry.options = empty; args = empty |> add "numbers" (Value (TList TInt, [1; 2])) }
+      { Zeta.Entry.options = empty; args = empty |> add "numbers" (Value (TList TInt, [1; 2])) }
     );
   test_case "[list] entry evaluation succeeds : maximum reached" `Quick 
     (Utils.test_evaluated_feature_id "sum" "sum 1 2 3" sum);

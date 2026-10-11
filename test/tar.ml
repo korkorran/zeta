@@ -13,10 +13,10 @@ let tar_test = [
       "tar file1.txt -c" 
       Native_registry.Tar.tar
       { 
-      Command_req.Entry.options = Opencommand.StringMap.empty; 
+      Zeta.Entry.options = Opencommand.StringMap.empty; 
       args = Opencommand.StringMap.empty |>
         Opencommand.StringMap.add "files" (
-          Command_req.Typeformat.(Value (TList (TString None), ["file1.txt"; "-c"]))
+          Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"; "-c"]))
         ) 
       }
     );

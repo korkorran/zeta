@@ -1,4 +1,4 @@
 (test
  (name test)
  (modules test git utils ls tar entry_tokenizer_test mv dot list_arguments)
- (libraries alcotest opencommand command_req native_registry entry_tokenizer))
+ (libraries alcotest opencommand zeta native_registry entry_tokenizer))
