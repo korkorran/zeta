@@ -75,7 +75,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "branch_name" (Any {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to create"})
         );
         description = "Create a new branch";
-        path = FeaturePath.Token.[Directive "git"; Directive "branch"; SingleArgumentLocation "branch_name"];
+        path = FeaturePath.Token.[Directive "git"; Directive "branch"; ArgumentLocation "branch_name"];
       }
   |> Feature.addFeature "checkout" {
         options = StringMap.empty;
@@ -122,7 +122,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "value" (Any {encoding = Single (SimpleString (Some SingleWord)); description = "Value to set for the config key"})
         );
         description = "Set a config value";
-        path = FeaturePath.Token.[Directive "git"; Directive "config"; SingleArgumentLocation "key"; SingleArgumentLocation "value"];
+        path = FeaturePath.Token.[Directive "git"; Directive "config"; ArgumentLocation "key"; ArgumentLocation "value"];
       }
   |> Feature.addFeature "merge" {
         options = (let open Feature.CommandOption in StringMap.empty
@@ -234,7 +234,7 @@ let gitFeatures = StringMap.empty
           |> StringMap.add "branch-name" (let open Feature.Argument in Any {encoding = Single (SimpleString (Some SingleWord)); description = "Name of the branch to merge"})
         );
         description = "Join two or more development histories together";
-        path = FeaturePath.Token.[Directive "git"; Directive "merge"; Anchor "options"; SingleArgumentLocation "branch-name"];
+        path = FeaturePath.Token.[Directive "git"; Directive "merge"; Anchor "options"; ArgumentLocation "branch-name"];
       }
 
 

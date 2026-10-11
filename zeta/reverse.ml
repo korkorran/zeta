@@ -17,7 +17,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
   let entryParts = List.map (
     fun token -> match token with
     | FeaturePath.Token.Directive s -> s
-    | FeaturePath.Token.SingleArgumentLocation l | FeaturePath.Token.ArgumentLocation l -> 
+    | FeaturePath.Token.ArgumentLocation l -> 
         let argValue = StringMap.find_opt l configuration.Entry.args in
         (match argValue with
         | Some (Typeformat.Value (Typeformat.TOption _, None)) -> ""

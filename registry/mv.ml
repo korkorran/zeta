@@ -12,7 +12,7 @@ let mvFeatures = StringMap.empty
       |> StringMap.add "source" (Feature.Argument.Any { encoding = Feature.Argument.Over (1, TokenEncoding.SimpleString (Some TokenEncoding.SingleWord)); description = "Source file/directory" })
       |> StringMap.add "destination" (Feature.Argument.Any { encoding = Feature.Argument.Single (TokenEncoding.SimpleString (Some TokenEncoding.SingleWord)); description = "Destination file/directory" });
     description = "Move or rename a file, a directory, or a symlink";
-    path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; SingleArgumentLocation "destination"];
+    path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; ArgumentLocation "destination"];
   }
 
 let mv : Ocf.Command.command = {

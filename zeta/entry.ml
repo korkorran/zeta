@@ -168,8 +168,8 @@ let evalTokens
           }}]
       | FeaturePath.Token.ArgumentLocation l ->
         (let (Feature.Argument.Any arg) = StringMap.find l head.args in
-        let emptyValue = match arg.encoding with
-          | Feature.Argument.Single _ -> failwith "argument encoding should not be Single (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        let emptyValue () = match arg.encoding with
+          | Feature.Argument.Single _ -> assert false (* a Single argument requires one value, see argumentBounds *)
           | Feature.Argument.Optional encoding -> Typeformat.Value (Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding encoding), None)
           | Feature.Argument.Over (_, encoding) -> Typeformat.Value (Typeformat.TList (Typeformat.typeformat_of_tokenEncoding encoding), [])
           | Feature.Argument.Between (_, _, encoding) -> Typeformat.Value (Typeformat.TList (Typeformat.typeformat_of_tokenEncoding encoding), [])
@@ -177,7 +177,7 @@ let evalTokens
           (* a list argument already holding values was kept open when its values were consumed:
              the alternative that closes it has been generated at that time *)
           if fst (argumentBounds arg.encoding) = 0 && not (StringMap.mem l currentConfig.args) then 
-            let newConfig = {options=currentConfig.options; args=StringMap.add l emptyValue currentConfig.args} in
+            let newConfig = {options=currentConfig.options; args=StringMap.add l (emptyValue ()) currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry;
               restEntry = currentState.restEntry;
@@ -231,24 +231,6 @@ let evalTokens
             evaluatedCommand = currentState.evaluatedCommand @ [hc];
             restCommand = tc;
           }}]
-      | SingleArgumentLocation l ->
-        (let (Feature.Argument.Any arg) = StringMap.find l head.args in
-        match arg.encoding with
-        | Feature.Argument.Optional _ | Feature.Argument.Over _ | Feature.Argument.Between _ -> failwith "argument encoding should be Single (other encodings are reserved to ArgumentLocation), this should have been caught in parsing"
-        | Feature.Argument.Single encoding ->
-            let he = List.hd currentState.restEntry in
-            let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
-            match Typeformat.value_of_token typeformat he with
-              | None -> [{ongoingResult with case = Unmatched hc}]
-              | Some value ->
-            let newArgs = StringMap.add l (Typeformat.Value (typeformat, value)) currentConfig.args in
-            let newConfig = {options=currentConfig.options; args=newArgs} in
-            [{ongoingResult with configuration = newConfig; evaluationState = {
-              evaluatedEntry = currentState.evaluatedEntry @ [he];
-              restEntry = List.tl currentState.restEntry;
-              evaluatedCommand = currentState.evaluatedCommand @ [hc];
-              restCommand = List.tl currentState.restCommand;
-            }}])
       | FeaturePath.Token.ArgumentLocation l ->
         let (Feature.Argument.Any arg) = StringMap.find l head.args in
         let skipArgument = {ongoingResult with evaluationState = {
@@ -258,7 +240,19 @@ let evalTokens
           restCommand = List.tl currentState.restCommand;
         }} in
         match arg.encoding with
-        | Feature.Argument.Single _ -> failwith "argument encoding should not be Single (reserved to SingleArgumentLocation), this should have been caught in parsing"
+        | Feature.Argument.Single encoding ->
+          let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
+          let he = List.hd currentState.restEntry in
+          (match Typeformat.value_of_token typeformat he with
+          | None -> [{ongoingResult with case = Unmatched hc}]
+          | Some value ->
+            let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (typeformat, value)) currentConfig.args} in
+            [{ongoingResult with configuration = newConfig; evaluationState = {
+              evaluatedEntry = currentState.evaluatedEntry @ [he];
+              restEntry = List.tl currentState.restEntry;
+              evaluatedCommand = currentState.evaluatedCommand @ [hc];
+              restCommand = List.tl currentState.restCommand;
+            }}])
         | Feature.Argument.Optional encoding ->
           let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
           let noValueConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (Typeformat.TOption typeformat, None)) currentConfig.args} in
