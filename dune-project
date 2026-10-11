@@ -1,15 +1,15 @@
 (lang dune 3.17)
 
-(name opencommand)
+(name open-command)
 
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github korkorran/open-command))
 
-(authors "Author Name <author@example.com>")
+(authors "Frédéric Lang <frederic.ln.lang@gmail.com>")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
+(maintainers "Frédéric Lang <frederic.ln.lang@gmail.com>")
 
 (license LICENSE)
 
@@ -18,12 +18,11 @@
 (using menhir 3.0)
 
 (package
- (name opencommand)
+ (name open-command)
  (allow_empty)
- (synopsis "A short synopsis")
+ (synopsis "A format and a algorithm to parse the command line")
  (description "A longer description")
  (depends ocaml (alcotest :with-test))
  (tags
-  ("add topics" "to describe" your project)))
+  ("command" "terminal" "parser" "format" "ocaml")))
 
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
