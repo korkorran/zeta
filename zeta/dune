@@ -2,4 +2,4 @@
  (name zeta)
  (modules typeformat entry reverse configuration optionAnchor)
  (preprocess (pps ppx_deriving.show))
- (libraries opencommand entry_tokenizer tyre))
+ (libraries ocf entry_tokenizer tyre))

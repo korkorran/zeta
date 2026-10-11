@@ -1,5 +1,5 @@
 
-let successfull_feature_Ids entry (command:Opencommand.Command.command) = 
+let successfull_feature_Ids entry (command:Ocf.Command.command) = 
   let results = Zeta.Entry.evalConfiguration entry command.features in
   List.filter_map (fun (path, result:string * Zeta.Entry.result) ->
     Format.fprintf Format.std_formatter "Testing path: %s -> %a \n" path Zeta.Entry.pp_result result;
@@ -14,8 +14,8 @@ let test_evaluated_feature_id_fails entry cmd () =
   Alcotest.(check (list string)) "same path" [] (List.map fst (successfull_feature_Ids entry cmd))
 
 let equal_configuration (c1:Zeta.Entry.configuration) (c2:Zeta.Entry.configuration) =
-  Opencommand.StringMap.equal Zeta.Typeformat.equal_value c1.options c2.options
-  && Opencommand.StringMap.equal Zeta.Typeformat.equal_value c1.args c2.args
+  Ocf.StringMap.equal Zeta.Typeformat.equal_value c1.options c2.options
+  && Ocf.StringMap.equal Zeta.Typeformat.equal_value c1.args c2.args
 
 let test_evaluated_feature_id_with_configuration feature entry cmd expectedConfiguration () =
   let results = successfull_feature_Ids entry cmd in
@@ -25,7 +25,7 @@ let test_evaluated_feature_id_with_configuration feature entry cmd expectedConfi
   | _ -> Alcotest.failf "Expected one successful feature evaluation but got %d" (List.length results)
 
 
-let generate_entry (command:Opencommand.Command.command) (feature:string) (configuration:Zeta.Entry.configuration) : (string, Zeta.Reverse.error) Result.t =
+let generate_entry (command:Ocf.Command.command) (feature:string) (configuration:Zeta.Entry.configuration) : (string, Zeta.Reverse.error) Result.t =
   Zeta.Reverse.computeEntry command feature configuration
 
 let test_generated_entry expectedEntry command feature configuration () =

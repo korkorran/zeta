@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let dotFeatures = StringMap.empty
   |> Feature.addFeature "generate_visualization" {
@@ -12,7 +12,7 @@ let dotFeatures = StringMap.empty
     path = FeaturePath.Token.[Directive "dot"; Anchor "options"; ArgumentLocation "input"];
   }
 
-let dot : Opencommand.Command.command = {
+let dot : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "dot";

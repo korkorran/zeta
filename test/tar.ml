@@ -13,9 +13,9 @@ let tar_test = [
       "tar file1.txt -c" 
       Registry.Tar.tar
       { 
-      Zeta.Entry.options = Opencommand.StringMap.empty; 
-      args = Opencommand.StringMap.empty |>
-        Opencommand.StringMap.add "files" (
+      Zeta.Entry.options = Ocf.StringMap.empty; 
+      args = Ocf.StringMap.empty |>
+        Ocf.StringMap.add "files" (
           Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"; "-c"]))
         ) 
       }

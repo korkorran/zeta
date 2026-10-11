@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let cdFeatures = StringMap.empty
   |> Feature.addFeature "change_directory" {
@@ -10,7 +10,7 @@ let cdFeatures = StringMap.empty
     path = FeaturePath.Token.[Directive "cd"; SingleArgumentLocation "directory"];
   }
 
-let cd : Opencommand.Command.command = {
+let cd : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "cd";

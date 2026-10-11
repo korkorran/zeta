@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 type 'a typeformat = TUnit : unit typeformat
                 | TInt : int typeformat

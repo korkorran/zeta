@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let mvFeatures = StringMap.empty
   |> Feature.addFeature "move_or_rename" {
@@ -15,7 +15,7 @@ let mvFeatures = StringMap.empty
     path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; SingleArgumentLocation "destination"];
   }
 
-let mv : Opencommand.Command.command = {
+let mv : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "mv";

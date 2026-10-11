@@ -1,5 +1,5 @@
 (library
- (name opencommand)
+ (name ocf)
  (modules command stringMap tokenEncoding featurePath feature)
  (preprocess (pps ppx_deriving.show ppx_deriving_yojson))
  (libraries yojson ppx_deriving_yojson.runtime))

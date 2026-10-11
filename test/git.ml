@@ -1,5 +1,5 @@
 open Alcotest
-open Opencommand.StringMap
+open Ocf.StringMap
 
 let git = Registry.Git.git
 (* The tests *)
@@ -29,7 +29,7 @@ let git_test = [
     { Zeta.Entry.options = empty; args = empty |> add "branch_name" Zeta.Typeformat.(Value (TString None, "my_branch")) }
   );
   test_case "[create_branch] generated entry #4 (fails)" `Quick (Utils.test_generated_entry_fails 
-    (Zeta.Reverse.ValidationError [(Zeta.Configuration.Arg , "branch_name", Zeta.Configuration.Format (Zeta.Typeformat.FormatError (Zeta.Typeformat.Any (Zeta.Typeformat.TString (Some Opencommand.TokenEncoding.SingleWord)))))])
+    (Zeta.Reverse.ValidationError [(Zeta.Configuration.Arg , "branch_name", Zeta.Configuration.Format (Zeta.Typeformat.FormatError (Zeta.Typeformat.Any (Zeta.Typeformat.TString (Some Ocf.TokenEncoding.SingleWord)))))])
     git 
     "create_branch" 
     { Zeta.Entry.options = empty; args = empty |> add "branch_name" Zeta.Typeformat.(Value (TString None, "my branch")) }

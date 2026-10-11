@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let pwdFeatures = StringMap.empty
   |> Feature.addFeature "print_working_directory" {
@@ -12,7 +12,7 @@ let pwdFeatures = StringMap.empty
     path = FeaturePath.Token.[Directive "pwd"; Anchor "options"];
   }
 
-let pwd : Opencommand.Command.command = {
+let pwd : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "pwd";

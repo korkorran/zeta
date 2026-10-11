@@ -1,5 +1,5 @@
 open Alcotest
-open Opencommand.StringMap
+open Ocf.StringMap
 open Zeta.Typeformat
 
 let dot = Registry.Dot.dot

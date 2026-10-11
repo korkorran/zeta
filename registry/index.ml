@@ -1,6 +1,6 @@
-open Opencommand
+open Ocf
 
-let registry : Opencommand.Command.command StringMap.t = StringMap.empty
+let registry : Ocf.Command.command StringMap.t = StringMap.empty
   |> StringMap.add "git" Git.git
   |> StringMap.add "mv" Mv.mv
   |> StringMap.add "cd" Cd.cd

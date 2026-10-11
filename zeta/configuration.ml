@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 
 type configurationTemplate = {

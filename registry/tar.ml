@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let tarFeatures = StringMap.empty
   |> Feature.addFeature "create_archive" {
@@ -13,7 +13,7 @@ let tarFeatures = StringMap.empty
     path = FeaturePath.Token.[Directive "tar"; Anchor "options"; ArgumentLocation "files"];
   }
 
-let tar : Opencommand.Command.command = {
+let tar : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "tar";

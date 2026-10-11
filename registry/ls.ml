@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let lsFeatures = StringMap.empty
   |> Feature.addFeature "list_directory_contents" {
@@ -14,7 +14,7 @@ let lsFeatures = StringMap.empty
     path = FeaturePath.Token.[Directive "ls"; Anchor "options"; ArgumentLocation "directories"];
   }
 
-let ls : Opencommand.Command.command = {
+let ls : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "ls";

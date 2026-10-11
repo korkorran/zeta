@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 type error = FeatureNotFound of string | ValidationError of (Configuration.configurationError) list
 [@@deriving show]

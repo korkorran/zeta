@@ -1,4 +1,4 @@
-open Opencommand
+open Ocf
 
 let gitFeatures = StringMap.empty
   |> Feature.addFeature "git_usage" {
@@ -238,7 +238,7 @@ let gitFeatures = StringMap.empty
       }
 
 
-let git : Opencommand.Command.command = {
+let git : Ocf.Command.command = {
   opencommand_version = "0.0.1";
   info = {
     commandName = "git";

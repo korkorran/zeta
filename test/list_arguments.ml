@@ -1,6 +1,6 @@
 open Alcotest
-open Opencommand
-open Opencommand.StringMap
+open Ocf
+open Ocf.StringMap
 open Zeta.Typeformat
 
 (* a command taking between 2 and 3 integers *)
