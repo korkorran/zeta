@@ -14,24 +14,24 @@ let git_test = [
     "git config" 
     git 
     "get_config" 
-    { Zeta.Entry.options = empty; args = empty }
+    { Repr.Configuration.options = empty; args = empty }
   );
   test_case "[get_config] generated entry #2" `Quick (Utils.test_generated_entry 
     "git config --list" 
     git 
     "get_config" 
-    { Zeta.Entry.options = empty |> add "--list" Zeta.Typeformat.(Value (TOption TUnit, Some ())); args = empty }
+    { Repr.Configuration.options = empty |> add "--list" Repr.Typeformat.(Value (TOption TUnit, Some ())); args = empty }
   );
   test_case "[create_branch] generated entry #3" `Quick (Utils.test_generated_entry 
     "git branch my_branch" 
     git 
     "create_branch" 
-    { Zeta.Entry.options = empty; args = empty |> add "branch_name" Zeta.Typeformat.(Value (TString None, "my_branch")) }
+    { Repr.Configuration.options = empty; args = empty |> add "branch_name" Repr.Typeformat.(Value (TString None, "my_branch")) }
   );
   test_case "[create_branch] generated entry #4 (fails)" `Quick (Utils.test_generated_entry_fails 
-    (Zeta.Reverse.ValidationError [(Zeta.Configuration.Arg , "branch_name", Zeta.Configuration.Format (Zeta.Typeformat.FormatError (Zeta.Typeformat.Any (Zeta.Typeformat.TString (Some Ocf.TokenEncoding.SingleWord)))))])
+    (Zeta.Reverse.ValidationError [(Repr.Configuration.Arg , "branch_name", Repr.Configuration.Format (Repr.Typeformat.FormatError (Repr.Typeformat.Any (Repr.Typeformat.TString (Some Ocf.TokenEncoding.SingleWord)))))])
     git 
     "create_branch" 
-    { Zeta.Entry.options = empty; args = empty |> add "branch_name" Zeta.Typeformat.(Value (TString None, "my branch")) }
+    { Repr.Configuration.options = empty; args = empty |> add "branch_name" Repr.Typeformat.(Value (TString None, "my branch")) }
   );
 ]

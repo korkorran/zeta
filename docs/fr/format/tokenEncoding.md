@@ -25,7 +25,7 @@ C'est une GADT : le paramètre `'a` est le type OCaml de la valeur portée par l
 - `SingleWord` : un mot sans espace ;
 - `FilePath` : un chemin de fichier, composé de caractères alphanumériques et de ponctuation.
 
-`None` signifie que toute chaîne est acceptée. Le format se contente de nommer ces contraintes : leur vérification est faite par la bibliothèque `zeta`, au moment de valider une configuration.
+`None` signifie que toute chaîne est acceptée. Le format se contente de nommer ces contraintes : leur vérification est faite par la bibliothèque `repr` (`Typeformat.validate`), au moment de valider une configuration.
 
 ## `decodeToken` et `encodeToken`
 
@@ -34,7 +34,7 @@ Ces deux fonctions convertissent un token dans les deux sens, en suivant son enc
 - `decodeToken enc s` transforme le token `s` en une valeur de type `'a` ;
 - `encodeToken enc v` transforme la valeur `v` en token.
 
-`decodeToken` ne vérifie pas que le token est valide : sur un `Integer`, un token qui n'est pas un entier lève une exception, et sur un `Enum`, la valeur n'est pas comparée à la liste. La lecture des tokens avec vérification est faite par la bibliothèque `zeta`.
+`decodeToken` ne vérifie pas que le token est valide : sur un `Integer`, un token qui n'est pas un entier lève une exception, et sur un `Enum`, la valeur n'est pas comparée à la liste. La lecture des tokens avec vérification est faite par la bibliothèque `repr` (`Typeformat.value_of_token`).
 
 ## Exemple
 

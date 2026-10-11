@@ -1,9 +1,8 @@
 open Ocf
+open Repr
 
 
 type entry = string list
-type configuration = {options : (Typeformat.value) StringMap.t; args : Typeformat.value StringMap.t}
-[@@deriving show]
 
 
 type evaluationState = {
@@ -23,7 +22,7 @@ type ongoingCase =
 [@@deriving show]
 
 type ongoingResult = {
-  configuration : configuration;
+  configuration : Configuration.configuration;
   evaluationState : evaluationState;
   case : ongoingCase;
 }
@@ -57,8 +56,8 @@ let getOptionsFromAnchor (feature:Feature.feature) (availableAnchor:string) : (s
 let evalOption 
   (id, Feature.CommandOption.Any option: string* Feature.CommandOption.any) 
   (restEntry: string list) 
-  (currentConfig: configuration) 
-  : (configuration * string list * string list) option =
+  (currentConfig: Configuration.configuration) 
+  : (Configuration.configuration * string list * string list) option =
   match option.encoding with
   | Feature.CommandOption.SingleString encodings -> (
     match restEntry with
@@ -66,7 +65,7 @@ let evalOption
     | he::te ->
         if List.exists (fun enc -> enc = he) encodings then
           let updatedOptions = StringMap.add id (Typeformat.Value (Typeformat.TOption Typeformat.TUnit, Some ())) currentConfig.options in
-          Some ({options=updatedOptions;args=currentConfig.args}, [he], te)
+          Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [he], te)
         else
           None )
   | Feature.CommandOption.ValueSuffix (prefixes, encoding) -> (
@@ -78,7 +77,7 @@ let evalOption
         | None -> None
         | Some value ->
         let updatedOptions = StringMap.add id (Typeformat.Value (typeformat, value)) currentConfig.options in
-        Some ({options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
+        Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
       else
         None
     | _ -> None)
@@ -93,8 +92,8 @@ let argumentBounds : type a. a Feature.Argument.encoding -> int * int option = f
 (*let evalArgument
   (id, option: string* Command.argument) 
   (restEntry: string list) 
-  (currentConfig: configuration) 
-  : (configuration * string list * string list) option =
+  (currentConfig: Configuration.configuration) 
+  : (Configuration.configuration * string list * string list) option =
   match restEntry with
   | [] -> None
   | he::te -> *)
@@ -128,14 +127,14 @@ let evalListArgument (type a)
   (* the argument can be left empty only before any value has been consumed *)
   let skipped =
     if min = 0 && not (StringMap.mem l currentConfig.args) then
-      [{skipArgument with configuration = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (listTypeformat, [])) currentConfig.args}}]
+      [{skipArgument with configuration = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (listTypeformat, [])) currentConfig.args}}]
     else []
   in
   let he = List.hd currentState.restEntry in
   match Typeformat.value_of_token typeformat he with
   | None -> if skipped = [] then [{ongoingResult with case = Unmatched hc}] else skipped
   | Some value ->
-    let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (listTypeformat, l_args @ [value])) currentConfig.args} in
+    let newConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (listTypeformat, l_args @ [value])) currentConfig.args} in
     let consumed evaluatedCommand restCommand = {ongoingResult with configuration = newConfig; evaluationState = {
       evaluatedEntry = currentState.evaluatedEntry @ [he];
       restEntry = List.tl currentState.restEntry;
@@ -177,7 +176,7 @@ let evalTokens
           (* a list argument already holding values was kept open when its values were consumed:
              the alternative that closes it has been generated at that time *)
           if fst (argumentBounds arg.encoding) = 0 && not (StringMap.mem l currentConfig.args) then 
-            let newConfig = {options=currentConfig.options; args=StringMap.add l (emptyValue ()) currentConfig.args} in
+            let newConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (emptyValue ()) currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry;
               restEntry = currentState.restEntry;
@@ -246,7 +245,7 @@ let evalTokens
           (match Typeformat.value_of_token typeformat he with
           | None -> [{ongoingResult with case = Unmatched hc}]
           | Some value ->
-            let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (typeformat, value)) currentConfig.args} in
+            let newConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (typeformat, value)) currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry @ [he];
               restEntry = List.tl currentState.restEntry;
@@ -255,13 +254,13 @@ let evalTokens
             }}])
         | Feature.Argument.Optional encoding ->
           let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
-          let noValueConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (Typeformat.TOption typeformat, None)) currentConfig.args} in
+          let noValueConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (Typeformat.TOption typeformat, None)) currentConfig.args} in
           let skipped = {skipArgument with configuration = noValueConfig} in
           let he = List.hd currentState.restEntry in
           (match Typeformat.value_of_token typeformat he with
           | None -> [skipped]
           | Some value ->
-            let newConfig = {options=currentConfig.options; args=StringMap.add l (Typeformat.Value (Typeformat.TOption typeformat, Some value)) currentConfig.args} in
+            let newConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (Typeformat.TOption typeformat, Some value)) currentConfig.args} in
             [{ongoingResult with configuration = newConfig; evaluationState = {
               evaluatedEntry = currentState.evaluatedEntry @ [he];
               restEntry = List.tl currentState.restEntry;
@@ -274,7 +273,7 @@ let evalTokens
           evalListArgument ongoingResult hc l skipArgument min (Some max) encoding
 (*         let he = List.hd restEntry in
         let newArgs = StringMap.add l (Typeformat.VString he) currentConfig.args in
-        let newConfig = {options=currentConfig.options; args=newArgs} in
+        let newConfig = {Configuration.options=currentConfig.options; args=newArgs} in
         Ongoing (newConfig, {
           evaluatedEntry = evaluatedEntry @ [he];
           restEntry = List.tl restEntry;
@@ -283,7 +282,7 @@ let evalTokens
         }) *)
 
 
-type result = Success of configuration 
+type result = Success of Configuration.configuration 
   | Unmatched of FeaturePath.Token.t
   | Incomplete of FeaturePath.Token.t 
   | Overflow of string 
@@ -309,7 +308,7 @@ let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.featur
     |> List.flatten
   in
   let initState = { case= Ongoing;
-       configuration = {options=StringMap.empty;args=StringMap.empty};
+       configuration = {Configuration.options=StringMap.empty;args=StringMap.empty};
        evaluationState ={
         evaluatedEntry = [];
         restEntry = entry;

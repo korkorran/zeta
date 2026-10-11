@@ -13,10 +13,10 @@ let tar_test = [
       "tar file1.txt -c" 
       Registry.Tar.tar
       { 
-      Zeta.Entry.options = Ocf.StringMap.empty; 
+      Repr.Configuration.options = Ocf.StringMap.empty; 
       args = Ocf.StringMap.empty |>
         Ocf.StringMap.add "files" (
-          Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"; "-c"]))
+          Repr.Typeformat.(Value (TList (TString None), ["file1.txt"; "-c"]))
         ) 
       }
     );

@@ -13,13 +13,13 @@ let mv_test = [
       "mv -v file1.txt file2.txt" 
       Registry.Mv.mv
       { 
-      Zeta.Entry.options = Ocf.StringMap.empty |>
-        Ocf.StringMap.add "verbose" Zeta.Typeformat.(Value (TOption TUnit, Some ())); 
+      Repr.Configuration.options = Ocf.StringMap.empty |>
+        Ocf.StringMap.add "verbose" Repr.Typeformat.(Value (TOption TUnit, Some ())); 
       args = Ocf.StringMap.empty |>
         Ocf.StringMap.add "source" (
-          Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"]))
+          Repr.Typeformat.(Value (TList (TString None), ["file1.txt"]))
         ) |>
-        Ocf.StringMap.add "destination" Zeta.Typeformat.(Value (TString None, "file2.txt"))
+        Ocf.StringMap.add "destination" Repr.Typeformat.(Value (TString None, "file2.txt"))
       }
     );
   test_case "[mv] entry evaluation succeeds with configuration - bad option location" `Quick 
@@ -28,12 +28,12 @@ let mv_test = [
       "mv file1.txt -v file2.txt" 
       Registry.Mv.mv
       { 
-      Zeta.Entry.options = Ocf.StringMap.empty; 
+      Repr.Configuration.options = Ocf.StringMap.empty; 
       args = Ocf.StringMap.empty |>
         Ocf.StringMap.add "source" (
-          Zeta.Typeformat.(Value (TList (TString None), ["file1.txt"; "-v"]))
+          Repr.Typeformat.(Value (TList (TString None), ["file1.txt"; "-v"]))
         ) |>
-        Ocf.StringMap.add "destination" Zeta.Typeformat.(Value (TString None, "file2.txt"))
+        Ocf.StringMap.add "destination" Repr.Typeformat.(Value (TString None, "file2.txt"))
       }
     );
   test_case "[mv] entry evaluation succeeds with configuration - many sources" `Quick 
@@ -42,12 +42,12 @@ let mv_test = [
       "mv a.txt b.txt c.txt d.txt dir" 
       Registry.Mv.mv
       { 
-      Zeta.Entry.options = Ocf.StringMap.empty; 
+      Repr.Configuration.options = Ocf.StringMap.empty; 
       args = Ocf.StringMap.empty |>
         Ocf.StringMap.add "source" (
-          Zeta.Typeformat.(Value (TList (TString None), ["a.txt"; "b.txt"; "c.txt"; "d.txt"]))
+          Repr.Typeformat.(Value (TList (TString None), ["a.txt"; "b.txt"; "c.txt"; "d.txt"]))
         ) |>
-        Ocf.StringMap.add "destination" Zeta.Typeformat.(Value (TString None, "dir"))
+        Ocf.StringMap.add "destination" Repr.Typeformat.(Value (TString None, "dir"))
       }
     );
 ]

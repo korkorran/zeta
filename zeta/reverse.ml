@@ -1,4 +1,5 @@
 open Ocf
+open Repr
 
 type error = FeatureNotFound of string | ValidationError of (Configuration.configurationError) list
 [@@deriving show]
@@ -6,7 +7,7 @@ type error = FeatureNotFound of string | ValidationError of (Configuration.confi
 let pathFromFeature (feature:string) (command:Command.command) : (FeaturePath.EncodedPath.t, error) Result.t =
   Result.Ok (StringMap.find feature command.features).Feature.path
 
-let computeEntry (command:Command.command) (feature:string) (configuration:Entry.configuration) : (string, error) Result.t =
+let computeEntry (command:Command.command) (feature:string) (configuration:Configuration.configuration) : (string, error) Result.t =
   let result = StringMap.find_opt feature command.features in
   match result with
   | None -> Result.Error (FeatureNotFound feature)
@@ -18,7 +19,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
     fun token -> match token with
     | FeaturePath.Token.Directive s -> s
     | FeaturePath.Token.ArgumentLocation l -> 
-        let argValue = StringMap.find_opt l configuration.Entry.args in
+        let argValue = StringMap.find_opt l configuration.Configuration.args in
         (match argValue with
         | Some (Typeformat.Value (Typeformat.TOption _, None)) -> ""
         | Some v -> Format.asprintf "%a" Typeformat.pp_value v
@@ -26,7 +27,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Entry
     | FeaturePath.Token.Anchor a ->
         let acceptableOptions = Entry.getOptionsFromAnchor head a in
         let acceptedOptions = List.filter_map (fun (optName, Feature.CommandOption.Any opt) ->
-          let optValue = StringMap.find_opt optName configuration.Entry.options in
+          let optValue = StringMap.find_opt optName configuration.Configuration.options in
           match optValue with
           | Some v -> (
           match opt.encoding with

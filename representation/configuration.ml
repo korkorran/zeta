@@ -1,17 +1,23 @@
 open Ocf
 
 
-type configurationTemplate = {
-  optionsTemplate: Typeformat.any StringMap.t;
-  argsTemplate: Typeformat.any StringMap.t;
+type template = {
+  optionsT: Typeformat.any StringMap.t;
+  argsT: Typeformat.any StringMap.t;
 }
 
-let getConfigurationTemplate (head: Feature.feature) : configurationTemplate =
+type configuration = {
+  options : (Typeformat.value) StringMap.t; 
+  args : Typeformat.value StringMap.t
+}
+[@@deriving show]
+
+let getConfigurationTemplate (head: Feature.feature) : template =
   let typeformat_of_option_encoding : type a. a Feature.CommandOption.encoding -> a Typeformat.typeformat = function
     | Feature.CommandOption.SingleString _ -> Typeformat.TOption Typeformat.TUnit
     | Feature.CommandOption.ValueSuffix (_, enc) -> Typeformat.typeformat_of_tokenEncoding enc
   in
-  let optionsTemplate = head.options 
+  let optionsT = head.options 
   |> StringMap.map (fun (Feature.CommandOption.Any opt) -> Typeformat.Any (typeformat_of_option_encoding opt.encoding)) 
   in
   let typeformat_of_encoding : type a. a Feature.Argument.encoding -> a Typeformat.typeformat = function
@@ -20,11 +26,11 @@ let getConfigurationTemplate (head: Feature.feature) : configurationTemplate =
     | Feature.Argument.Over (_, enc) -> Typeformat.TList (Typeformat.typeformat_of_tokenEncoding enc)
     | Feature.Argument.Between (_, _, enc) -> Typeformat.TList (Typeformat.typeformat_of_tokenEncoding enc)
   in
-  let argsTemplate = head.args
+  let argsT = head.args
   |> StringMap.map (fun (Feature.Argument.Any arg) -> Typeformat.Any (typeformat_of_encoding arg.encoding)) in
-  { optionsTemplate; argsTemplate }
+  { optionsT; argsT }
 
-let getEmptyConfiguration (template: configurationTemplate) : Entry.configuration =
+let getEmptyConfiguration (template: template) : configuration =
   let options = StringMap.empty in
   let rec defaultValue : type a. a Typeformat.typeformat -> a = function
       | Typeformat.TUnit -> ()
@@ -37,8 +43,8 @@ let getEmptyConfiguration (template: configurationTemplate) : Entry.configuratio
       | TPair (a, b) -> (defaultValue a, defaultValue b)
       | TList _ -> []
   in
-  let args = template.argsTemplate |> StringMap.map (fun (Typeformat.Any tf) -> Typeformat.Value (tf, defaultValue tf)) in
-  { Entry.options; args }
+  let args = template.argsT |> StringMap.map (fun (Typeformat.Any tf) -> Typeformat.Value (tf, defaultValue tf)) in
+  { options; args }
 
 type optionOrArgument = Opt | Arg
 [@@deriving show]
@@ -53,16 +59,16 @@ let configurationError_to_string (kind, key, err) =
     | ItemNotInTemplate -> "Item not in template"
   in
   Printf.sprintf "%s '%s': %s" kindStr key errorMsg
-let validateConfiguration config template =
+let validateConfiguration (config: configuration) (template: template) =
   let optionsErrors = StringMap.fold (fun k v accErrors->
-      match StringMap.find_opt k template.optionsTemplate with
+      match StringMap.find_opt k template.optionsT with
       | Some (Typeformat.Any optionTypeformat) -> let r = (Typeformat.validate_value optionTypeformat v) in if Result.is_ok r then accErrors else (Opt, k, Format (Result.get_error r))::accErrors
       | None -> (Opt, k, ItemNotInTemplate)::accErrors)
-    config.Entry.options [] in
+    config.options [] in
   let argsErrors = StringMap.fold (fun k v accErrors->
-    match StringMap.find_opt k template.argsTemplate with
+    match StringMap.find_opt k template.argsT with
     | Some (Typeformat.Any argTypeformat) -> let r = (Typeformat.validate_value argTypeformat v) in if Result.is_ok r then accErrors else (Arg, k, Format (Result.get_error r))::accErrors
     | None -> (Arg, k, ItemNotInTemplate)::accErrors) 
-    config.Entry.args [] in
+    config.args [] in
   if optionsErrors = [] && argsErrors = [] then Result.Ok () else Result.Error (optionsErrors @ argsErrors)
 

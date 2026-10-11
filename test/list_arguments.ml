@@ -1,7 +1,7 @@
 open Alcotest
 open Ocf
 open Ocf.StringMap
-open Zeta.Typeformat
+open Repr.Typeformat
 
 (* a command taking between 2 and 3 integers *)
 let sum : Command.command = {
@@ -25,7 +25,7 @@ let list_arguments_test = [
       "sum" 
       "sum 1 2" 
       sum
-      { Zeta.Entry.options = empty; args = empty |> add "numbers" (Value (TList TInt, [1; 2])) }
+      { Repr.Configuration.options = empty; args = empty |> add "numbers" (Value (TList TInt, [1; 2])) }
     );
   test_case "[list] entry evaluation succeeds : maximum reached" `Quick 
     (Utils.test_evaluated_feature_id "sum" "sum 1 2 3" sum);
