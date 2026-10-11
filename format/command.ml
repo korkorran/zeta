@@ -7,7 +7,6 @@ type info = {
 }
 
 type command = {
-  opencommand_version: string;
   info: info;
   features: Feature.featureMap;
 }

@@ -5,7 +5,6 @@ open Zeta.Typeformat
 
 (* a command taking between 2 and 3 integers *)
 let sum : Command.command = {
-  opencommand_version = "0.0.1";
   info = { commandName = "sum"; version = "UNVERSIONED"; description = "Sum integers" };
   features = empty
     |> Feature.addFeature "sum" {

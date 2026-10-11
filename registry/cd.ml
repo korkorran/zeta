@@ -11,7 +11,6 @@ let cdFeatures = StringMap.empty
   }
 
 let cd : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "cd";
     version = "builtin";

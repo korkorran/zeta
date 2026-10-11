@@ -13,7 +13,6 @@ let dotFeatures = StringMap.empty
   }
 
 let dot : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "dot";
     version = "UNVERSIONED";

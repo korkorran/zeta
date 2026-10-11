@@ -239,7 +239,6 @@ let gitFeatures = StringMap.empty
 
 
 let git : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "git";
     version = "2.40.0";

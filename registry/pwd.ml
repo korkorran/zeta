@@ -13,7 +13,6 @@ let pwdFeatures = StringMap.empty
   }
 
 let pwd : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "pwd";
     version = "builtin";

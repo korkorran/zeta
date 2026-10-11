@@ -15,7 +15,6 @@ let lsFeatures = StringMap.empty
   }
 
 let ls : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "ls";
     version = "8.32";

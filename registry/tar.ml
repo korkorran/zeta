@@ -14,7 +14,6 @@ let tarFeatures = StringMap.empty
   }
 
 let tar : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "tar";
     version = "builtin";

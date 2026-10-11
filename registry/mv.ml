@@ -16,7 +16,6 @@ let mvFeatures = StringMap.empty
   }
 
 let mv : Ocf.Command.command = {
-  opencommand_version = "0.0.1";
   info = {
     commandName = "mv";
     version = "8.32";
