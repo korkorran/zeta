@@ -1,6 +1,6 @@
 # Open-Command
 
-A format describing the syntax of terminal commands, and an algorithm `Zeta` to evaluate a terminal entry to a formatted representation of the entry. 
+A format describing the syntax of terminal commands, and an algorithm `Zeta` to evaluate a terminal entry to a formatted representation of the entry. The project aims to be a general approach to parse terminal entries despites the variety of terminal commands syntax.
 
 ## Folder structure
 
