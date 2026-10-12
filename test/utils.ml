@@ -1,10 +1,10 @@
 
 let successfull_feature_Ids entry (command:Ocf.Command.command) = 
-  let results = Zeta.Entry.evalConfiguration entry command.features in
-  List.filter_map (fun (path, result:string * Zeta.Entry.result) ->
-    Format.fprintf Format.std_formatter "Testing path: %s -> %a \n" path Zeta.Entry.pp_result result;
+  let results = Zeta.Entry.evalEntry entry command in
+  List.filter_map (fun (path, result:string * Zeta.EvalFeature.result) ->
+    Format.fprintf Format.std_formatter "Testing path: %s -> %a \n" path Zeta.EvalFeature.pp_result result;
     match result with
-    | Zeta.Entry.Success conf -> Some (path, conf)
+    | Zeta.EvalFeature.Success conf -> Some (path, conf)
     | _ -> None
   ) results 
 let test_evaluated_feature_id feature entry cmd () =

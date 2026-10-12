@@ -1,5 +1,5 @@
 (library
  (name zeta)
- (modules state entry reverse anchor option argument)
+ (modules state entry reverse anchor option argument evalFeature)
  (preprocess (pps ppx_deriving.show))
  (libraries ocf repr entry_tokenizer))
