@@ -2,7 +2,7 @@ open Ocf
 open Repr
 
 
-type evaluationState = {
+type evaluationStacks = {
   evaluatedEntry: string list;
   restEntry: string list;
   evaluatedCommand: FeaturePath.Token.t list;
@@ -18,15 +18,15 @@ type ongoingCase =
   | Overflow of string
 [@@deriving show]
 
-type ongoingResult = {
+type ongoingState = {
   configuration : Configuration.configuration;
-  evaluationState : evaluationState;
+  evaluationStacks : evaluationStacks;
   case : ongoingCase;
 }
 [@@deriving show]
 
-let compare_ongoingResult r1 r2 =
-  let entry_cmp = compare (List.length r1.evaluationState.evaluatedEntry) (List.length r2.evaluationState.evaluatedEntry) in
+let compare_ongoingState r1 r2 =
+  let entry_cmp = compare (List.length r1.evaluationStacks.evaluatedEntry) (List.length r2.evaluationStacks.evaluatedEntry) in
   if entry_cmp <> 0 then entry_cmp
   else
     match (r1.case, r2.case) with
