@@ -25,7 +25,7 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Confi
         | Some v -> Format.asprintf "%a" Typeformat.pp_value v
         | None -> Format.asprintf "%s" l)
     | FeaturePath.Token.Anchor a ->
-        let acceptableOptions = Entry.getOptionsFromAnchor head a in
+        let acceptableOptions = Option.getOptionsFromAnchor head a in
         let acceptedOptions = List.filter_map (fun (optName, Feature.CommandOption.Any opt) ->
           let optValue = StringMap.find_opt optName configuration.Configuration.options in
           match optValue with

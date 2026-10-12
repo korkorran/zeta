@@ -1,86 +1,10 @@
 open Ocf
 open Repr
+open State
 
 
 type entry = string list
 
-
-type evaluationState = {
-  evaluatedEntry: string list;
-  restEntry: string list;
-  evaluatedCommand: FeaturePath.Token.t list;
-  restCommand: FeaturePath.Token.t list;
-}
-[@@deriving show]
-
-type ongoingCase = 
-  | Ongoing
-  | Success 
-  | Unmatched of FeaturePath.Token.t 
-  | Incomplete of FeaturePath.Token.t
-  | Overflow of string
-[@@deriving show]
-
-type ongoingResult = {
-  configuration : Configuration.configuration;
-  evaluationState : evaluationState;
-  case : ongoingCase;
-}
-[@@deriving show]
-
-let compare_ongoingResult r1 r2 =
-  let entry_cmp = compare (List.length r1.evaluationState.evaluatedEntry) (List.length r2.evaluationState.evaluatedEntry) in
-  if entry_cmp <> 0 then entry_cmp
-  else
-    match (r1.case, r2.case) with
-    | (Success, Success) -> 0
-    | (Success, _) -> -1
-    | (_, Success) -> 1
-    | (Ongoing, Ongoing) -> 0
-    | (Ongoing, _) -> -1
-    | (_, Ongoing) -> 1
-    | (Unmatched t1, Unmatched t2) -> FeaturePath.Token.compare t1 t2
-    | (Unmatched _, _) -> -1
-    | (_, Unmatched _) -> 1
-    | (Incomplete t1, Incomplete t2) -> FeaturePath.Token.compare t1 t2
-    | (Incomplete _, _) -> -1
-    | (_, Incomplete _) -> 1
-    | (Overflow s1, Overflow s2) -> compare s1 s2
-    
-  
-
-let getOptionsFromAnchor (feature:Feature.feature) (availableAnchor:string) : (string * Feature.CommandOption.any) list =
-  StringMap.bindings feature.options
-  |> List.filter (fun (_, Feature.CommandOption.Any opt) -> opt.location = availableAnchor)
-
-let evalOption 
-  (id, Feature.CommandOption.Any option: string* Feature.CommandOption.any) 
-  (restEntry: string list) 
-  (currentConfig: Configuration.configuration) 
-  : (Configuration.configuration * string list * string list) option =
-  match option.encoding with
-  | Feature.CommandOption.SingleString encodings -> (
-    match restEntry with
-    | [] -> None
-    | he::te ->
-        if List.exists (fun enc -> enc = he) encodings then
-          let updatedOptions = StringMap.add id (Typeformat.Value (Typeformat.TOption Typeformat.TUnit, Some ())) currentConfig.options in
-          Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [he], te)
-        else
-          None )
-  | Feature.CommandOption.ValueSuffix (prefixes, encoding) -> (
-    match restEntry with
-    | h1::h2::te -> 
-      if List.exists (fun prefix -> prefix = h1) prefixes then
-        let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
-        match Typeformat.value_of_token typeformat h2 with
-        | None -> None
-        | Some value ->
-        let updatedOptions = StringMap.add id (Typeformat.Value (Typeformat.TOption typeformat, Some value)) currentConfig.options in
-        Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
-      else
-        None
-    | _ -> None)
 
 (* (min, max) number of entry tokens accepted by an argument, max = None means unbounded *)
 let argumentBounds : type a. a Feature.Argument.encoding -> int * int option = function
@@ -88,15 +12,6 @@ let argumentBounds : type a. a Feature.Argument.encoding -> int * int option = f
   | Feature.Argument.Optional _ -> (0, Some 1)
   | Feature.Argument.Over (min, _) -> (min, None)
   | Feature.Argument.Between (min, max, _) -> (min, Some max)
-
-(*let evalArgument
-  (id, option: string* Command.argument) 
-  (restEntry: string list) 
-  (currentConfig: Configuration.configuration) 
-  : (Configuration.configuration * string list * string list) option =
-  match restEntry with
-  | [] -> None
-  | he::te -> *)
 
 (* evaluates the next entry token against a list argument location [hc] (named [l]),
    holding between [min] and [max] values (max = None means unbounded) *)
@@ -122,7 +37,7 @@ let evalListArgument (type a)
   in
   let n = List.length l_args in
   if reachesMax n then
-    failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l (Option.get max))
+    failwith (Format.asprintf "Too many arguments for %s, maximum is %d" l (Stdlib.Option.get max))
   else
   (* the argument can be left empty only before any value has been consumed *)
   let skipped =
@@ -187,8 +102,8 @@ let evalTokens
              [{ongoingResult with case = Incomplete hc}])
     | _ -> [{ongoingResult with case = Incomplete hc}])
   | (h::_, []) -> 
-    let availableOptions = List.flatten (List.map (getOptionsFromAnchor head) availableOptionsAnchors) in
-    let succeededOptions = List.filter_map (fun opt -> evalOption opt currentState.restEntry currentConfig) availableOptions in
+    let availableOptions = List.flatten (List.map (Option.getOptionsFromAnchor head) availableOptionsAnchors) in
+    let succeededOptions = List.filter_map (fun opt -> Option.evalOption opt currentState.restEntry currentConfig) availableOptions in
     (match succeededOptions with
     | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
         evaluatedEntry = currentState.evaluatedEntry @ evaluatedTokens;
@@ -198,8 +113,8 @@ let evalTokens
       } |> fun state -> [{ongoingResult with configuration = newConfig; evaluationState = state}]
     | [] -> [{ongoingResult with case = Overflow h}])
   | (_, _) -> 
-    let availableOptions = List.flatten (List.map (getOptionsFromAnchor head) availableOptionsAnchors) in
-    let succeededOptions = List.filter_map (fun opt -> evalOption opt currentState.restEntry currentConfig) availableOptions in
+    let availableOptions = List.flatten (List.map (Option.getOptionsFromAnchor head) availableOptionsAnchors) in
+    let succeededOptions = List.filter_map (fun opt -> Option.evalOption opt currentState.restEntry currentConfig) availableOptions in
     match succeededOptions with
     | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
         evaluatedEntry = currentState.evaluatedEntry @ evaluatedTokens;
@@ -298,7 +213,7 @@ let evalPath (entry:entry) (path:FeaturePath.EncodedPath.t) (head:Feature.featur
       (* Printf.printf "Current result: %s\n" (show_ongoingResult currentResult); *)
     match currentResult.case with
     | Ongoing ->
-        let anchors = OptionAnchor.getApplicableAnchors 
+        let anchors = Anchor.getApplicableAnchors 
           head.anchors 
           currentResult.evaluationState.evaluatedCommand 
           currentResult.evaluationState.restCommand in
