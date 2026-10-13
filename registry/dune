@@ -1,4 +1,4 @@
 (library
  (name registry)
- (modules git mv index cd pwd ls dot tar)
+ (modules git mv index cd pwd ls dot tar gcc)
  (libraries ocf))

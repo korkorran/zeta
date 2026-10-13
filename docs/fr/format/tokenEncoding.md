@@ -10,6 +10,7 @@ type 'a tokenEncoding =
   | FormattedString : stringFormat option -> string tokenEncoding
   | Integer : int tokenEncoding
   | Enum : string list -> string tokenEncoding
+  | Prefixed : string list * 'a tokenEncoding -> 'a tokenEncoding
 ```
 
 C'est une GADT : le paramètre `'a` est le type OCaml de la valeur portée par le token.
@@ -17,7 +18,8 @@ C'est une GADT : le paramètre `'a` est le type OCaml de la valeur portée par l
 - `FixedString ["-a"; "--all"]` : un token fixe, qui doit être l'une des chaînes données. Il ne porte aucune valeur, d'où le type `unit` ;
 - `FormattedString fmt` : une chaîne de caractères, éventuellement contrainte par un `stringFormat` ;
 - `Integer` : un entier ;
-- `Enum ["a"; "b"]` : une chaîne qui doit faire partie de la liste donnée.
+- `Enum ["a"; "b"]` : une chaîne qui doit faire partie de la liste donnée ;
+- `Prefixed (["-I"], encodage)` : un token qui commence par l'un des préfixes donnés, immédiatement suivi d'une valeur décrite par `encodage`. Par exemple, `-Iinclude` porte la valeur `include`. Un préfixe seul, sans valeur, n'est pas reconnu.
 
 ## Le type `stringFormat`
 

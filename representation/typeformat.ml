@@ -132,24 +132,31 @@ let rec pp : type a. a typeformat -> Format.formatter -> a -> unit = fun typefor
 
 let pp_value fmt (Value (tf, v)) = pp tf fmt v
 
-let typeformat_of_tokenEncoding : type a. a TokenEncoding.tokenEncoding -> a typeformat = function
+let rec typeformat_of_tokenEncoding : type a. a TokenEncoding.tokenEncoding -> a typeformat = function
   | TokenEncoding.FixedString _ -> TUnit
   | TokenEncoding.FormattedString fmt -> TString fmt
   | TokenEncoding.Integer -> TInt
   | TokenEncoding.Enum options -> TEnum options
+  | TokenEncoding.Prefixed (_, encoding) -> typeformat_of_tokenEncoding encoding
 
 (* reads the value of a token written with the given encoding, None if the token does not match it *)
-let value_of_token : type a. a TokenEncoding.tokenEncoding -> string -> a option = fun encoding token ->
+let rec value_of_token : type a. a TokenEncoding.tokenEncoding -> string -> a option = fun encoding token ->
   match encoding with
   | TokenEncoding.FixedString strings -> if List.mem token strings then Some () else None
   | TokenEncoding.FormattedString format_opt -> if validate_stringFormat format_opt token then Some token else None
   | TokenEncoding.Integer -> int_of_string_opt token
   | TokenEncoding.Enum options -> if List.mem token options then Some token else None
+  | TokenEncoding.Prefixed (prefixes, encoding) ->
+    (* the prefix must be followed by a value *)
+    prefixes |> List.find_map (fun prefix ->
+      let lp = String.length prefix and l = String.length token in
+      if l > lp && String.starts_with ~prefix token then value_of_token encoding (String.sub token lp (l - lp)) else None)
 
 (* writes a value as a token with the given encoding *)
-let token_of_value : type a. a TokenEncoding.tokenEncoding -> a -> string = fun encoding value ->
+let rec token_of_value : type a. a TokenEncoding.tokenEncoding -> a -> string = fun encoding value ->
   match encoding with
   | TokenEncoding.FixedString strings -> List.hd strings
   | TokenEncoding.FormattedString _ -> value
   | TokenEncoding.Integer -> string_of_int value
   | TokenEncoding.Enum _ -> value
+  | TokenEncoding.Prefixed (prefixes, encoding) -> List.hd prefixes ^ token_of_value encoding value

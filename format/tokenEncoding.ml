@@ -6,4 +6,5 @@ type 'a tokenEncoding =
   | FormattedString : stringFormat option -> string tokenEncoding
   | Integer : int tokenEncoding
   | Enum : string list -> string tokenEncoding
+  | Prefixed : string list * 'a tokenEncoding -> 'a tokenEncoding
 

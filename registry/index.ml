@@ -8,3 +8,4 @@ let registry : Ocf.Command.command StringMap.t = StringMap.empty
   |> StringMap.add "ls" Ls.ls
   |> StringMap.add "dot" Dot.dot
   |> StringMap.add "tar" Tar.tar
+  |> StringMap.add "gcc" Gcc.gcc
