@@ -42,7 +42,7 @@ let evalList (type a)
     else []
   in
   let he = List.hd currentStacks.restEntry in
-  match Typeformat.value_of_token typeformat he with
+  match Typeformat.value_of_token encoding he with
   | None -> if skipped = [] then [{ongoingState with case = Unmatched hc}] else skipped
   | Some value ->
     let newConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (listTypeformat, l_args @ [value])) currentConfig.args} in
@@ -99,13 +99,13 @@ let evalArgument
     match arg.encoding with
     | Feature.Argument.Single encoding ->
       let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
-      (match Typeformat.value_of_token typeformat he with
+      (match Typeformat.value_of_token encoding he with
       | None -> [{ongoingState with case = Unmatched hc}]
       | Some value -> [consumed (Typeformat.Value (typeformat, value))])
     | Feature.Argument.Optional encoding ->
       let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
       let skipped = {skipArgument with configuration = withArg (Typeformat.Value (Typeformat.TOption typeformat, None))} in
-      (match Typeformat.value_of_token typeformat he with
+      (match Typeformat.value_of_token encoding he with
       | None -> [skipped]
       | Some value -> [consumed (Typeformat.Value (Typeformat.TOption typeformat, Some value)); skipped])
     | Feature.Argument.Over (min, encoding) ->

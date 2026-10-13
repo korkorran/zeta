@@ -10,26 +10,19 @@ let evalOption
   (restEntry: string list) 
   (currentConfig: Configuration.configuration) 
   : (Configuration.configuration * string list * string list) option =
+  let withOption typeformat value = {Configuration.options=StringMap.add id (Typeformat.Value (Typeformat.TOption typeformat, Some value)) currentConfig.options; args=currentConfig.args} in
   match option.encoding with
-  | Feature.CommandOption.SingleString encodings -> (
+  | Feature.CommandOption.SingleToken encoding -> (
     match restEntry with
-    | [] -> None
-    | he::te ->
-        if List.exists (fun enc -> enc = he) encodings then
-          let updatedOptions = StringMap.add id (Typeformat.Value (Typeformat.TOption Typeformat.TUnit, Some ())) currentConfig.options in
-          Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [he], te)
-        else
-          None )
-  | Feature.CommandOption.ValueSuffix (prefixes, encoding) -> (
+    | he::te -> (
+      match Typeformat.value_of_token encoding he with
+      | Some value -> Some (withOption (Typeformat.typeformat_of_tokenEncoding encoding) value, [he], te)
+      | None -> None)
+    | [] -> None)
+  | Feature.CommandOption.ValueNextToken (keyEncoding, encoding) -> (
     match restEntry with
-    | h1::h2::te -> 
-      if List.exists (fun prefix -> prefix = h1) prefixes then
-        let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
-        match Typeformat.value_of_token typeformat h2 with
-        | None -> None
-        | Some value ->
-        let updatedOptions = StringMap.add id (Typeformat.Value (Typeformat.TOption typeformat, Some value)) currentConfig.options in
-        Some ({Configuration.options=updatedOptions;args=currentConfig.args}, [h1; h2], te)
-      else
-        None
+    | h1::h2::te -> (
+      match Typeformat.value_of_token keyEncoding h1, Typeformat.value_of_token encoding h2 with
+      | Some (), Some value -> Some (withOption (Typeformat.typeformat_of_tokenEncoding encoding) value, [h1; h2], te)
+      | _ -> None)
     | _ -> None)

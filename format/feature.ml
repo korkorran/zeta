@@ -1,8 +1,8 @@
 module CommandOption = struct
 
   type 'a encoding =
-  | SingleString : string list -> unit option encoding
-  | ValueSuffix : string list * ('a TokenEncoding.tokenEncoding) -> 'a option encoding
+  | SingleToken : 'a TokenEncoding.tokenEncoding -> 'a option encoding
+  | ValueNextToken : unit TokenEncoding.tokenEncoding * ('a TokenEncoding.tokenEncoding) -> 'a option encoding
 
   type 'a t = {
     encoding: 'a encoding;

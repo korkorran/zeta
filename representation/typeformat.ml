@@ -127,18 +127,24 @@ let rec pp : type a. a typeformat -> Format.formatter -> a -> unit = fun typefor
 
 let pp_value fmt (Value (tf, v)) = pp tf fmt v
 
-let value_of_token : type a. a typeformat -> string -> a option = fun typeformat token ->
-  match typeformat, token with
-  | TUnit, "unit" -> Some ()
-  | TInt, s -> int_of_string_opt s
-  | TFloat, s -> float_of_string_opt s
-  | TBool, "true" -> Some true
-  | TBool, "false" -> Some false
-  | TString _, s -> Some s
-  | TEnum options, s when List.mem s options -> Some s
-  | _, _ -> None
-
 let typeformat_of_tokenEncoding : type a. a TokenEncoding.tokenEncoding -> a typeformat = function
-  | TokenEncoding.SimpleString fmt -> TString fmt
+  | TokenEncoding.FixedString _ -> TUnit
+  | TokenEncoding.FormattedString fmt -> TString fmt
   | TokenEncoding.Integer -> TInt
   | TokenEncoding.Enum options -> TEnum options
+
+(* reads the value of a token written with the given encoding, None if the token does not match it *)
+let value_of_token : type a. a TokenEncoding.tokenEncoding -> string -> a option = fun encoding token ->
+  match encoding with
+  | TokenEncoding.FixedString strings -> if List.mem token strings then Some () else None
+  | TokenEncoding.FormattedString _ -> Some token
+  | TokenEncoding.Integer -> int_of_string_opt token
+  | TokenEncoding.Enum options -> if List.mem token options then Some token else None
+
+(* writes a value as a token with the given encoding *)
+let token_of_value : type a. a TokenEncoding.tokenEncoding -> a -> string = fun encoding value ->
+  match encoding with
+  | TokenEncoding.FixedString strings -> List.hd strings
+  | TokenEncoding.FormattedString _ -> value
+  | TokenEncoding.Integer -> string_of_int value
+  | TokenEncoding.Enum _ -> value

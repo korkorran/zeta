@@ -29,8 +29,8 @@ Une option est décrite par son encodage, une description et sa `location`, c'es
 
 Il existe deux encodages :
 
-- `SingleString ["-a"; "--all"]` : un drapeau sans valeur, reconnu par l'une des chaînes de la liste ;
-- `ValueSuffix (["-m"; "--message"], encodage)` : une option suivie d'une valeur. La valeur est décrite par un `TokenEncoding` (chaîne, entier, énumération).
+- `SingleToken encodage` : une option écrite en un seul token, décrit par un `TokenEncoding`. Par exemple, le drapeau `-a` / `--all` s'écrit `SingleToken (FixedString ["-a"; "--all"])` ;
+- `ValueNextToken (clé, encodage)` : une option écrite en deux tokens, une clé fixe suivie d'une valeur. Par exemple, `-m "message"` s'écrit `ValueNextToken (FixedString ["-m"; "--message"], FormattedString (Some QuotedString))`.
 
 ## Les arguments : `Argument`
 
@@ -68,11 +68,11 @@ La fonctionnalité `move_or_rename` de `mv`, simplifiée (voir `registry/mv.ml`)
 Feature.addFeature "move_or_rename" {
   path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; ArgumentLocation "destination"];
   options = StringMap.empty
-    |> StringMap.add "verbose" (CommandOption.Any { encoding = SingleString ["-v"]; description = "Verbose output"; location = "options" });
+    |> StringMap.add "verbose" (CommandOption.Any { encoding = SingleToken (FixedString ["-v"]); description = "Verbose output"; location = "options" });
   anchors = StringMap.empty |> StringMap.add "options" [OptionAnchor.ExactLocation];
   args = StringMap.empty
-    |> StringMap.add "source" (Argument.Any { encoding = Over (1, SimpleString (Some SingleWord)); description = "Source file/directory" })
-    |> StringMap.add "destination" (Argument.Any { encoding = Single (SimpleString (Some SingleWord)); description = "Destination file/directory" });
+    |> StringMap.add "source" (Argument.Any { encoding = Over (1, FormattedString (Some SingleWord)); description = "Source file/directory" })
+    |> StringMap.add "destination" (Argument.Any { encoding = Single (FormattedString (Some SingleWord)); description = "Destination file/directory" });
   description = "Move or rename a file, a directory, or a symlink";
 }
 ```

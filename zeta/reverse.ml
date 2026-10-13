@@ -30,11 +30,17 @@ let computeEntry (command:Command.command) (feature:string) (configuration:Confi
           let optValue = StringMap.find_opt optName configuration.Configuration.options in
           match optValue with
           | Some (Typeformat.Value (Typeformat.TOption _, None)) -> None
-          | Some v -> (
+          | Some (Typeformat.Value (tf, v)) -> (
+          (* writes the option value with the token encoding [encoding] *)
+          let token_of_option (type a) (encoding : a TokenEncoding.tokenEncoding) =
+            match Typeformat.equal_type tf (Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding encoding)) with
+            | Some Type.Equal -> Stdlib.Option.map (Typeformat.token_of_value encoding) v
+            | None -> None
+          in
           match opt.encoding with
-          | Feature.CommandOption.SingleString encodings -> Some (List.hd encodings)
-          | ValueSuffix (suffixes, _valueFormat) -> 
-              Some (List.hd suffixes ^ (Format.asprintf " %a" Typeformat.pp_value v)))
+          | Feature.CommandOption.SingleToken encoding -> token_of_option encoding
+          | Feature.CommandOption.ValueNextToken (keyEncoding, encoding) ->
+              Stdlib.Option.map (fun value -> Typeformat.token_of_value keyEncoding () ^ " " ^ value) (token_of_option encoding))
           | None -> None
         ) acceptableOptions in
         List.fold_left (fun acc opt -> if acc = "" then opt else acc ^ " " ^ opt) "" acceptedOptions
