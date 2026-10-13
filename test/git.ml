@@ -10,6 +10,7 @@ let git_test = [
   test_case "[get_config] entry evaluation succeeds #1" `Quick (Utils.test_evaluated_feature_id "get_config" "git config --list" git);
   test_case "[commit] entry evaluation succeeds #2" `Quick (Utils.test_evaluated_feature_id "commit" "git commit -m \"Initial commit\"" git);
   test_case "[commit] entry evaluation fails : bad option location" `Quick (Utils.test_evaluated_feature_id_fails "git -m \"Initial commit\" commit" git);
+  test_case "[commit] entry evaluation fails : message not quoted" `Quick (Utils.test_evaluated_feature_id_fails "git commit -m hello" git);
   test_case "[get_config] generated entry #1" `Quick (Utils.test_generated_entry 
     "git config" 
     git 

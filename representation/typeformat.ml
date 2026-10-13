@@ -79,18 +79,23 @@ let validationError_to_string = function
     in
     describe tf
 
+(* checks that a string respects the format, any string is valid when there is no format *)
+let validate_stringFormat (format_opt : TokenEncoding.stringFormat option) (s : string) : bool =
+  let open Tyre in
+  match format_opt with
+  | Some TokenEncoding.QuotedString ->
+    execp (compile (start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop)) s
+  | Some TokenEncoding.SingleWord ->
+    execp (compile (start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop)) s
+  | Some TokenEncoding.FilePath ->
+    execp (compile (start *> (rep1 (charset (Charset.union [(Charset.alnum); (Charset.punct)]))) <* stop)) s
+  | None -> true
+
 let rec validate : type a. a typeformat -> a -> (unit, validationError) Result.t = fun typeformat value ->
   match typeformat with
   | TUnit | TInt | TFloat | TBool -> Result.Ok ()
-  | TString format_opt -> let open Tyre in (match format_opt with
-    | Some TokenEncoding.QuotedString -> 
-      let re = start *> (char '"') *> (rep (charset (Charset.not (Charset.char '"')))) <* (char '"') <* stop in
-        if execp (compile re) value then Result.Ok () else Result.Error (FormatError (Any typeformat))
-    | Some TokenEncoding.SingleWord -> let re = start *> (rep1 (charset (Charset.not (Charset.blank)))) <* stop in
-        if execp (compile re) value then Result.Ok () else Result.Error (FormatError (Any typeformat))
-    | Some TokenEncoding.FilePath -> let re = start *> (rep1 (charset (Charset.union [(Charset.alnum); (Charset.punct)]))) <* stop in
-        if execp (compile re) value then Result.Ok () else Result.Error (FormatError (Any typeformat))
-    | None -> Result.Ok ())
+  | TString format_opt ->
+    if validate_stringFormat format_opt value then Result.Ok () else Result.Error (FormatError (Any typeformat))
   | TList tf ->
     if List.for_all (fun v -> Result.is_ok (validate tf v)) value
       then Result.Ok () else Result.Error (FormatError (Any typeformat))
@@ -137,7 +142,7 @@ let typeformat_of_tokenEncoding : type a. a TokenEncoding.tokenEncoding -> a typ
 let value_of_token : type a. a TokenEncoding.tokenEncoding -> string -> a option = fun encoding token ->
   match encoding with
   | TokenEncoding.FixedString strings -> if List.mem token strings then Some () else None
-  | TokenEncoding.FormattedString _ -> Some token
+  | TokenEncoding.FormattedString format_opt -> if validate_stringFormat format_opt token then Some token else None
   | TokenEncoding.Integer -> int_of_string_opt token
   | TokenEncoding.Enum options -> if List.mem token options then Some token else None
 

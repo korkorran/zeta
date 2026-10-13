@@ -11,5 +11,6 @@ let () =
       "tar", Tar.tar_test;
       "mv", Mv.mv_test;
       "dot", Dot.dot_test;
+      "cd", Cd.cd_test;
       "list_arguments", List_arguments.list_arguments_test;
     ]
