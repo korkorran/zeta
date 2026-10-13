@@ -12,6 +12,7 @@ bug-reports: "https://github.com/korkorran/open-command/issues"
 depends: [
   "dune" {>= "3.17"}
   "ocaml"
+  "cmdliner"
   "alcotest" {with-test}
   "odoc" {with-doc}
 ]
