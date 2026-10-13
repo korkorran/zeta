@@ -13,7 +13,7 @@ Une commande est donc avant tout une collection de fonctionnalités. Chacune dé
 
 `Feature.featureMap` associe un identifiant (par exemple `"commit"` ou `"create_branch"`) à une `feature`. Une `feature` décrit une forme d'appel de la commande :
 
-- `path` : la suite des tokens attendus dans le terminal. Ce sont des directives (`git commit`), des ancres où peuvent se placer les options (`?options`) et des emplacements d'arguments (`<branch_name>`) ;
+- `path` : la suite des tokens attendus dans le terminal. Ce sont des directives (`git commit`), des ancres où peuvent se placer les options (`§options`) et des emplacements d'arguments (`<branch_name>`) ;
 - `options` : les options disponibles, avec leur encodage (`-a`, `-m "message"`…) et l'ancre où elles peuvent apparaître ;
 - `anchors` : les contraintes de position de chaque ancre d'options ;
 - `args` : les arguments, avec leur encodage et leur arité (`Single`, `Optional`, `Over`, `Between`) ;

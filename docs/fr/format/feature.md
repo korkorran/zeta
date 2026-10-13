@@ -16,7 +16,7 @@ type feature = {
 
 - `path` : la suite des tokens qui structure l'appel. Il y a trois sortes de tokens :
   - les directives (`Directive "commit"`), qui doivent apparaître telles quelles ;
-  - les ancres (`Anchor "options"`, notées `?options`), qui marquent l'endroit où les options peuvent apparaître ;
+  - les ancres (`Anchor "options"`, notées `§options`), qui marquent l'endroit où les options peuvent apparaître ;
   - les emplacements d'arguments (`ArgumentLocation "source"`, notés `<source>`).
 - `options` : les options, indexées par leur identifiant.
 - `anchors` : les contraintes de position de chaque ancre, indexées par le nom de l'ancre.

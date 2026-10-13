@@ -6,7 +6,7 @@ module Token = struct
 
   let token_to_string = function
     | Directive s -> s
-    | Anchor s -> "?" ^ s
+    | Anchor s -> "§" ^ s
     | ArgumentLocation s -> "<" ^ s ^ ">"
 
   (* returns the content of s between prefix and suffix, if s is wrapped by them *)
@@ -19,10 +19,10 @@ module Token = struct
 
   let token_of_string s =
     if s = "" then failwith "Empty token string";
-    match unwrap "?" "" s, unwrap "<" ">" s with
+    match unwrap "§" "" s, unwrap "<" ">" s with
     | Some a, _ -> Anchor a
     | _, Some l -> ArgumentLocation l
-    | _ when s.[0] = '?' || s.[0] = '<' -> failwith ("Invalid token: " ^ s)
+    | _ when String.starts_with ~prefix:"§" s || s.[0] = '<' -> failwith ("Invalid token: " ^ s)
     | _ -> Directive s
 
   let compare t1 t2 =

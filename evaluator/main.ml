@@ -6,12 +6,17 @@ let registry = Registry.Index.registry
 let path_to_string path =
   String.concat " " (List.map FeaturePath.Token.token_to_string path)
 
+(* pads [s] to [width] characters, counting UTF-8 characters rather than bytes (e.g. the anchor marker §) *)
+let pad width s =
+  let length = String.fold_left (fun n c -> if Char.code c land 0xC0 = 0x80 then n else n + 1) 0 s in
+  s ^ String.make (max 0 (width - length)) ' '
+
 (* browse *)
 
 let print_command (command : Command.command) =
   Printf.printf "%s (%s) : %s\n" command.info.commandName command.info.version command.info.description;
   StringMap.iter (fun id (feature : Feature.feature) ->
-    Printf.printf "  %-24s %-40s %s\n" id (path_to_string feature.path) feature.description
+    Printf.printf "  %-24s %s %s\n" id (pad 40 (path_to_string feature.path)) feature.description
   ) command.features
 
 let browse () =
