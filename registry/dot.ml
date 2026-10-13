@@ -3,7 +3,7 @@ open Ocf
 let dotFeatures = StringMap.empty
   |> Feature.addFeature "generate_visualization" {
     options = StringMap.empty
-      |> StringMap.add "output" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.ValueNextToken (TokenEncoding.FixedString ["-o"], TokenEncoding.FormattedString (Some TokenEncoding.FilePath)); description = "write output in file"; location = "options" });
+      |> StringMap.add "output" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.Once (Feature.CommandOption.ValueNextToken (TokenEncoding.FixedString ["-o"], TokenEncoding.FormattedString (Some TokenEncoding.FilePath))); description = "write output in file"; location = "options" });
     anchors = StringMap.empty
       |> StringMap.add "options" [];
     args = StringMap.empty

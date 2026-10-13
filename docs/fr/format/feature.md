@@ -27,10 +27,21 @@ type feature = {
 
 Une option est décrite par son encodage, une description et sa `location`, c'est-à-dire le nom de l'ancre à laquelle elle est rattachée.
 
-Il existe deux encodages :
+L'encodage d'une option précise deux choses : comment une occurrence de l'option est écrite (`written`), et combien de fois l'option peut apparaître.
 
-- `SingleToken encodage` : une option écrite en un seul token, décrit par un `TokenEncoding`. Par exemple, le drapeau `-a` / `--all` s'écrit `SingleToken (FixedString ["-a"; "--all"])` ;
-- `ValueNextToken (clé, encodage)` : une option écrite en deux tokens, une clé fixe suivie d'une valeur. Par exemple, `-m "message"` s'écrit `ValueNextToken (FixedString ["-m"; "--message"], FormattedString (Some QuotedString))`.
+Une occurrence s'écrit de deux façons :
+
+- `SingleToken encodage` : en un seul token, décrit par un `TokenEncoding`. Par exemple, le drapeau `-a` / `--all` s'écrit `SingleToken (FixedString ["-a"; "--all"])` ;
+- `ValueNextToken (clé, encodage)` : en deux tokens, une clé fixe suivie d'une valeur. Par exemple, `-m "message"` s'écrit `ValueNextToken (FixedString ["-m"; "--message"], FormattedString (Some QuotedString))`.
+
+Le nombre d'occurrences est donné par :
+
+| Encodage | Occurrences | Type de la valeur |
+|---|---|---|
+| `Once written` | 0 ou 1 (si l'option est répétée, la dernière occurrence l'emporte) | `'a option` |
+| `Repeatable written` | 0 ou plus, toutes conservées | `'a list` |
+
+Par exemple, l'option `-I` de `gcc` peut être répétée : `Repeatable (SingleToken (Prefixed (["-I"], FormattedString (Some FilePath))))`. L'entrée `gcc -Ia -Ib main.c` donne la valeur `["a"; "b"]`.
 
 ## Les arguments : `Argument`
 
@@ -68,7 +79,7 @@ La fonctionnalité `move_or_rename` de `mv`, simplifiée (voir `registry/mv.ml`)
 Feature.addFeature "move_or_rename" {
   path = FeaturePath.Token.[Directive "mv"; Anchor "options"; ArgumentLocation "source"; ArgumentLocation "destination"];
   options = StringMap.empty
-    |> StringMap.add "verbose" (CommandOption.Any { encoding = SingleToken (FixedString ["-v"]); description = "Verbose output"; location = "options" });
+    |> StringMap.add "verbose" (CommandOption.Any { encoding = Once (SingleToken (FixedString ["-v"])); description = "Verbose output"; location = "options" });
   anchors = StringMap.empty |> StringMap.add "options" [OptionAnchor.ExactLocation];
   args = StringMap.empty
     |> StringMap.add "source" (Argument.Any { encoding = Over (1, FormattedString (Some SingleWord)); description = "Source file/directory" })

@@ -14,8 +14,8 @@ type configuration = {
 
 let getConfigurationTemplate (head: Feature.feature) : template =
   let typeformat_of_option_encoding : type a. a Feature.CommandOption.encoding -> a Typeformat.typeformat = function
-    | Feature.CommandOption.SingleToken enc -> Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding enc)
-    | Feature.CommandOption.ValueNextToken (_, enc) -> Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding enc)
+    | Feature.CommandOption.Once written -> Typeformat.TOption (Typeformat.typeformat_of_tokenEncoding (Feature.CommandOption.valueEncoding written))
+    | Feature.CommandOption.Repeatable written -> Typeformat.TList (Typeformat.typeformat_of_tokenEncoding (Feature.CommandOption.valueEncoding written))
   in
   let optionsT = head.options 
   |> StringMap.map (fun (Feature.CommandOption.Any opt) -> Typeformat.Any (typeformat_of_option_encoding opt.encoding)) 

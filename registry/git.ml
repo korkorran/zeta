@@ -11,17 +11,17 @@ let gitFeatures = StringMap.empty
   |> Feature.addFeature "commit" {
         options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--message" (Any {
-              encoding = ValueNextToken (TokenEncoding.FixedString ["-m"; "--message"], (TokenEncoding.FormattedString (Some TokenEncoding.QuotedString)));
+              encoding = Once (ValueNextToken (TokenEncoding.FixedString ["-m"; "--message"], (TokenEncoding.FormattedString (Some TokenEncoding.QuotedString))));
               description = "Use the given message as the commit message";
               location = "options";
             })
           |> StringMap.add "--all" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["-a"; "--all"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["-a"; "--all"]));
               description = "Automatically stage files that have been modified and deleted, but new files you have not told Git about are not affected";
               location = "options";
             })
           |> StringMap.add "--amend" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--amend"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--amend"]));
               description = "Replace the tip of the current branch by creating a new commit";
               location = "options";
             })
@@ -87,22 +87,22 @@ let gitFeatures = StringMap.empty
   |> Feature.addFeature "get_config" {
         options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--global" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--global"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--global"]));
               description = "Use global config file";
               location = "options";
             })
           |> StringMap.add "--system" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--system"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--system"]));
               description = "Use system config file";
               location = "options";
             })
           |> StringMap.add "--local" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--local"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--local"]));
               description = "Use local config file";
               location = "options";
             })
           |> StringMap.add "--list" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--list"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--list"]));
               description = "List all config settings";
               location = "options";
             })
@@ -127,102 +127,102 @@ let gitFeatures = StringMap.empty
   |> Feature.addFeature "merge" {
         options = (let open Feature.CommandOption in StringMap.empty
           |> StringMap.add "--no-ff" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-ff"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-ff"]));
               description = "Create a merge commit even when the merge resolves as a fast-forward";
               location = "options";
             })
           |> StringMap.add "--ff-only" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--ff-only"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--ff-only"]));
               description = "Refuse to merge and exit with a non-zero status unless the current HEAD is already up to date or the merge can be resolved as a fast-forward";
               location = "options";
             })
           |> StringMap.add "--squash" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--squash"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--squash"]));
               description = "Produce the working tree and index state as if a real merge happened (except no commit is made), but do not actually make a commit or move the HEAD, and pretend as if the merge failed to allow further manipulation (e.g. by squashing the resulting changes into another commit)";
               location = "options";
             })
           |> StringMap.add "--no-squash" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-squash"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-squash"]));
               description = "Perform a normal merge (the default)";
               location = "options";
             })
           |> StringMap.add "--commit" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--commit"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--commit"]));
               description = "Perform a merge and commit the result (the default)";
               location = "options";
             })
           |> StringMap.add "--no-commit" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-commit"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-commit"]));
               description = "Perform a merge and do not commit the result";
               location = "options";
             })
           |> StringMap.add "--edit" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--edit"; "-e"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--edit"; "-e"]));
               description = "Invoke the editor before committing the resulting merge to edit the auto-generated merge message";
               location = "options";
             })
           |> StringMap.add "--no-edit" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-edit"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-edit"]));
               description = "Use the auto-generated merge message without launching an editor";
               location = "options";
             })
           |> StringMap.add "--abort" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--abort"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--abort"]));
               description = "Abort the merge and try to reconstruct the pre-merge state";
               location = "options";
             })
           |> StringMap.add "--continue" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--continue"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--continue"]));
               description = "Continue the merge after having resolved any conflicts";
               location = "options";
             })
           |> StringMap.add "--quit" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--quit"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--quit"]));
               description = "Abort the merge and keep the working tree as it is";
               location = "options";
             })
           |> StringMap.add "--no-verify" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-verify"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-verify"]));
               description = "Bypass the pre-merge and commit-msg hooks";
               location = "options";
             })
           |> StringMap.add "--verify" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--verify"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--verify"]));
               description = "Run the pre-merge and commit-msg hooks (the default)";
               location = "options";
             })
           |> StringMap.add "--verify-signatures" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--verify-signatures"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--verify-signatures"]));
               description = "Verify the GPG signature of the commits being merged";
               location = "options";
             })
           |> StringMap.add "--no-verify-signatures" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-verify-signatures"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-verify-signatures"]));
               description = "Do not verify the GPG signature of the commits being merged (the default)";
               location = "options";
             })
           |> StringMap.add "--signoff" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--signoff"; "-s"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--signoff"; "-s"]));
               description = "Add Signed-off-by line by the committer at the end of the commit log message";
               location = "options";
             })
           |> StringMap.add "--no-signoff" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-signoff"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-signoff"]));
               description = "Do not add Signed-off-by line by the committer at the end of the commit log message (the default)";
               location = "options";
             })
           |> StringMap.add "--gpg-sign" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--gpg-sign"; "-S"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--gpg-sign"; "-S"]));
               description = "GPG-sign the commits being merged";
               location = "options";
             })
           |> StringMap.add "--no-gpg-sign" (Any {
-              encoding = SingleToken (TokenEncoding.FixedString ["--no-gpg-sign"]);
+              encoding = Once (SingleToken (TokenEncoding.FixedString ["--no-gpg-sign"]));
               description = "Do not GPG-sign the commits being merged (the default)";
               location = "options";
             })
           |> StringMap.add "--strategy" (Any {
-              encoding = ValueNextToken (TokenEncoding.FixedString ["--strategy"], Enum ["resolve"; "recursive"; "octopus"; "ours"; "subtree"]);
+              encoding = Once (ValueNextToken (TokenEncoding.FixedString ["--strategy"], Enum ["resolve"; "recursive"; "octopus"; "ours"; "subtree"]));
               description = "Use the given merge strategy";
               location = "options";
             })

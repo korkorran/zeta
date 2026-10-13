@@ -3,9 +3,9 @@ open Ocf
 let mvFeatures = StringMap.empty
   |> Feature.addFeature "move_or_rename" {
     options = StringMap.empty
-      |> StringMap.add "force" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleToken (TokenEncoding.FixedString ["-f"]); description = "Force move"; location = "options" })
-      |> StringMap.add "verbose" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleToken (TokenEncoding.FixedString ["-v"]); description = "Verbose output"; location = "options" })
-      |> StringMap.add "interactive" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.SingleToken (TokenEncoding.FixedString ["-i"]); description = "Prompt before move"; location = "options" });
+      |> StringMap.add "force" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.Once (Feature.CommandOption.SingleToken (TokenEncoding.FixedString ["-f"])); description = "Force move"; location = "options" })
+      |> StringMap.add "verbose" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.Once (Feature.CommandOption.SingleToken (TokenEncoding.FixedString ["-v"])); description = "Verbose output"; location = "options" })
+      |> StringMap.add "interactive" (Feature.CommandOption.Any { Feature.CommandOption.encoding = Feature.CommandOption.Once (Feature.CommandOption.SingleToken (TokenEncoding.FixedString ["-i"])); description = "Prompt before move"; location = "options" });
     anchors = StringMap.empty
       |> StringMap.add "options" [Feature.OptionAnchor.ExactLocation];
     args = StringMap.empty

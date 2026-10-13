@@ -1,8 +1,19 @@
 module CommandOption = struct
 
+  (* how one occurrence of the option is written *)
+  type 'a written =
+  | SingleToken : 'a TokenEncoding.tokenEncoding -> 'a written
+  | ValueNextToken : unit TokenEncoding.tokenEncoding * ('a TokenEncoding.tokenEncoding) -> 'a written
+
+  (* how many times the option may appear *)
   type 'a encoding =
-  | SingleToken : 'a TokenEncoding.tokenEncoding -> 'a option encoding
-  | ValueNextToken : unit TokenEncoding.tokenEncoding * ('a TokenEncoding.tokenEncoding) -> 'a option encoding
+  | Once : 'a written -> 'a option encoding
+  | Repeatable : 'a written -> 'a list encoding
+
+  (* the encoding of the value carried by one occurrence of the option *)
+  let valueEncoding : type a. a written -> a TokenEncoding.tokenEncoding = function
+  | SingleToken encoding -> encoding
+  | ValueNextToken (_, encoding) -> encoding
 
   type 'a t = {
     encoding: 'a encoding;
