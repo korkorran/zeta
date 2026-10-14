@@ -13,6 +13,8 @@ depends: [
   "dune" {>= "3.17"}
   "ocaml"
   "cmdliner"
+  "lambda-term"
+  "lwt"
   "alcotest" {with-test}
   "odoc" {with-doc}
 ]

@@ -22,7 +22,7 @@
  (allow_empty)
  (synopsis "A format and a algorithm to parse the command line")
  (description "A longer description")
- (depends ocaml cmdliner (alcotest :with-test))
+ (depends ocaml cmdliner lambda-term lwt (alcotest :with-test))
  (tags
   ("command" "terminal" "parser" "format" "ocaml")))
 

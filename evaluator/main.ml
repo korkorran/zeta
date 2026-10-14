@@ -3,25 +3,6 @@ open Cmdliner
 
 let registry = Registry.Index.registry
 
-let path_to_string path =
-  String.concat " " (List.map FeaturePath.Token.token_to_string path)
-
-(* pads [s] to [width] characters, counting UTF-8 characters rather than bytes (e.g. the anchor marker §) *)
-let pad width s =
-  let length = String.fold_left (fun n c -> if Char.code c land 0xC0 = 0x80 then n else n + 1) 0 s in
-  s ^ String.make (max 0 (width - length)) ' '
-
-(* browse *)
-
-let print_command (command : Command.command) =
-  Printf.printf "%s (%s) : %s\n" command.info.commandName command.info.version command.info.description;
-  StringMap.iter (fun id (feature : Feature.feature) ->
-    Printf.printf "  %-24s %s %s\n" id (pad 40 (path_to_string feature.path)) feature.description
-  ) command.features
-
-let browse () =
-  StringMap.iter (fun _ command -> print_command command; print_newline ()) registry
-
 (* eval *)
 
 let print_values title values =
@@ -64,8 +45,8 @@ let eval_entry words =
 (* command line *)
 
 let browse_cmd =
-  let doc = "List the commands described in the registry, with their features." in
-  Cmd.v (Cmd.info "browse" ~doc) Term.(const (fun () -> browse (); 0) $ const ())
+  let doc = "Browse interactively the commands of the registry, their features and their arguments, anchors and options." in
+  Cmd.v (Cmd.info "browse" ~doc) Term.(const (fun () -> Browse.run (); 0) $ const ())
 
 let eval_cmd =
   let doc = "Evaluate a command line entry against the registry with the zeta algorithm." in
