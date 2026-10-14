@@ -19,25 +19,26 @@ A format describing the syntax of terminal commands, and an algorithm `Zeta` to 
 The `evaluator` executable has two subcommands:
 
 ```sh
-# list the commands of the registry, with their features
+# browse interactively the commands of the registry, their features, arguments, anchors and options
 dune exec evaluator/main.exe browse
 
-# evaluate a terminal entry against every feature of its command
+# evaluate interactively a terminal entry with Zeta
 dune exec evaluator/main.exe -- eval '<entry>'
 ```
 
-Quote the entry (or put it after `--`) so that its options are not read as options of the evaluator. The exit code is `0` when at least one feature matches the entry, `1` otherwise.
+`eval` opens a line editor prefilled with the entry. Press Enter to evaluate it: the matching command, the matching features and the configuration computed by Zeta are displayed, then the entry can be edited again. Press Ctrl-C to quit. Quote the entry (or put it after `--`) so that its options are not read as options of the evaluator.
 
 Example:
 
 ```
 $ dune exec evaluator/main.exe -- eval 'git commit -m "hello world"'
-git commit -m "hello world"
-  [fail] checkout : the entry does not match 'checkout'
-  [fail] clone : the entry does not match 'clone'
-  [ok]   commit
-    options:
-      --message = "hello world"
-  [fail] create_branch : the entry does not match 'branch'
-  ...
+Enter: evaluate the entry   Ctrl-C: quit
+entry> git commit -m "hello world"
+✔ command  git : Git version control system
+✔ feature  commit
+    options
+      --message : string option = "hello world"
+entry> git commit -m "hello world"
 ```
+
+When the output is not a terminal (in a script or a pipe), `browse` prints the list of the commands and their features, and `eval` evaluates the entry once and prints the result of every feature. The exit code of `eval` is then `0` when at least one feature matches the entry, `1` otherwise.

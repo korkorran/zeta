@@ -1,3 +1,3 @@
 (executable
  (name main)
- (libraries cmdliner lambda-term lwt unix ocf repr zeta registry))
+ (libraries cmdliner lambda-term lwt react zed unix ocf repr zeta registry))
