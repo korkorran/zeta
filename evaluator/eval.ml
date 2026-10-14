@@ -2,6 +2,10 @@ open Ocf
 
 let registry = Registry.Index.registry
 
+(* the path of the feature [id] of [command] *)
+let feature_path (command : Command.command) id =
+  Browse.path_to_string (StringMap.find id command.features).path
+
 let print_values title values =
   if not (StringMap.is_empty values) then begin
     Printf.printf "    %s:\n" title;
@@ -10,10 +14,10 @@ let print_values title values =
     ) values
   end
 
-let print_result (feature, result) =
+let print_result (command : Command.command) (feature, result) =
   match result with
   | Zeta.EvalFeature.Success (configuration : Repr.Configuration.configuration) ->
-    Printf.printf "  [ok]   %s\n" feature;
+    Printf.printf "  [ok]   %s : %s\n" feature (feature_path command feature);
     print_values "options" configuration.options;
     print_values "args" configuration.args
   | Zeta.EvalFeature.Unmatched token ->
@@ -39,7 +43,7 @@ let print_evaluation entry =
   | Some command ->
     let results = Zeta.Entry.evalEntry entry command in
     Printf.printf "%s\n" entry;
-    List.iter print_result results;
+    List.iter (print_result command) results;
     `Ok (if List.exists is_success results then 0 else 1)
 
 (* interactive evaluation *)
@@ -79,7 +83,7 @@ let evaluation_markup entry : LTerm_text.markup =
       @ List.concat_map (fun (feature, result) ->
           match result with
           | Zeta.EvalFeature.Success (configuration : Repr.Configuration.configuration) ->
-            ok ("feature  " ^ feature)
+            ok (Printf.sprintf "feature  %s : %s" feature (feature_path command feature))
             @ (if StringMap.is_empty configuration.options && StringMap.is_empty configuration.args
                then dim "    (empty configuration)"
                else values "options" configuration.options @ values "args" configuration.args)
