@@ -1,6 +1,6 @@
 # Zeta
 
-A format describing the syntax of terminal commands, and an algorithm `Zeta` to evaluate a terminal entry to a formatted representation of the entry. The project aims to be a general approach to parse terminal entries despites the variety of terminal commands syntax.
+A format describing the syntax of terminal commands, and an algorithm `Zeta` to evaluate a terminal entry to a formatted representation of the entry. The evaluation is done against a collection of description of command saved in a registry. The project aims to be a general approach to parse terminal entries despites the variety of terminal commands syntax.
 
 ## Folder structure
 
@@ -42,3 +42,9 @@ entry> git commit -m "hello world"
 ```
 
 When the output is not a terminal (in a script or a pipe), `browse` prints the list of the commands and their features, and `eval` evaluates the entry once and prints the result of every feature. The exit code of `eval` is then `0` when at least one feature matches the entry, `1` otherwise.
+
+## License
+
+Copyright (C) 2026 Frédéric Lang
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE) for the full text.
