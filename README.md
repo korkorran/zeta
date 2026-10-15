@@ -1,4 +1,4 @@
-# Open-Command
+# Zeta
 
 A format describing the syntax of terminal commands, and an algorithm `Zeta` to evaluate a terminal entry to a formatted representation of the entry. The project aims to be a general approach to parse terminal entries despites the variety of terminal commands syntax.
 
@@ -7,7 +7,7 @@ A format describing the syntax of terminal commands, and an algorithm `Zeta` to 
 ```
 - docs/ : markdown documentation of the project
 - evaluator/ : a executable to browse commands written in the registry and to evaluate terminal entries (see 'Usage')
-- format/ : the definition of the Open-Command format, describing a command syntax
+- format/ : the definition of the Zeta format, describing a command syntax
 - registry/ : a collection of described commands
 - representation/ : the format describing the representation of an evaluated terminal entry
 - test/ : test utility to check the algorithm against real terminal entries
