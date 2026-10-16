@@ -8,13 +8,13 @@ let evalTokens
   (availableOptionsAnchors: string list)
   : ongoingState list =
   let currentConfig = ongoingState.configuration in
-  let currentStacks = ongoingState.evaluationStacks in
+  let currentStacks = ongoingState.tokenStacks in
   match (currentStacks.restEntry, currentStacks.restCommand) with
   | [] , [] -> [{ongoingState with case = Success}]
   | ([], hc::_) -> (match hc with 
     FeaturePath.Token.Anchor _ -> 
       let tc = List.tl currentStacks.restCommand in
-          [{ongoingState with evaluationStacks = {
+          [{ongoingState with tokenStacks = {
             evaluatedEntry = currentStacks.evaluatedEntry;
             restEntry = currentStacks.restEntry;
             evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
@@ -32,7 +32,7 @@ let evalTokens
         restEntry = newRestEntry;
         evaluatedCommand = currentStacks.evaluatedCommand;
         restCommand = currentStacks.restCommand;
-      } |> fun state -> [{ongoingState with configuration = newConfig; evaluationStacks = state}]
+      } |> fun state -> [{ongoingState with configuration = newConfig; tokenStacks = state}]
     | [] -> [{ongoingState with case = Overflow h}])
   | (_, _) -> 
     let availableOptions = List.flatten (List.map (Option.getOptionsFromAnchor head) availableOptionsAnchors) in
@@ -43,14 +43,14 @@ let evalTokens
         restEntry = newRestEntry;
         evaluatedCommand = currentStacks.evaluatedCommand;
         restCommand = currentStacks.restCommand;
-      } |> fun state -> [{ongoingState with configuration = newConfig; evaluationStacks = state}]
+      } |> fun state -> [{ongoingState with configuration = newConfig; tokenStacks = state}]
     | [] ->
       let hc = List.hd currentStacks.restCommand in
       match hc with
       | FeaturePath.Token.Directive d -> 
           let he = List.hd currentStacks.restEntry in
           if he = d then
-            [{ongoingState with evaluationStacks = {
+            [{ongoingState with tokenStacks = {
               evaluatedEntry = currentStacks.evaluatedEntry @ [he];
               restEntry = List.tl currentStacks.restEntry;
               evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
@@ -61,7 +61,7 @@ let evalTokens
       | FeaturePath.Token.Anchor _ ->
          let hc = List.hd currentStacks.restCommand in
          let tc = List.tl currentStacks.restCommand in
-          [{ongoingState with evaluationStacks = {
+          [{ongoingState with tokenStacks = {
             evaluatedEntry = currentStacks.evaluatedEntry;
             restEntry = currentStacks.restEntry;
             evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
@@ -91,8 +91,8 @@ let evalFeature (entry:string list) (head:Feature.feature) : result =
     | Ongoing ->
         let anchors = Anchor.getApplicableAnchors 
           head.anchors 
-          currentState.evaluationStacks.evaluatedCommand 
-          currentState.evaluationStacks.restCommand in
+          currentState.tokenStacks.evaluatedCommand 
+          currentState.tokenStacks.restCommand in
         let nextStates = evalTokens head currentState anchors in
         aux nextStates
     | _ -> [currentState]) 
@@ -100,7 +100,7 @@ let evalFeature (entry:string list) (head:Feature.feature) : result =
   in
   let initState = { case= Ongoing;
        configuration = {Configuration.options=StringMap.empty;args=StringMap.empty};
-       evaluationStacks ={
+       tokenStacks ={
         evaluatedEntry = [];
         restEntry = entry;
         evaluatedCommand = [];

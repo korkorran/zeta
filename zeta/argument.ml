@@ -21,7 +21,7 @@ let evalList (type a)
   (encoding : a TokenEncoding.tokenEncoding)
   : ongoingState list =
   let currentConfig = ongoingState.configuration in
-  let currentStacks = ongoingState.evaluationStacks in
+  let currentStacks = ongoingState.tokenStacks in
   let reachesMax n = match max with Some m -> n >= m | None -> false in
   let typeformat = Typeformat.typeformat_of_tokenEncoding encoding in
   let listTypeformat = Typeformat.TList typeformat in
@@ -46,7 +46,7 @@ let evalList (type a)
   | None -> if skipped = [] then [{ongoingState with case = Unmatched hc}] else skipped
   | Some value ->
     let newConfig = {Configuration.options=currentConfig.options; args=StringMap.add l (Typeformat.Value (listTypeformat, l_args @ [value])) currentConfig.args} in
-    let consumed evaluatedCommand restCommand = {ongoingState with configuration = newConfig; evaluationStacks = {
+    let consumed evaluatedCommand restCommand = {ongoingState with configuration = newConfig; tokenStacks = {
       evaluatedEntry = currentStacks.evaluatedEntry @ [he];
       restEntry = List.tl currentStacks.restEntry;
       evaluatedCommand;
@@ -67,9 +67,9 @@ let evalArgument
   (Feature.Argument.Any arg : Feature.Argument.any)
   : ongoingState list =
   let currentConfig = ongoingState.configuration in
-  let currentStacks = ongoingState.evaluationStacks in
+  let currentStacks = ongoingState.tokenStacks in
   let withArg value = {Configuration.options=currentConfig.options; args=StringMap.add l value currentConfig.args} in
-  let skipArgument = {ongoingState with evaluationStacks = {
+  let skipArgument = {ongoingState with tokenStacks = {
     evaluatedEntry = currentStacks.evaluatedEntry;
     restEntry = currentStacks.restEntry;
     evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
@@ -90,7 +90,7 @@ let evalArgument
     else
       [{ongoingState with case = Incomplete hc}]
   | he :: te ->
-    let consumed value = {ongoingState with configuration = withArg value; evaluationStacks = {
+    let consumed value = {ongoingState with configuration = withArg value; tokenStacks = {
       evaluatedEntry = currentStacks.evaluatedEntry @ [he];
       restEntry = te;
       evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
