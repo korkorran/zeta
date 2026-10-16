@@ -5,11 +5,11 @@ open State
 let evalTokens
   (head : Feature.feature)
   ({tokenStacks = stacks; _} as ongoingState : ongoingState)
-  (availableOptionsAnchors : string list)
+  (applicableOptionsAnchors : string list)
   : ongoingState list =
-  (* the first option of the available anchors matching the head of the entry *)
+  (* the first option of the applicable anchors matching the head of the entry *)
   let evalOptions () =
-    availableOptionsAnchors
+    applicableOptionsAnchors
     |> List.concat_map (Option.getOptionsFromAnchor head)
     |> List.find_map (fun opt -> Option.evalOption opt ongoingState)
   in
