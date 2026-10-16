@@ -2,74 +2,44 @@ open Ocf
 open Repr
 open State
 
-let evalTokens 
-  (head :Feature.feature) 
-  (ongoingState : ongoingState)
-  (availableOptionsAnchors: string list)
+let evalTokens
+  (head : Feature.feature)
+  ({tokenStacks = stacks; _} as ongoingState : ongoingState)
+  (availableOptionsAnchors : string list)
   : ongoingState list =
-  let currentConfig = ongoingState.configuration in
-  let currentStacks = ongoingState.tokenStacks in
-  match (currentStacks.restEntry, currentStacks.restCommand) with
-  | [] , [] -> [{ongoingState with case = Success}]
-  | ([], hc::_) -> (match hc with 
-    FeaturePath.Token.Anchor _ -> 
-      let tc = List.tl currentStacks.restCommand in
-          [{ongoingState with tokenStacks = {
-            evaluatedEntry = currentStacks.evaluatedEntry;
-            restEntry = currentStacks.restEntry;
-            evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
-            restCommand = tc;
-          }}]
-      | FeaturePath.Token.ArgumentLocation l ->
-        Argument.evalArgument ongoingState hc l (StringMap.find l head.args)
-    | _ -> [{ongoingState with case = Incomplete hc}])
-  | (h::_, []) -> 
-    let availableOptions = List.flatten (List.map (Option.getOptionsFromAnchor head) availableOptionsAnchors) in
-    let succeededOptions = List.filter_map (fun opt -> Option.evalOption opt currentStacks.restEntry currentConfig) availableOptions in
-    (match succeededOptions with
-    | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
-        evaluatedEntry = currentStacks.evaluatedEntry @ evaluatedTokens;
-        restEntry = newRestEntry;
-        evaluatedCommand = currentStacks.evaluatedCommand;
-        restCommand = currentStacks.restCommand;
-      } |> fun state -> [{ongoingState with configuration = newConfig; tokenStacks = state}]
-    | [] -> [{ongoingState with case = Overflow h}])
-  | (_, _) -> 
-    let availableOptions = List.flatten (List.map (Option.getOptionsFromAnchor head) availableOptionsAnchors) in
-    let succeededOptions = List.filter_map (fun opt -> Option.evalOption opt currentStacks.restEntry currentConfig) availableOptions in
-    match succeededOptions with
-    | (newConfig, evaluatedTokens, newRestEntry)::_ -> {
-        evaluatedEntry = currentStacks.evaluatedEntry @ evaluatedTokens;
-        restEntry = newRestEntry;
-        evaluatedCommand = currentStacks.evaluatedCommand;
-        restCommand = currentStacks.restCommand;
-      } |> fun state -> [{ongoingState with configuration = newConfig; tokenStacks = state}]
-    | [] ->
-      let hc = List.hd currentStacks.restCommand in
-      match hc with
-      | FeaturePath.Token.Directive d -> 
-          let he = List.hd currentStacks.restEntry in
-          if he = d then
-            [{ongoingState with tokenStacks = {
-              evaluatedEntry = currentStacks.evaluatedEntry @ [he];
-              restEntry = List.tl currentStacks.restEntry;
-              evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
-              restCommand = List.tl currentStacks.restCommand;
-            }}]
-          else
-            [{ongoingState with case = Unmatched hc}]
-      | FeaturePath.Token.Anchor _ ->
-         let hc = List.hd currentStacks.restCommand in
-         let tc = List.tl currentStacks.restCommand in
-          [{ongoingState with tokenStacks = {
-            evaluatedEntry = currentStacks.evaluatedEntry;
-            restEntry = currentStacks.restEntry;
-            evaluatedCommand = currentStacks.evaluatedCommand @ [hc];
-            restCommand = tc;
-          }}]
-      | FeaturePath.Token.ArgumentLocation l ->
-        Argument.evalArgument ongoingState hc l (StringMap.find l head.args)
-
+  (* the first option of the available anchors matching the head of the entry *)
+  let evalOptions () =
+    availableOptionsAnchors
+    |> List.concat_map (Option.getOptionsFromAnchor head)
+    |> List.find_map (fun opt -> Option.evalOption opt ongoingState)
+  in
+  (* the command token [hc] is consumed without consuming any entry token *)
+  let skip hc restCommand =
+    [{ongoingState with tokenStacks = {stacks with evaluatedCommand = stacks.evaluatedCommand @ [hc]; restCommand}}]
+  in
+  match stacks.restEntry, stacks.restCommand with
+  | [], [] -> [{ongoingState with case = Success}]
+  | [], (FeaturePath.Token.Anchor _ as hc) :: tc -> skip hc tc
+  | [], FeaturePath.Token.ArgumentLocation _ :: _ -> Argument.evalArgument head.args ongoingState
+  | [], hc :: _ -> [{ongoingState with case = Incomplete hc}]
+  | he :: _, [] ->
+    begin match evalOptions () with
+    | Some state -> [state]
+    | None -> [{ongoingState with case = Overflow he}]
+    end
+  | he :: te, hc :: tc ->
+    match evalOptions (), hc with
+    | Some state, _ -> [state]
+    | None, FeaturePath.Token.Directive d when he = d ->
+      [{ongoingState with tokenStacks = {
+        evaluatedEntry = stacks.evaluatedEntry @ [he];
+        restEntry = te;
+        evaluatedCommand = stacks.evaluatedCommand @ [hc];
+        restCommand = tc;
+      }}]
+    | None, FeaturePath.Token.Directive _ -> [{ongoingState with case = Unmatched hc}]
+    | None, FeaturePath.Token.Anchor _ -> skip hc tc
+    | None, FeaturePath.Token.ArgumentLocation _ -> Argument.evalArgument head.args ongoingState
 
 
 type result = Success of Configuration.configuration 
