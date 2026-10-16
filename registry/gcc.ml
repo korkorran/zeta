@@ -35,7 +35,7 @@ let gccFeatures = StringMap.empty
 let gcc : Ocf.Command.command = {
   info = {
     commandName = "gcc";
-    version = "UNVERSIONED";
+    version = "14.2.0";
     description = "GNU project C and C++ compiler";
   };
   features = gccFeatures;
